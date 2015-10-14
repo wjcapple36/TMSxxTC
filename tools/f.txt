@@ -1,0 +1,3 @@
+ifconfig eth1 down
+ifconfig eth1 hw ether fe:0f:06:13:b0:3e
+ifconfig eth1 up
