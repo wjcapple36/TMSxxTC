@@ -463,7 +463,8 @@ struct tms_alarm_hw_change_val
 	int32_t level;
 	int32_t frame;
 	int32_t slot;
-	uint16_t reason[64];
+	// uint16_t reason[64];
+	uint32_t reason;
 	int8_t time[20];
 };
 // // ID_CFG_OLP_PORT			7
@@ -1056,7 +1057,8 @@ struct tms_alarm_hw_val
 	int32_t level;
 	int32_t frame;
 	int32_t slot;
-	uint8_t	reason[128];
+	// uint8_t	reason[128];
+	uint32_t	reason;
 	uint8_t	time[20];
 };
 // //ID_CMD_OTDR_CYC			25	

@@ -1274,6 +1274,10 @@ uint32_t tms_RetDeviceComposition_any(
 		plist->slot = htonl(ptlist->slot);
 		plist->type  = htonl(ptlist->type);
 		plist->port  = htonl(ptlist->port);
+		plist->reserved0 = htonl(plist->reserved0);
+		plist->reserved1 = htonl(plist->reserved1);
+		plist->reserved2 = htonl(plist->reserved2);
+		plist->reserved3 = htonl(plist->reserved3);
 		plist++;
 		ptlist++;
 	}
@@ -1328,7 +1332,7 @@ uint32_t tms_RetDeviceComposition(
 
 
 
-
+// 0x80000067
 static int32_t tms_AnalyseRetDeviceComposition(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
 	printf("tms_AnalyseRetDeviceComposition()\n");
@@ -1354,6 +1358,10 @@ static int32_t tms_AnalyseRetDeviceComposition(struct tms_context *pcontext, int
 		ptlist->slot      = htonl(ptlist->slot);
 		ptlist->type      = htonl(ptlist->type);
 		ptlist->port      = htonl(ptlist->port);
+		ptlist->reserved0 = htonl(ptlist->reserved0);
+		ptlist->reserved1 = htonl(ptlist->reserved1);
+		ptlist->reserved2 = htonl(ptlist->reserved2);
+		ptlist->reserved3 = htonl(ptlist->reserved3);
 		ptlist++;
 	}
 
@@ -4415,8 +4423,9 @@ int32_t tms_AlarmHW(
         plist->level  = htonl(ptlist->level);
         plist->frame  = htonl(ptlist->frame);
         plist->slot   = htonl(ptlist->slot);
+        plist->reason = htonl(ptlist->reason);
 
-
+#if 0
         // 将short按照网络字节发送，你妈B
         memcpy(plist->reason, ptlist->reason, 128);
         preason  = (uint16_t*)plist->reason;
@@ -4427,6 +4436,7 @@ int32_t tms_AlarmHW(
         }
         preason  = (uint16_t*)ptlist->reason;
         // PrintfMemory((uint8_t*)preason, 128);
+#endif
 
 
         memcpy(plist->time,   ptlist->time,   20);
@@ -4472,13 +4482,16 @@ static int32_t tms_AnalyseAlarmHW(struct tms_context *pcontext, int8_t *pdata, i
         ptlist->level      = htonl(ptlist->level);
         ptlist->frame      = htonl(ptlist->frame);
         ptlist->slot       = htonl(ptlist->slot);
+        ptlist->reason     = htonl(ptlist->reason);
         ptlist++;
 
+#if 0
         preason  = (uint16_t*)plist->reason;
         for (int k = 0;k < 128/2;k++) {
             *preason = htons(*preason);
             preason++;
         }
+#endif
     }
 
     printf("tms_AnalyseAlarmHW\n");
@@ -4771,7 +4784,7 @@ int32_t tms_RetOTDRCycle_V2(
 	alarm.port = htonl(palarm->port);
 	alarm.alarm_position = htonl(palarm->alarm_position);
 	memcpy(alarm.time, palarm->time, 20);
-	alarm.reserve0 = 0;
+	alarm.reserve0 = htonl(palarm->reserve0);
 
 	// Part A.1
 	test_hdr.osw_frame  = htonl(ptest_hdr->osw_frame);
@@ -4893,6 +4906,14 @@ static int32_t tms_AnalyseRetOTDRCycle_V2(struct tms_context *pcontext, int8_t *
 	}
 	pevent_val  = (struct tms_retotdr_event_val  *)(((char*)pevent_hdr) + sizeof(struct tms_retotdr_event_hdr));
 	pchain      = (struct tms_retotdr_chain      *)(((char*)pevent_val) + sizeof(struct tms_retotdr_event_val) * htonl(pevent_hdr->count));
+
+	palarm->alarm_type 		= htonl(palarm->alarm_type);
+	palarm->alarm_level 	= htonl(palarm->alarm_level);
+	palarm->frame 			= htonl(palarm->frame);
+	palarm->slot 			= htonl(palarm->slot);
+	palarm->port 			= htonl(palarm->port);
+	palarm->alarm_position 	= htonl(palarm->alarm_position);
+	palarm->reserve0 		= htonl(palarm->reserve0);
 
 	// Part A.1
 	ptest_hdr->osw_frame  = htonl(ptest_hdr->osw_frame);
@@ -5854,8 +5875,9 @@ uint32_t tms_RetAlarmHWChange(
 	    plist->level  = htonl(ptlist->level);
 	    plist->frame  = htonl(ptlist->frame);
 	    plist->slot   = htonl(ptlist->slot);
+	    plist->reason = htonl(ptlist->reason);
 
-
+#if 0
 	    // 将short按照网络字节发送，你妈B
 	    memcpy(plist->reason, ptlist->reason, 128);
 	    preason  = (uint16_t*)plist->reason;
@@ -5866,7 +5888,7 @@ uint32_t tms_RetAlarmHWChange(
 	    }
 	    preason  = (uint16_t*)ptlist->reason;
 	    // PrintfMemory((uint8_t*)preason, 128);
-
+#endif
 
 	    memcpy(plist->time,   ptlist->time,   20);
 
