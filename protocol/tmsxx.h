@@ -265,7 +265,10 @@ extern "C" {
 #define ID_GET_ALARM_SOUND_STATE		0x80000074 ///< 网管查询MCU告警声音关闭状态 
 #define ID_RET_ALARM_SOUND_STATE		0x80000075 ///< 返回MCU告警声音关闭状态
 
-
+#define ID_GET_TOTAL_OP_ALARM	0x80000076 ///< 查询总的光功告警
+#define ID_RET_TOTAL_OP_ALARM	0x80000077 ///< 主控返回总的光功告警
+#define ID_GET_OLP_ACTION_LOG	0x80000079 ///< 网管查询OLP切换记录
+#define ID_RET_OLP_ACTION_LOG	0x80000080 ///< 返回OLP切换记录
 
 
 
