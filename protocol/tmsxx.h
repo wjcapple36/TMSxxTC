@@ -267,6 +267,7 @@ extern "C" {
 
 #define ID_GET_TOTAL_OP_ALARM	0x80000076 ///< 查询总的光功告警
 #define ID_RET_TOTAL_OP_ALARM	0x80000077 ///< 主控返回总的光功告警
+#define ID_GET_TOTAL_HW_ALARM	0x80000078 ///< 查询总的硬件告警
 #define ID_GET_OLP_ACTION_LOG	0x80000079 ///< 网管查询OLP切换记录
 #define ID_RET_OLP_ACTION_LOG	0x80000080 ///< 返回OLP切换记录
 
@@ -1232,6 +1233,38 @@ struct tms_unit
 	int32_t  port_b;		///< 端口编号b
 };
 
+// ID_GET_TOTAL_OP_ALARM
+struct tms_total_op_alarm_hdr
+{
+	int32_t type;
+	int32_t count;
+};
+
+struct tms_total_op_alarm_val
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t port;
+	int32_t alarm_level;
+	int32_t cur_power;
+	int8_t time[20];
+};
+
+// ID_GET_OLP_ACTION_LOG
+struct tms_olp_action_log_hdr
+{
+	int32_t count;
+};
+
+struct tms_olp_action_log_val
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+	int32_t sw_type;
+	int32_t sw_port;
+	int8_t  time[20];
+};
 #include "bipbuffer.h"
 ///< 应用程序
 struct tmsxx_app

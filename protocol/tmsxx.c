@@ -5964,10 +5964,145 @@ int32_t tms_RetAlarmSoundState(int fd, struct glink_addr *paddr, uint32_t state)
 	ret = glink_Send(fd, &base_hdr, (uint8_t*)&data_state, 4);
 	return ret;	
 }
+
+/**
+ * @brief	ID_GET_TOTAL_OP_ALARM		0x80000076 ///< 查询总的光功告警
+ */
+
+int32_t tms_GetTotalOPAlarm(int fd, struct glink_addr *paddr)
+{
+	return tms_MCUtoDevice(fd, 0, 0 , 0, DEV_MCU, 0, ID_GET_TOTAL_OP_ALARM, 0);
+}
+
+/**
+ * @brief	ID_RET_TOTAL_OP_ALARM	0x80000077 ///< 主控返回总的光功告警
+ * @retval	>0 发送成功
+ * @retval	0 发送失败，该链接失效，立即断开
+ * @remarks	
+ * @see	
+ */
+int32_t tms_RetTotalOPAlarm(int fd, struct glink_addr *paddr,
+	int32_t type,
+	int32_t count,
+	struct tms_total_op_alarm_val *pval)
+{
+	int len;
+	struct tms_total_op_alarm_hdr hdr;
+	struct tms_total_op_alarm_val *ptlist;
+
+	hdr.type  = htonl(type);
+	hdr.count = htonl(count);
+
+	ptlist = pval;
+	for (int i = 0; i < count; i++) {
+		ptlist->frame		= htonl(ptlist->frame);
+		ptlist->slot		= htonl(ptlist->slot);
+		ptlist->port		= htonl(ptlist->port);
+		ptlist->alarm_level	= htonl(ptlist->alarm_level);
+		ptlist->cur_power	= htonl(ptlist->cur_power);
+		ptlist++;
+	}
+	struct glink_base  base_hdr;
+	
+
+	len = sizeof(struct tms_total_op_alarm_hdr) + count * sizeof(struct tms_total_op_alarm_val);
+	tms_FillGlinkFrame(&base_hdr, paddr);
+	if (0 == fd) {
+		// fd = 
+		tms_SelectFdByAddr(&base_hdr.dst);
+	}
+	glink_Build(&base_hdr, ID_GET_TOTAL_OP_ALARM, len);
+	glink_SendHead(fd, &base_hdr);
+	glink_SendSerial(fd, (uint8_t*)&hdr,   sizeof(struct tms_total_op_alarm_hdr));
+	glink_SendSerial(fd, (uint8_t*)&pval,   count * sizeof(struct tms_total_op_alarm_val));
+	glink_SendTail(fd);
+
+
+	return 0;
+}
+// 0x80000077
+static int32_t tms_AnalyseRetTotalOPAlarm(struct tms_context *pcontext, int8_t *pdata, int32_t len)
+{
+	return 0;
+}
+
+/**
+ * @brief	ID_GET_TOTAL_HW_ALARM	0x80000078 ///< 查询总的硬件告警
+ * @see	
+ */
+
+int32_t tms_GetTotalHwAlarm(int fd, struct glink_addr *paddr)
+{
+	return tms_MCUtoDevice(fd, 0, 0 , 0, DEV_MCU, 0, ID_GET_TOTAL_HW_ALARM, 0);
+}
+
+
+/**
+ * @brief	ID_GET_OLP_ACTION_LOG	0x80000079 ///< 网管查询OLP切换记录
+ * @see	
+ */
+
+int32_t tms_GetOLPActionLog(int fd, struct glink_addr *paddr)
+{
+	return tms_MCUtoDevice(fd, 0, 0 , 0, DEV_MCU, 0, ID_GET_OLP_ACTION_LOG, 0);
+}
+
+
+/**
+ * @brief	ID_RET_OLP_ACTION_LOG	0x80000080 ///< 返回OLP切换记录
+ * @retval	>0 发送成功
+ * @retval	0 发送失败，该链接失效，立即断开
+ * @remarks	
+ * @see	
+ */
+int32_t tms_RetOLPActionLog(int fd, struct glink_addr *paddr,
+	int32_t count,
+	struct tms_olp_action_log_val *pval)
+{
+	int len;
+	struct tms_olp_action_log_hdr hdr;
+	struct tms_olp_action_log_val *ptlist;
+
+	hdr.count = htonl(count);
+
+	ptlist = pval;
+	for (int i = 0; i < count; i++) {
+		ptlist->frame	= htonl(ptlist->frame);
+		ptlist->slot	= htonl(ptlist->slot);
+		ptlist->type	= htonl(ptlist->type);
+		ptlist->sw_type	= htonl(ptlist->sw_type);
+		ptlist->sw_port	= htonl(ptlist->sw_port);
+		ptlist++;
+	}
+	struct glink_base  base_hdr;
+	
+
+	len = sizeof(struct tms_olp_action_log_hdr) + count * sizeof(struct tms_olp_action_log_val);
+	tms_FillGlinkFrame(&base_hdr, paddr);
+	if (0 == fd) {
+		// fd = 
+		tms_SelectFdByAddr(&base_hdr.dst);
+	}
+	glink_Build(&base_hdr, ID_RET_OLP_ACTION_LOG, len);
+	glink_SendHead(fd, &base_hdr);
+	glink_SendSerial(fd, (uint8_t*)&hdr,   sizeof(struct tms_olp_action_log_hdr));
+	glink_SendSerial(fd, (uint8_t*)&pval,   count * sizeof(struct tms_olp_action_log_val));
+	glink_SendTail(fd);
+
+
+	return 0;
+}
+// 0x80000080
+static int32_t tms_AnalyseRetOLPActionLog(struct tms_context *pcontext, int8_t *pdata, int32_t len)
+{
+	return 0;
+}
+
+
+
+
 ////////////////////////////////////////////////////////////////////////
 // 数据包分析
-
-
 // 命令名列表0x1000xxxx、0x6000xxxx、0x8000xxxx
 static struct pro_list g_cmdname_0x1000xxxx[] = 
 {
@@ -6129,6 +6264,17 @@ static struct pro_list g_cmdname_0x8000xxxx[] = {
 {"ID_ALARM_SOUND_ON_OFF"},
 {"ID_GET_ALARM_SOUND_STATE"},
 {"ID_RET_ALARM_SOUND_STATE"},
+{"ID_GET_TOTAL_OP_ALARM"},
+{"ID_RET_TOTAL_OP_ALARM"},
+{"ID_GET_TOTAL_HW_ALARM"},
+{"ID_GET_OLP_ACTION_LOG"},
+{"--"},
+{"--"},
+{"--"},
+{"--"},
+{"--"},
+{"--"},
+{"ID_RET_OLP_ACTION_LOG"},
 
 
 
@@ -6803,6 +6949,18 @@ struct tms_analyse_array sg_analyse_0x8000xxxx[] =
 {	tms_AnalyseUnuse	,0},//	0x80000073	ID_ALARM_SOUND_ON_OFF
 {	tms_AnalyseUnuse	,0},//	0x80000074	ID_GET_ALARM_SOUND_STATE
 {	tms_AnalyseUnuse	,8},//	0x80000075	ID_RET_ALARM_SOUND_STATE
+
+{	tms_AnalyseUnuse	,0},//	0x80000076	ID_GET_TOTAL_OP_ALARM
+{	tms_AnalyseRetTotalOPAlarm	,8},//	0x80000077	ID_RET_TOTAL_OP_ALARM
+{	tms_AnalyseUnuse	,0},//	0x80000078	ID_GET_TOTAL_HW_ALARM
+{	tms_AnalyseUnuse	,0},//	0x80000079	ID_GET_OLP_ACTION_LOG
+{	tms_AnalyseUnuse	,8},//	0x8000007A	--
+{	tms_AnalyseUnuse	,8},//	0x8000007B	--
+{	tms_AnalyseUnuse	,8},//	0x8000007C	--
+{	tms_AnalyseUnuse	,8},//	0x8000007D	--
+{	tms_AnalyseUnuse	,8},//	0x8000007E	--
+{	tms_AnalyseUnuse	,8},//	0x8000007F	--
+{	tms_AnalyseRetOLPActionLog	,8},//	0x80000080	ID_RET_OLP_ACTION_LOG
 
 };
 /**
