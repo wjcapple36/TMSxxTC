@@ -8,6 +8,7 @@
 
 * @section 必看内容
 - \subpage workhis "每日工作简述，建议阅读帮助文档前先看这部分，了解每次发布doxygen文档更新什么内容"
+- \subpage buglist "项目已发现缺陷列表"
 
 * @section 开发记录
 - \subpage tmsxx "TMSxx"
