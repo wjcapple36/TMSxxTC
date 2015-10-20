@@ -668,7 +668,7 @@ void *ThreadConnectCU(void *arg)
 	struct ep_con_t client;
 	
 	bzero(&client, sizeof(struct ep_con_t));
-	// return 0;
+	return 0;
 #ifdef _MANAGE
 	return 0;
 #endif

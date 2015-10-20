@@ -1,5 +1,12 @@
 /*! \page workhis TMSxxTC 项目工作日志
 2015-10-19: Menglong Wu
+	- 测试2015-07-20修改的网络部分代码，已测试部分
+		+ 打开tms_SelectFdByAddr的V1.1 - V1.2版本过渡功能
+		+ 添加 MCU 对PC侧连接管理
+		+ 添加 MCU 转发到PC侧路由，通过地址转发单个设备数据包
+	- TODO 向网管群发设备告警
+		
+2015-10-19: Menglong Wu
 	- Bug : 业务板与工控板直连不上，结果交换机可以
 		- \subpage Bug-1-2-2051019-1
 		

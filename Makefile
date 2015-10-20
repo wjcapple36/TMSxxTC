@@ -204,6 +204,7 @@ else
 	load_lds = load_lds-n
 endif
 
+# make_in_list = list="$(1)"; for p in $$list; do $(MAKE) -C $$p $(2) -j 1; done
 
 all:$(load_lds)
 	
@@ -213,28 +214,28 @@ configure: init_dir
 #################################################################
 # 
 load_lds-n:$(OUTPUT_DIR) $(OBJS)
-	@echo "    " create $(OUTPUT_DIR)/$(OUTPUT_ELF)
+	@echo "    " [$(ARCH)]  create $(OUTPUT_DIR)/$(OUTPUT_ELF)
 	@$(CC) -o $(OUTPUT_DIR)/$(OUTPUT_ELF) $(OBJS) $(LIB_DIR) $(LFLAGS)
 
-	@echo "    " create $(OUTPUT_DIR)/$(OUTPUT_DIS)
+	@echo "    " [$(ARCH)]  create $(OUTPUT_DIR)/$(OUTPUT_DIS)
 	@$(OBJDUMP) -S $(OUTPUT_DIR)/$(OUTPUT_ELF) > $(OUTPUT_DIR)/$(OUTPUT_DIS)
 
 
 load_lds-y:$(OUTPUT_DIR) $(OBJS)
 
-	@echo "    " create $(OUTPUT_DIR)/$(OUTPUT_ELF)
+	@echo "    " [$(ARCH)]  create $(OUTPUT_DIR)/$(OUTPUT_ELF)
 	@$(LD) -Tboot.lds $(OBJS) -o $(OUTPUT_DIR)/$(OUTPUT_ELF) $(LFLAGS) $(LIB_DIR)  
 	
-	@echo "    " create $(OUTPUT_DIR)/$(OUTPUT_BIN)
+	@echo "    " [$(ARCH)]  create $(OUTPUT_DIR)/$(OUTPUT_BIN)
 	@$(OBJCOPY) -O binary -S $(OUTPUT_DIR)/$(OUTPUT_ELF) $(OUTPUT_DIR)/$(OUTPUT_BIN)
 
 
-	@echo "    " create $(OUTPUT_DIR)/$(OUTPUT_DIS)
+	@echo "    " [$(ARCH)]  create $(OUTPUT_DIR)/$(OUTPUT_DIS)
 	@$(OBJDUMP) -S $(OUTPUT_DIR)/$(OUTPUT_ELF) > $(OUTPUT_DIR)/$(OUTPUT_DIS)
 
 #################################################################
 %.o:%.c
-	@echo "    " compile $^
+	@echo "    " [$(ARCH)]  compile $^
 	@$(CC) -o $@ -c $^ $(CC_FLAGS) $(INCLUDE_DIR)
 %.o:%.cpp
 	@echo "    " compile $^
@@ -256,7 +257,7 @@ $(MAKE_DIR):
 
 .PHONY: clean disclean
 clean:
-	@-rm $(OBJS)  \
+	@-rm -f $(OBJS)  \
 		$(OUTPUT_DIR)/$(OUTPUT_DIS) \
 		$(OUTPUT_DIR)/$(OUTPUT_ELF) \
 		$(OUTPUT_DIR)/$(OUTPUT_BIN) \

@@ -7273,7 +7273,7 @@ int32_t tms_GetManageFd()
 
 int32_t tms_SelectFdByAddr(uint32_t *paddr)
 {
-    return tms_GetCUFd();
+    // return tms_GetCUFd();
 	printf("dest addr %x\n", *paddr);
 	// addr 无效
 	if (0 == paddr) {
