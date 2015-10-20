@@ -21,9 +21,32 @@ TODO：详细描述
 #include "tmsxx.h"
 #include "time.h"
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+inline int unuse_echo(const char *__restrict __format, ...)
+{
+	return 0;
+}
+#ifdef _MANAGE
+	int (*fecho)(const char *__restrict __format, ...) = unuse_echo;
+#else
+	int (*fecho)(const char *__restrict __format, ...) = printf;
+#endif
+
+
+void tms_Echo(int en)
+{
+	if (en) {
+		fecho = printf;
+	}
+	else {
+		fecho = unuse_echo;
+	}
+}
+
 void PrintfMemory(uint8_t *buf, uint32_t len)
 {
 	for (int i = 0; i < len; i++) {
@@ -525,7 +548,7 @@ static int32_t tms_AnalyseCommand(struct tms_context *pcontext, int8_t *pdata, i
 	struct glink_base *pbase_hdr;
 	pbase_hdr = (struct glink_base*)(pdata + sizeof(int32_t));
 	char *pval = (char*)(pdata + GLINK_OFFSET_DATA);
-	printf("len = %d cmd:[%s]\n", strlen(pval), pval);
+	dbg_tms("len = %d cmd:[%s]\n", strlen(pval), pval);
 
 	// sh_analyse(pval, strlen(pval));
 
@@ -643,7 +666,7 @@ static int32_t tms_AnalyseGetDevType(struct tms_context *pcontext, int8_t *pdata
 	pval->slot = htonl(pval->slot);
 
 	printf("tms_AnalyseGetDevType\n");
-	printf("val:f%d/s%x\n", pval->frame, pval->slot);
+	printf("\tval:f%d/s%x\n", pval->frame, pval->slot);
 	//fun(, , pdev)
 	
 	return 0;
@@ -3345,7 +3368,7 @@ void tms_Print_tms_retotdr_event(struct tms_retotdr_event_hdr *pevent_hdr, struc
 
 	// printf("EventID: %s\n",pevent_hdr->eventid);
 	// printf("\n------------------------------------------------------------------------\n");
-	printf("%s\t%s\t%8.12s\t%8.12s\t%8.12s\t%8.12s\n", 
+	fecho("%s\t%s\t%8.12s\t%8.12s\t%8.12s\t%8.12s\n", 
 		"dist", "type", "att", "lost", "ref", "link");
 	printf("------------------------------------------------------------------------\n");
 	// p32d = (uint32_t*)pevent_val;	
@@ -6379,41 +6402,29 @@ int32_t tms_Transmit2Manager(struct tms_context *pcontext, int8_t *pdata, int32_
 {
 	int fd;
 	struct glink_base  base_hdr;
-	int src,dst;
+	uint32_t src,dst;
 
 	struct glink_base *pbase_hdr;
 	pbase_hdr = (struct glink_base*)(pdata + sizeof(int32_t));
 	src = htonl(pbase_hdr->src);
 	dst = htonl(pbase_hdr->dst);
 
-	printf("tms_Transmit2Manager()\n");
-	printf("\t%x , %x\n",src,dst);
+	dbg_tms("tms_Transmit2Manager()\n");
+	dbg_tms("\t%x , %x\n",src,dst);
 
 	// 过滤设备发往MCU的数据包，不向网管转发
 	if (dst == GLINK_4412_ADDR || 
         src == GLINK_4412_ADDR ||
-        dst != GLINK_MANAGE_ADDR) {
-		printf("self command\n");
+        GLINK_MASK_MADDR != (dst & GLINK_MASK_MADDR)) {
+		dbg_tms("can't not transmit to manager\n");
 		return 0;
 	}
-
-
-	// pbase_hdr->pklen 	= htonl(pbase_hdr->pklen);
-	// pbase_hdr->version 	= htonl(pbase_hdr->version);
-	// pbase_hdr->src 		= htonl(pbase_hdr->src);
-	// pbase_hdr->dst 		= htonl(pbase_hdr->dst);
-	// pbase_hdr->type 		= htons(pbase_hdr->type);
-	// pbase_hdr->pkid 		= htons(pbase_hdr->pkid);
-	// pbase_hdr->reserve 	= htonl(pbase_hdr->reserve);
-	// pbase_hdr->cmdid 	= htonl(pbase_hdr->cmdid);
-	// pbase_hdr->datalen 	= htonl(pbase_hdr->datalen);
-
 
 	pbase_hdr->dst = htonl(GLINK_MANAGE_ADDR);
 	pbase_hdr->src = htonl(GLINK_4412_ADDR);
 	// PrintfMemory((uint8_t*)pdata,20);
-	fd = tms_GetManageFd();
-	printf("manager fd = %d\n", fd);
+	fd = tms_SelectFdByAddr(&dst);
+	dbg_tms("manager fd = %d\n", fd);
 	if (fd == 0) {
 		return 0;
 	}
@@ -7013,7 +7024,7 @@ int32_t tms_Analyse(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 	// 	(ID_TRACE0 > cmdid &&  ID_TRACE3 < cmdid)  )
 	if (cmdid != ID_TICK)
 	{
-		printf("\n[frame]:-----[ %d ] cmdid [%8.8x] fd [%d]", len, cmdid, pcontext->fd);	
+		fecho("\n[frame]:-----[ %d ] cmdid [%8.8x] fd [%d]", len, cmdid, pcontext->fd);	
 		tms_PrintCmdName(cmdid);
 	}
 
@@ -7035,7 +7046,7 @@ int32_t tms_Analyse(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 	switch(cmdh) {
 	case 0x80000000:
 		if (cmdl >= sizeof(sg_analyse_0x8000xxxx) / sizeof(struct tms_analyse_array)) {
-			printf("0x80000000 out of cmd memory!!! ");
+			fecho("0x80000000 out of cmd memory!!! ");
 			goto _Unknow;
 		}
 		pcontext->ptr_analyse_arr = sg_analyse_0x8000xxxx + cmdl;
@@ -7044,7 +7055,7 @@ int32_t tms_Analyse(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 		break;
 	case 0x60000000:
 		if (cmdl >= sizeof(sg_analyse_0x6000xxxx) / sizeof(struct tms_analyse_array)) {
-			printf("0x60000000 out of cmd memory!!!\n");
+			fecho("0x60000000 out of cmd memory!!!\n");
 			goto _Unknow;
 		}
 		pcontext->ptr_analyse_arr = sg_analyse_0x6000xxxx + cmdl;
@@ -7053,7 +7064,7 @@ int32_t tms_Analyse(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 		break;
 	case 0x10000000:
 		if (cmdl >= sizeof(sg_analyse_0x1000xxxx) / sizeof(struct tms_analyse_array)) {
-			printf("0x10000000 out of cmd memory!!!\n");
+			fecho("0x10000000 out of cmd memory!!!\n");
 			goto _Unknow;
 		}
 		pcontext->ptr_analyse_arr = sg_analyse_0x1000xxxx + cmdl;
@@ -7062,7 +7073,7 @@ int32_t tms_Analyse(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 		break;
 	default:
 _Unknow:;
-		printf("printf unknow 0x%8.8x\n", cmdid);
+		fecho("unknow command id 0x%8.8x\n", cmdid);
 		break;
 	}
 	
@@ -7078,7 +7089,7 @@ _Unknow:;
 		pwhichArr->ptrfun( pcontext, pdata, len);
 		break;
 	case PROCCESS_2MANAGE:
-        printf("PROCCESS_2MANAGE\n");
+        fecho("PROCCESS_2MANAGE\n");
 		tms_Transmit2Manager( pcontext, pdata, len);
 		pwhichArr->ptrfun( pcontext, pdata, len);
 		break;
@@ -7086,18 +7097,18 @@ _Unknow:;
 		pwhichArr->ptrfun(pcontext, pdata, len);
 		break;
 	case PROCCESS_COPY2USE:
-        printf("PROCCESS_COPY2USE\n");
+        fecho("PROCCESS_COPY2USE\n");
 		pwhichArr->ptrfun(pcontext, pdata, len);
 		tms_Copy2Use(pcontext, pdata, len);
 		break;
 	case PROCCESS_2DEV_AND_COPY2USE:
-        printf("PROCCESS_2DEV_AND_COPY2USE\n");
+        fecho("PROCCESS_2DEV_AND_COPY2USE\n");
 		tms_Transmit2Dev( pcontext, pdata, len);
 		pwhichArr->ptrfun(pcontext, pdata, len);
 		tms_Copy2Use(pcontext, pdata, len);
 		break;
 	case PROCCESS_2MANAGE_AND_COPY2USE:
-		printf("PROCCESS_2MANAGE_AND_COPY2USE\n");
+		fecho("PROCCESS_2MANAGE_AND_COPY2USE\n");
 		tms_Transmit2Manager( pcontext, pdata, len);
 		pwhichArr->ptrfun( pcontext, pdata, len);
 		tms_Copy2Use( pcontext, pdata, len);
@@ -7105,18 +7116,18 @@ _Unknow:;
 	case PROCCESS_DONOT:
 		break;
 	case PROCCESS_SPECAIAL:
-		printf("specail help!!!!!!!\n");
+		fecho("specail help!!!!!!!\n");
 		pwhichArr->ptrfun(pcontext, pdata, len);
 		tms_Copy2Use(pcontext, pdata, len);
 		break;
 	case PROCCESS_2MANAGE_OR_COPY2USE:
-		printf("manage or copy2use????\n");
+		fecho("manage or copy2use????\n");
 		break;
 	case PROCCESS_2DEV_OR_COPY2USE:
-		printf("do nothing\n");
+		fecho("do nothing\n");
 		break;
 	default:
-		printf("undefine dowhat!!!!!\n");
+		fecho("undefine dowhat!!!!!\n");
 		break;
 	}
 	return 0;

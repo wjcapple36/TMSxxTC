@@ -55,8 +55,8 @@ int unuse_copy2use(char *buf, int datalen, int msec, void *ptr)
 	pid = (uint32_t*)buf;
 	plen = (uint32_t*)(buf + sizeof(int32_t));
 
-	printf("\nunuse_copy2use()\t %d\n",datalen);
-	printf("\tcmdid[%8.8x] len[%d] datalen %d  src %x dst %x pkid %x\n", *pid,*plen,datalen,pgb->src, pgb->dst, pgb->pkid);
+	dbg_tms("\nunuse_copy2use()\t %d\n",datalen);
+	dbg_tms("\tcmdid[%8.8x] len[%d] datalen %d  src %x dst %x pkid %x\n", *pid,*plen,datalen,pgb->src, pgb->dst, pgb->pkid);
 	return 0;
 	printf("\nunuse_copy2use()\t %d\n",datalen);
 	

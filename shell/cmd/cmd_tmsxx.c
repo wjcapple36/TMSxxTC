@@ -4749,10 +4749,13 @@ int cmd_enable(int argc, char **argv)
 	if(argc == 3 && strcmp(argv[1], "cu") == 0) {
 		g_en_connect_cu = atoi(argv[2]);
 	}
-	if(argc == 3 && strcmp(argv[1], "sqlecho") == 0) {
+	else if(argc == 3 && strcmp(argv[1], "sqlecho") == 0) {
 		onoff = atoi(argv[2]);
 		tmsdb_Echo(onoff);       	// 关闭数据库回显
-
+	}
+	else if(argc == 3 && strcmp(argv[1], "echo") == 0) {
+		onoff = atoi(argv[2]);
+		tms_Echo(onoff);       	// 关闭数据库回显
 	}
 	return 0;
 }
@@ -5490,7 +5493,7 @@ int cmd_Disp(int argc, char **argv)
 
 	int flag = 0;
 
-	printf(" h             who      1211111111     \n");
+
 	// 打印设备连接状态，有两种显示方式、frame、connect
 	if (argc == 2) {
 		if(memcmp(argv[1], "frame", strlen(argv[1])) == 0) {

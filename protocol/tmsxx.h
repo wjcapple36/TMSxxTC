@@ -23,6 +23,27 @@ extern "C" {
 #endif
 
 #include "stdlib.h"
+
+
+
+#if defined(TMS_DEBUG)
+	#define dbg_tms( format, args...) printf(format, ##args) 
+#else
+ 	#define dbg_tms( format, args...)
+#endif
+
+#if defined(TMS_DEBUG1)
+	#define dbg_tms1( format, args...) printf(format, ##args) 
+#else
+ 	#define dbg_tms1( format, args...)
+#endif
+
+ #if defined(TMS_DEBUG2)
+	#define dbg_tms2( format, args...) printf(format, ##args) 
+#else
+ 	#define dbg_tms2( format, args...)
+#endif
+
 /*
 -------------------------------------------------------------------------------------------------
 |   struct unknow1   |<- struct_A -> | <- struct_B->|<- struct_B->|<- struct_B->|   struct unknow2|
@@ -2000,6 +2021,7 @@ uint32_t tms_RetAlarmHWChange(
 		struct tms_alarm_hw_change_val *list);
 int32_t tms_RetMCUTime(int fd, struct glink_addr *paddr, uint8_t *time);
 int32_t tms_RetAlarmSoundState(int fd, struct glink_addr *paddr, uint32_t state);
+void tms_Echo(int en);
 // int32_t tms_AnyGetOTDRTest(
 // 		int fd, 
 // 		struct glink_addr *paddr, 
