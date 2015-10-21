@@ -187,7 +187,7 @@ OBJCOPY = $(CROSS_COMPILE)objcopy
 # CFLAGS		- Compile general option
 # CC_FLAGS		- Compile only for *.c file option
 # CS_FLAGS		- Compile only for *.S file option
-CFLAGS		+= -O -g  	 -Wall -static -rdynamic -D_UNUSE_QT_ -fshort-wchar 
+CFLAGS		+= -O -g  	 -Wall -static -rdynamic -D_UNUSE_QT_ -fshort-wchar  -DUSE_MD5
 ifeq ("$(GCC_G++)","gcc") # 只有gcc编译器才使用该选项，g++无此选项
 	CC_FLAGS    = -std=gnu99
 else

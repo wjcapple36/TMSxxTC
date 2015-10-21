@@ -268,8 +268,9 @@ static int32_t tms_AnalyseTick(struct tms_context *pcontext, int8_t *pdata, int3
 	return 0;
 }
 
-
-//#include "protocol/md5.h"
+#ifdef USE_MD5
+#include "protocol/md5.h"
+#endif
  /**
  * @brief	ID_UPDATE 0x10000001 在线升级
  * @param[in]	fd 套接字文件描述符
@@ -322,10 +323,14 @@ int32_t tms_Update(
 	unsigned char md5int[16];
 	unsigned char md5str[33];
 
-//	CMD5::MD5Int((unsigned char *)pdata, flen ,md5int);
-//	CMD5::MD5Int2Str(md5int, md5str);
-//	memcpy(md5.md5, md5str, strlen((char*)md5str));//debug
+#ifdef USE_MD5
+	CMD5::MD5Int((unsigned char *)pdata, flen ,md5int);
+	CMD5::MD5Int2Str(md5int, md5str);
+	memcpy(md5.md5, md5str, strlen((char*)md5str));//debug
 	printf("\tmd5: %s\n",md5str);
+#else
+	printf("\tunse MD5\n");
+#endif
 
 
 	// Step 3. 发送
@@ -3989,11 +3994,14 @@ int32_t tms_ReportOLPAction(
 
 	pmem = (uint8_t*)&olpaction;
 	tms_FillGlinkFrame(&base_hdr, paddr);
-	if (0 == fd) {
-		// fd = 
-		tms_SelectFdByAddr(&base_hdr.dst);
-	}
+
 	glink_Build(&base_hdr, ID_REPORT_OLP_ACTION, sizeof(struct tms_report_olp_action));
+	if (paddr != NULL && paddr->dst == GLINK_MASK_MADDR) {
+		return tms_SendAllManager(&base_hdr, pmem, sizeof(struct tms_report_olp_action));
+	}
+	if (0 == fd) {
+		fd = tms_SelectFdByAddr(&base_hdr.dst);
+	}	
 	ret = glink_Send(fd, &base_hdr, pmem, sizeof(struct tms_report_olp_action));
 	return ret;
 }
@@ -6431,6 +6439,50 @@ int32_t tms_Transmit2Manager(struct tms_context *pcontext, int8_t *pdata, int32_
 	return glink_SendSerial(fd, (uint8_t*)pdata, len);
 }
 
+// 向所有网管转发
+int32_t tms_Transmit2AllManager(struct tms_context *pcontext, int8_t *pdata, int32_t len)
+{
+
+}
+
+/**
+ * @brief	向所有网管群发发送
+ 			只能应用于动态分配内存的接口
+ * @param	pbase_hdr glink_base 描述信息
+ * @param	pdata 数据内容
+ * @param	len 数据长度
+ * @see	tms_SendAllManagerDot
+ */
+
+int32_t tms_SendAllManager(struct glink_base  *pbase_hdr, uint8_t *pdata, int32_t len)
+{
+	int fd;
+	uint32_t dst;
+	// 以后改用 tms_SelectFdByIndex
+	for (dst = 0x3a; dst <= 0x3f; dst++) {
+		fd = tms_SelectFdByAddr(&dst);
+		// 没有该地址的网管
+		if (0 == fd) {
+			continue;
+		}
+		dbg_tms("send all manager %x\n", dst);
+		pbase_hdr->dst = dst;
+		glink_Send(fd, pbase_hdr, pdata, len);
+	}
+	return 1;
+}
+
+/**
+ * @brief	向所有网管群发发送，类似printf的可变参数，群发
+ 			应用于连续、非连续内存的接口
+ * @param	pbase_hdr glink_base 描述信息
+ * @param	pdata 参数以 data1，len1，data2，len2...规则
+  * @see	tms_SendAllManager
+ */
+int32_t tms_SendAllManagerDot(struct glink_base  *pbase_hdr, uint8_t *pdata,...)
+{
+	return 0;
+}
 // 拷贝本地字节序到本地用户空间
 static int32_t tms_Copy2Use(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
@@ -7285,7 +7337,6 @@ int32_t tms_GetManageFd()
 int32_t tms_SelectFdByAddr(uint32_t *paddr)
 {
     // return tms_GetCUFd();
-	printf("dest addr %x\n", *paddr);
 	// addr 无效
 	if (0 == paddr) {
 		return 0;

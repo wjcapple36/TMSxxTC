@@ -3360,7 +3360,11 @@ int cmd_tmsall(int argc, char **argv)
 		}
 	}
 	else if(argc == 2 && strcmp(argv[1], "olprep") == 0) {
-		tms_ReportOLPAction(fd, NULL, sg_frameid, sg_slotid, OLP_SWITCH_ACTION_PERSION, OLP_SWITCH_A);
+		struct glink_addr base;
+		base.dst = GLINK_MASK_MADDR;
+		base.src = GLINK_4412_ADDR;
+		base.pkid = 12;
+		tms_ReportOLPAction(fd, &base, sg_frameid, sg_slotid, OLP_SWITCH_ACTION_PERSION, OLP_SWITCH_A);
 	}
 	
 
@@ -4814,9 +4818,14 @@ int cmd_term_connect(int argc,char **argv)
 
 		if (argc == 4) {
 			struct glink_addr gl;
-			gl.src = GLINK_MANAGE_ADDR + atoi(argv[3]);
+			int dst;
+
+			sscanf(argv[3], "%x", &dst);
+
+			gl.src = GLINK_MASK_MADDR + dst;
 			gl.dst = GLINK_CU_ADDR;
 			gl.pkid = 1;
+			
 			printf("------------gl.src %x--------\n",gl.src);
 			tms_GetSerialNumber(client.sockfd, &gl);
 		}

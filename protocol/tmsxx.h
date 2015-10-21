@@ -2022,6 +2022,7 @@ uint32_t tms_RetAlarmHWChange(
 int32_t tms_RetMCUTime(int fd, struct glink_addr *paddr, uint8_t *time);
 int32_t tms_RetAlarmSoundState(int fd, struct glink_addr *paddr, uint32_t state);
 void tms_Echo(int en);
+int32_t tms_SendAllManager(struct glink_base  *pbase_hdr, uint8_t *pdata, int32_t len);
 // int32_t tms_AnyGetOTDRTest(
 // 		int fd, 
 // 		struct glink_addr *paddr, 
