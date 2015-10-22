@@ -7,6 +7,10 @@
 		+ B 发起连接分别模拟0x3f、0x3e网管 tc 127.0.0.1 6000 f,tc 127.0.0.1 6000 e
 		+ A 返回OLP动作告警，tms alarmline
 		+ B 两个模拟网管都能收到信息
+	- Add 查询网管状态、地址接口
+		+ tms_CountList
+		+ disp mananger
+		+ DispMananger
 
 2015-10-21: Menglong Wu
 	- Think 在【任务进度】命令解析函数表.xlsx里统计需要群发的数据包

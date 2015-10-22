@@ -1174,6 +1174,11 @@ struct tms_manage
 	int fdtc_addr[MANAGE_COUNT];
 };
 
+struct tms_man_base
+{
+	int fd;
+	uint32_t addr;
+};
 ///< 设备上下文描述
 // 主要处理心跳计数，用与当设备长时间断开连接后能快速响应
 // 应用层“刷新”命令读取tick，如果tick一直不变表示死链接
@@ -2024,6 +2029,7 @@ int32_t tms_RetAlarmSoundState(int fd, struct glink_addr *paddr, uint32_t state)
 void tms_Echo(int en);
 int32_t tms_SendAllManager(struct glink_base  *pbase_hdr, uint8_t *pdata, int32_t len);
 int32_t tms_SendAllManagerDot(struct glink_base  *pbase_hdr, int group, uint8_t *fmt,...);
+int32_t tms_CountList(struct tms_man_base *list, int32_t count);
 #ifdef __cplusplus
 }
 #endif

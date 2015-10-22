@@ -5457,7 +5457,7 @@ int DispFrame(struct tms_devbase *pframe, uint32_t flag, struct trace_cache *ptc
 	if (ptc == NULL) {
 		return -1;
 	}
-	printf("ptc = %x",(int)ptc);
+	// printf("ptc = %x",(int)ptc);
 	ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset,
 			"-------------------------------------------------\n");
 	ptc->offset += ret;
@@ -5561,6 +5561,45 @@ int Dispinf(struct tms_devbase *pframe, uint32_t flag, struct trace_cache *ptc)
 	return 0;	
 }
 
+int DispManager(struct tms_man_base *list, int count, uint32_t flag, struct trace_cache *ptc)
+{
+	struct sockaddr_in locateAddr,remoteAddr;
+	socklen_t 		 len;
+	int ret;
+	int fd;
+
+	if (ptc->offset > ptc->limit) {
+		printf("%s", ptc->strout);
+		tms_Trace(NULL, ptc->strout, ptc->offset, LEVEL_TC);
+		ptc->offset = 0;
+	}
+
+	for (int i = 0; i < count; i++) {
+		fd = list[i].fd;
+		len = sizeof(struct sockaddr_in);
+		getsockname(fd, (struct sockaddr*)&locateAddr, &len);
+		len = sizeof(struct sockaddr_in);
+		getpeername(fd, (struct sockaddr*)&remoteAddr, &len);
+
+
+		ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset,"%-4d%8d%16s:%-8d",
+			i,
+			fd,
+			inet_ntoa(locateAddr.sin_addr),
+			htons(locateAddr.sin_port));
+		ptc->offset += ret;
+
+		ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset,"%16s:%-8d %2.2x\n",
+				inet_ntoa(remoteAddr.sin_addr),
+				htons(remoteAddr.sin_port),
+				list[i].addr);
+		ptc->offset += ret;
+	}
+	ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset,"\n");
+	ptc->offset += ret;
+	return 0;
+
+}
 
 #define FLAG_DISP_FRAME 1
 #define FLAG_DISP_CON 2
@@ -5578,6 +5617,7 @@ int cmd_Disp(int argc, char **argv)
 	int ret;
 
 	int flag = 0;
+	
 
 
 	// 打印设备连接状态，有两种显示方式、frame、connect
@@ -5591,7 +5631,7 @@ int cmd_Disp(int argc, char **argv)
 		else if(memcmp(argv[1], "all", strlen(argv[1])) == 0) {
 			flag = FLAG_DISP_ALL;
 		}
-	} 
+	}
 
 
 	if (argc == 2 && (flag & (FLAG_DISP_FRAME + FLAG_DISP_CON) ) ) {
@@ -5690,6 +5730,27 @@ int cmd_Disp(int argc, char **argv)
 		tms_GetDeviceCompositionRT(sg_sockfdid, NULL);
 
 		goto _Clear;
+	}
+
+	// disp manager
+	else if(argc == 2 && memcmp(argv[1], "manager", strlen(argv[1])) == 0) {
+		struct tms_man_base fdlist[16];
+		int count;
+		
+		count = tms_CountList(fdlist, sizeof(fdlist) /  sizeof(struct tms_man_base));
+
+		tc.strout = strout;
+		tc.limit = 500;
+		tc.empty = 1024;
+		tc.offset = 0;
+
+		ret = snprintf(tc.strout + tc.offset, tc.empty - tc.offset, "%-4s%8s%16s%24s%12s\n",
+			"Slot ","FD","locate","Remote","GA");
+		tc.offset += ret;
+
+		DispManager(fdlist,count, -1, &tc);
+		printf("%s",tc.strout);
+		tms_Trace(NULL, tc.strout, tc.offset + 1, LEVEL_TC);
 	}
 	
 

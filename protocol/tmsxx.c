@@ -20,7 +20,7 @@ TODO：详细描述
 #include <stdio.h>
 #include "tmsxx.h"
 #include "time.h"
-
+#include <stdarg.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -4299,23 +4299,6 @@ int32_t tms_AlarmLine(
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	glink_Build(&base_hdr, cmdID, len);
 	if (paddr != NULL && paddr->dst == GLINK_MASK_MADDR) {
-		// printf("sizeof(struct tms_alarm_line_hdr) = %d\n", sizeof(struct tms_alarm_line_hdr));
-		// printf("sizeof(struct tms_retotdr_test_hdr) = %d\n", sizeof(struct tms_retotdr_test_hdr));
-		// printf("sizeof(struct tms_retotdr_test_param) = %d\n", sizeof(struct tms_retotdr_test_param));
-		// printf("sizeof(struct tms_retotdr_data_hdr) = %d\n", sizeof(struct tms_retotdr_data_hdr));
-		// printf("sizeof(struct tms_retotdr_data_val) = %d\n", sizeof(struct tms_retotdr_data_val));
-		// printf("sizeof(struct tms_retotdr_event_hdr) = %d\n", sizeof(struct tms_retotdr_event_hdr));
-		// printf("sizeof(struct tms_retotdr_event_val) = %d\n", sizeof(struct tms_retotdr_event_val));
-		// printf("sizeof(struct tms_retotdr_chain) = %d\n", sizeof(struct tms_retotdr_chain));
-
-		// PrintfMemory((uint8_t*)&alarm,      sizeof(struct tms_alarm_line_hdr));
-		// PrintfMemory((uint8_t*)&test_hdr,   sizeof(struct tms_retotdr_test_hdr));
-		// PrintfMemory((uint8_t*)&test_param, sizeof(struct tms_retotdr_test_param));
-		// PrintfMemory((uint8_t*)&data_hdr,   sizeof(struct tms_retotdr_data_hdr));
-		// PrintfMemory((uint8_t*)&data_val,   sizeof(struct tms_retotdr_data_val) * pdata_hdr->count);
-		// PrintfMemory((uint8_t*)&event_hdr,  sizeof(struct tms_retotdr_event_hdr));
-		// PrintfMemory((uint8_t*)&event_val,  sizeof(struct tms_retotdr_event_val) * pevent_hdr->count);
-		// PrintfMemory((uint8_t*)&chain,      sizeof(struct tms_retotdr_chain));
 		return tms_SendAllManagerDot(&base_hdr,
 					8,
 					NULL,
@@ -4519,15 +4502,17 @@ int32_t tms_AlarmHW(
     struct glink_base  base_hdr;
     int ret;
 
-    tms_FillGlinkFrame(&base_hdr, paddr);
-    if (0 == fd) {
-        // fd =
-        tms_SelectFdByAddr(&base_hdr.dst);
-    }
-    // glink_Build(&base_hdr, ID_RET_COMPOSITION, len);
-    glink_Build(&base_hdr, ID_ALARM_HW, len);
-    ret = glink_Send(fd, &base_hdr, pmem, len);
-    free(pmem);
+	glink_Build(&base_hdr, ID_ALARM_HW, len);
+	if (paddr != NULL && paddr->dst == GLINK_MASK_MADDR) {
+		ret = tms_SendAllManager(&base_hdr, pmem, len);
+		goto _Free;
+	}
+	if (0 == fd) {
+		fd = tms_SelectFdByAddr(&base_hdr.dst);
+	}	
+	ret = glink_Send(fd, &base_hdr, pmem, len);
+_Free:;
+	free(pmem);
     return ret;
 }
 
@@ -5971,12 +5956,17 @@ uint32_t tms_RetAlarmHWChange(
 	int ret;
 
 	tms_FillGlinkFrame(&base_hdr, paddr);
-	if (0 == fd) {
-	    // fd =
-	    tms_SelectFdByAddr(&base_hdr.dst);
+
+	glink_Build(&base_hdr, ID_ALARM_OPM, len);
+	if (paddr != NULL && paddr->dst == GLINK_MASK_MADDR) {
+		ret = tms_SendAllManager(&base_hdr, pmem, len);
+		goto _Free;
 	}
-	glink_Build(&base_hdr, ID_RET_ALARM_HW_CHANGE, len);
+	if (0 == fd) {
+		fd = tms_SelectFdByAddr(&base_hdr.dst);
+	}	
 	ret = glink_Send(fd, &base_hdr, pmem, len);
+_Free:;
 	free(pmem);
 	return ret;
 }
@@ -6099,9 +6089,16 @@ int32_t tms_RetTotalOPAlarm(int fd, struct glink_addr *paddr,
 
 	len = sizeof(struct tms_total_op_alarm_hdr) + count * sizeof(struct tms_total_op_alarm_val);
 	tms_FillGlinkFrame(&base_hdr, paddr);
+	glink_Build(&base_hdr, ID_GET_TOTAL_OP_ALARM, len);
+	if (paddr != NULL && paddr->dst == GLINK_MASK_MADDR) {
+		return tms_SendAllManagerDot(&base_hdr,
+					2,
+					NULL,
+					(uint8_t*)&hdr,      sizeof(struct tms_total_op_alarm_hdr),
+					(uint8_t*)&pval,   sizeof(struct tms_total_op_alarm_val));
+	}
 	if (0 == fd) {
-		// fd = 
-		tms_SelectFdByAddr(&base_hdr.dst);
+		fd = tms_SelectFdByAddr(&base_hdr.dst);
 	}
 	glink_Build(&base_hdr, ID_GET_TOTAL_OP_ALARM, len);
 	glink_SendHead(fd, &base_hdr);
@@ -6515,26 +6512,12 @@ int32_t tms_SendAllManager(struct glink_base  *pbase_hdr, uint8_t *pdata, int32_
  * @brief	向所有网管群发发送，类似printf的可变参数，群发
  			应用于连续、非连续内存的接口
  * @param	pbase_hdr glink_base 描述信息
+ * @param	group 有多少组参数，参数 data，len 为一组
+ * @param	fmt 无用，填 NULL
  * @param	pdata 参数以 data1，len1，data2，len2...规则
   * @see	tms_SendAllManager
  */
-  // void fun1(int a,int fmt,...)
-  // {
-  // 	va_list args;
-  // 	int i;
-  // 	char *pstr;
-  // 	int len = 2;
 
-  	
-
-  // 	va_start(args, (const char*)fmt);
-  // 	// i=vfun1(a,fmt,args);
-  // 	pstr = va_arg(args,char*);
-  // 	len = va_arg(args, int);
-  // 	printf("%s %d\n",pstr,len);
-  // 	va_end(args);
-  // }
-#include <stdarg.h>
 int32_t tms_SendAllManagerDot(struct glink_base  *pbase_hdr, int group, uint8_t *fmt,...)
 {
 	va_list args;
@@ -7439,6 +7422,30 @@ int32_t tms_SelectFdByAddr(uint32_t *paddr)
 	}
 	// 未找到
 	return 0;
+}
+
+int32_t tms_CountList(struct tms_man_base *list, int32_t count)
+{
+	int index = 0;
+	struct tms_man_base *plist;
+	int i;
+	int ret;
+
+	plist = list;
+	ret = 0;
+	for (int i = 0;i < MANAGE_COUNT; i++) {
+		if (sg_manage.fd_addr[i] == 0) {
+			continue;
+		}
+
+		if (ret >= count) {
+			return ret;
+		}
+		ret++;
+		plist->fd = sg_manage.fd[i];
+		plist->addr = sg_manage.fd_addr[i];
+		plist++;
+	}
 }
 
 /**
