@@ -3359,9 +3359,91 @@ int cmd_tmsall(int argc, char **argv)
 			printf("Error over range\n");
 		}
 	}
+#ifdef TMS_DEBUG
 	else if(argc == 2 && strcmp(argv[1], "olprep") == 0) {
-		tms_ReportOLPAction(fd, NULL, sg_frameid, sg_slotid, OLP_SWITCH_ACTION_PERSION, OLP_SWITCH_A);
+		struct glink_addr base;
+		base.dst = GLINK_MASK_MADDR;
+		base.src = GLINK_4412_ADDR;
+		base.pkid = 12;
+		tms_ReportOLPAction(fd, &base, sg_frameid, sg_slotid, OLP_SWITCH_ACTION_PERSION, OLP_SWITCH_A);
 	}
+	else if(argc == 2 && strcmp(argv[1], "alarmline") == 0) {
+		struct tms_alarm_line_hdr     alarm;
+		struct tms_retotdr_test_hdr   test_hdr;
+		struct tms_retotdr_test_param test_param;
+		struct tms_retotdr_data_hdr   data_hdr;
+		struct tms_retotdr_data_val   data_val[10] = {1,2,3,4,5,6};
+		struct tms_retotdr_event_hdr  event_hdr;
+		struct tms_retotdr_event_val  event_val;
+		struct tms_retotdr_chain      chain;
+		
+		struct glink_addr base;
+		base.dst = GLINK_MASK_MADDR;
+		base.src = GLINK_4412_ADDR;
+		base.pkid = 12;
+
+		alarm.alarm_type = 1;
+		alarm.alarm_level = 1;
+		alarm.frame = 1;
+		alarm.slot = 1;
+		alarm.port = 1;
+		alarm.alarm_position = 1;
+		alarm.time[0] = '1';
+		alarm.time[1] = '\0';
+		alarm.reserve0 = 1;
+
+		test_hdr.osw_frame = 1;
+		test_hdr.osw_slot = 1;
+		test_hdr.osw_type = 1;
+		test_hdr.osw_port = 1;
+		test_hdr.time[0] = '1';
+		test_hdr.time[1] = '\0';
+
+		test_hdr.otdr_frame = 1;
+		test_hdr.otdr_slot = 1;
+		test_hdr.otdr_type = 1;
+		test_hdr.otdr_port = 1;
+		test_param.rang = 1000;
+		test_param.wl = 11241;
+		test_param.pw = 31;
+		test_param.time = 12;
+		test_param.gi = 1.1;
+		test_param.end_threshold = 1.2;
+		test_param.none_reflect_threshold = 1.2;
+		test_param.sample = 0;
+		test_param.reserve0 = 0;
+		test_param.reserve1  = 0;
+		
+		data_hdr.dpid[0] = '\0';
+		data_hdr.count = 10;
+
+
+		event_hdr.eventid[0] = '\0';
+		event_hdr.count = 1;
+
+		event_val.distance = 0;
+		event_val.event_type = 0;
+		event_val.att = 0;
+		event_val.loss = 0;
+		event_val.reflect = 0;
+		event_val.link_loss = 0;
+		bzero(&chain, sizeof(struct tms_retotdr_chain));
+
+		tms_AlarmLine(
+			fd, 
+			&base,
+			// NULL,
+			&alarm,
+			&test_hdr, 		
+			&test_param, 
+			&data_hdr, 
+			&data_val[0], 
+			&event_hdr, 
+			&event_val, 
+			&chain,
+			ID_ALARM_LINE);
+	}
+#endif
 	
 
 
@@ -4749,10 +4831,13 @@ int cmd_enable(int argc, char **argv)
 	if(argc == 3 && strcmp(argv[1], "cu") == 0) {
 		g_en_connect_cu = atoi(argv[2]);
 	}
-	if(argc == 3 && strcmp(argv[1], "sqlecho") == 0) {
+	else if(argc == 3 && strcmp(argv[1], "sqlecho") == 0) {
 		onoff = atoi(argv[2]);
 		tmsdb_Echo(onoff);       	// 关闭数据库回显
-
+	}
+	else if(argc == 3 && strcmp(argv[1], "echo") == 0) {
+		onoff = atoi(argv[2]);
+		tms_Echo(onoff);       	// 关闭数据库回显
 	}
 	return 0;
 }
@@ -4778,7 +4863,6 @@ int cmd_remotecmd(int argc, char **argv)
 	}
 	return 0;
 }
-
 W_BOOT_CMD(r, cmd_remotecmd, "cmd epoll server send");
 int cmd_term_connect(int argc,char **argv)
 {
@@ -4788,7 +4872,7 @@ int cmd_term_connect(int argc,char **argv)
 	char strout[64];
 	int ret;
 
-	// goto _Next;
+
 	if (argc < 3) {
 		printf("Usage:\n");
 		printf("\tconnect <IP> <port>\n");
@@ -4811,9 +4895,14 @@ int cmd_term_connect(int argc,char **argv)
 
 		if (argc == 4) {
 			struct glink_addr gl;
-			gl.src = GLINK_MANAGE_ADDR + atoi(argv[3]);
+			int dst;
+
+			sscanf(argv[3], "%x", &dst);
+
+			gl.src = GLINK_MASK_MADDR + dst;
 			gl.dst = GLINK_CU_ADDR;
 			gl.pkid = 1;
+			
 			printf("------------gl.src %x--------\n",gl.src);
 			tms_GetSerialNumber(client.sockfd, &gl);
 		}
@@ -5368,7 +5457,7 @@ int DispFrame(struct tms_devbase *pframe, uint32_t flag, struct trace_cache *ptc
 	if (ptc == NULL) {
 		return -1;
 	}
-	printf("ptc = %x",(int)ptc);
+	// printf("ptc = %x",(int)ptc);
 	ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset,
 			"-------------------------------------------------\n");
 	ptc->offset += ret;
@@ -5472,6 +5561,45 @@ int Dispinf(struct tms_devbase *pframe, uint32_t flag, struct trace_cache *ptc)
 	return 0;	
 }
 
+int DispManager(struct tms_man_base *list, int count, uint32_t flag, struct trace_cache *ptc)
+{
+	struct sockaddr_in locateAddr,remoteAddr;
+	socklen_t 		 len;
+	int ret;
+	int fd;
+
+	if (ptc->offset > ptc->limit) {
+		printf("%s", ptc->strout);
+		tms_Trace(NULL, ptc->strout, ptc->offset, LEVEL_TC);
+		ptc->offset = 0;
+	}
+
+	for (int i = 0; i < count; i++) {
+		fd = list[i].fd;
+		len = sizeof(struct sockaddr_in);
+		getsockname(fd, (struct sockaddr*)&locateAddr, &len);
+		len = sizeof(struct sockaddr_in);
+		getpeername(fd, (struct sockaddr*)&remoteAddr, &len);
+
+
+		ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset,"%-4d%8d%16s:%-8d",
+			i,
+			fd,
+			inet_ntoa(locateAddr.sin_addr),
+			htons(locateAddr.sin_port));
+		ptc->offset += ret;
+
+		ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset,"%16s:%-8d %2.2x\n",
+				inet_ntoa(remoteAddr.sin_addr),
+				htons(remoteAddr.sin_port),
+				list[i].addr);
+		ptc->offset += ret;
+	}
+	ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset,"\n");
+	ptc->offset += ret;
+	return 0;
+
+}
 
 #define FLAG_DISP_FRAME 1
 #define FLAG_DISP_CON 2
@@ -5489,8 +5617,9 @@ int cmd_Disp(int argc, char **argv)
 	int ret;
 
 	int flag = 0;
+	
 
-	printf(" h             who      1211111111     \n");
+
 	// 打印设备连接状态，有两种显示方式、frame、connect
 	if (argc == 2) {
 		if(memcmp(argv[1], "frame", strlen(argv[1])) == 0) {
@@ -5502,7 +5631,7 @@ int cmd_Disp(int argc, char **argv)
 		else if(memcmp(argv[1], "all", strlen(argv[1])) == 0) {
 			flag = FLAG_DISP_ALL;
 		}
-	} 
+	}
 
 
 	if (argc == 2 && (flag & (FLAG_DISP_FRAME + FLAG_DISP_CON) ) ) {
@@ -5601,6 +5730,27 @@ int cmd_Disp(int argc, char **argv)
 		tms_GetDeviceCompositionRT(sg_sockfdid, NULL);
 
 		goto _Clear;
+	}
+
+	// disp manager
+	else if(argc == 2 && memcmp(argv[1], "manager", strlen(argv[1])) == 0) {
+		struct tms_man_base fdlist[16];
+		int count;
+		
+		count = tms_CountList(fdlist, sizeof(fdlist) /  sizeof(struct tms_man_base));
+
+		tc.strout = strout;
+		tc.limit = 500;
+		tc.empty = 1024;
+		tc.offset = 0;
+
+		ret = snprintf(tc.strout + tc.offset, tc.empty - tc.offset, "%-4s%8s%16s%24s%12s\n",
+			"Slot ","FD","locate","Remote","GA");
+		tc.offset += ret;
+
+		DispManager(fdlist,count, -1, &tc);
+		printf("%s",tc.strout);
+		tms_Trace(NULL, tc.strout, tc.offset + 1, LEVEL_TC);
 	}
 	
 

@@ -23,6 +23,27 @@ extern "C" {
 #endif
 
 #include "stdlib.h"
+
+
+
+#if defined(TMS_DEBUG)
+	#define dbg_tms( format, args...) printf(format, ##args) 
+#else
+ 	#define dbg_tms( format, args...)
+#endif
+
+#if defined(TMS_DEBUG1)
+	#define dbg_tms1( format, args...) printf(format, ##args) 
+#else
+ 	#define dbg_tms1( format, args...)
+#endif
+
+ #if defined(TMS_DEBUG2)
+	#define dbg_tms2( format, args...) printf(format, ##args) 
+#else
+ 	#define dbg_tms2( format, args...)
+#endif
+
 /*
 -------------------------------------------------------------------------------------------------
 |   struct unknow1   |<- struct_A -> | <- struct_B->|<- struct_B->|<- struct_B->|   struct unknow2|
@@ -265,7 +286,11 @@ extern "C" {
 #define ID_GET_ALARM_SOUND_STATE		0x80000074 ///< 网管查询MCU告警声音关闭状态 
 #define ID_RET_ALARM_SOUND_STATE		0x80000075 ///< 返回MCU告警声音关闭状态
 
-
+#define ID_GET_TOTAL_OP_ALARM	0x80000076 ///< 查询总的光功告警
+#define ID_RET_TOTAL_OP_ALARM	0x80000077 ///< 主控返回总的光功告警
+#define ID_GET_TOTAL_HW_ALARM	0x80000078 ///< 查询总的硬件告警
+#define ID_GET_OLP_ACTION_LOG	0x80000079 ///< 网管查询OLP切换记录
+#define ID_RET_OLP_ACTION_LOG	0x80000080 ///< 返回OLP切换记录
 
 
 
@@ -459,7 +484,8 @@ struct tms_alarm_hw_change_val
 	int32_t level;
 	int32_t frame;
 	int32_t slot;
-	uint16_t reason[64];
+	// uint16_t reason[64];
+	uint32_t reason;
 	int8_t time[20];
 };
 // // ID_CFG_OLP_PORT			7
@@ -1052,7 +1078,8 @@ struct tms_alarm_hw_val
 	int32_t level;
 	int32_t frame;
 	int32_t slot;
-	uint8_t	reason[128];
+	// uint8_t	reason[128];
+	uint32_t	reason;
 	uint8_t	time[20];
 };
 // //ID_CMD_OTDR_CYC			25	
@@ -1147,6 +1174,11 @@ struct tms_manage
 	int fdtc_addr[MANAGE_COUNT];
 };
 
+struct tms_man_base
+{
+	int fd;
+	uint32_t addr;
+};
 ///< 设备上下文描述
 // 主要处理心跳计数，用与当设备长时间断开连接后能快速响应
 // 应用层“刷新”命令读取tick，如果tick一直不变表示死链接
@@ -1229,6 +1261,38 @@ struct tms_unit
 	int32_t  port_b;		///< 端口编号b
 };
 
+// ID_GET_TOTAL_OP_ALARM
+struct tms_total_op_alarm_hdr
+{
+	int32_t type;
+	int32_t count;
+};
+
+struct tms_total_op_alarm_val
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t port;
+	int32_t alarm_level;
+	int32_t cur_power;
+	int8_t time[20];
+};
+
+// ID_GET_OLP_ACTION_LOG
+struct tms_olp_action_log_hdr
+{
+	int32_t count;
+};
+
+struct tms_olp_action_log_val
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+	int32_t sw_type;
+	int32_t sw_port;
+	int8_t  time[20];
+};
 #include "bipbuffer.h"
 ///< 应用程序
 struct tmsxx_app
@@ -1962,15 +2026,10 @@ uint32_t tms_RetAlarmHWChange(
 		struct tms_alarm_hw_change_val *list);
 int32_t tms_RetMCUTime(int fd, struct glink_addr *paddr, uint8_t *time);
 int32_t tms_RetAlarmSoundState(int fd, struct glink_addr *paddr, uint32_t state);
-// int32_t tms_AnyGetOTDRTest(
-// 		int fd, 
-// 		struct glink_addr *paddr, 
-// 		int32_t frame, 
-// 		int32_t slot, 
-// 		// int32_t type, 
-// 		int32_t port, 
-// 		struct tms_getotdr_test_param *val, 
-// 		int32_t cmdID);
+void tms_Echo(int en);
+int32_t tms_SendAllManager(struct glink_base  *pbase_hdr, uint8_t *pdata, int32_t len);
+int32_t tms_SendAllManagerDot(struct glink_base  *pbase_hdr, int group, uint8_t *fmt,...);
+int32_t tms_CountList(struct tms_man_base *list, int32_t count);
 #ifdef __cplusplus
 }
 #endif

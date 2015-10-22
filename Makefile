@@ -131,8 +131,7 @@ BUILD_DATE="$(shell date "+%Y-%m-%d_%H:%M:%S")"
 INCLUDE_DIR	+= -I./include -I./osnet -I./shell -I./ -I./src -I/usr/include/readline
 LFLAGS		+= -lreadline -lpthread -lhistory -lncurses -lsqlite3 -lmd5
 LIB_DIR 	+= 
-CFLAGS      += -DBUILD_DATE=\"$(BUILD_DATE)\"  -DPRJ_VERSION=\"$(PRJ_VERSION)\" -DPRJ_NAME=\"$(PRJ_NAME)\"
-
+CFLAGS      += -DBUILD_DATE=\"$(BUILD_DATE)\"  -DPRJ_VERSION=\"$(PRJ_VERSION)\" -DPRJ_NAME=\"$(PRJ_NAME)\" 
 ifeq ("$(ARCH)", "x86")
 	INCLUDE_DIR	+= 
 	LFLAGS		+= -ltermcap  
@@ -186,7 +185,9 @@ OBJCOPY = $(CROSS_COMPILE)objcopy
 # CFLAGS		- Compile general option
 # CC_FLAGS		- Compile only for *.c file option
 # CS_FLAGS		- Compile only for *.S file option
-CFLAGS		+= -g  	 -Wall -static -rdynamic -D_UNUSE_QT_ -fshort-wchar 
+CFLAGS		+= -O -g  	 -Wall -static -rdynamic -D_UNUSE_QT_ -fshort-wchar  \
+-DUSE_MD5 \
+-DTMS_DEBUG
 ifeq ("$(GCC_G++)","gcc") # 只有gcc编译器才使用该选项，g++无此选项
 	CC_FLAGS    = -std=gnu99
 else
@@ -204,6 +205,7 @@ else
 	load_lds = load_lds-n
 endif
 
+# make_in_list = list="$(1)"; for p in $$list; do $(MAKE) -C $$p $(2) -j 1; done
 
 all:$(load_lds)
 	
@@ -213,28 +215,28 @@ configure: init_dir
 #################################################################
 # 
 load_lds-n:$(OUTPUT_DIR) $(OBJS)
-	@echo "    " create $(OUTPUT_DIR)/$(OUTPUT_ELF)
+	@echo "    " [$(ARCH)]  create $(OUTPUT_DIR)/$(OUTPUT_ELF)
 	@$(CC) -o $(OUTPUT_DIR)/$(OUTPUT_ELF) $(OBJS) $(LIB_DIR) $(LFLAGS)
 
-	@echo "    " create $(OUTPUT_DIR)/$(OUTPUT_DIS)
+	@echo "    " [$(ARCH)]  create $(OUTPUT_DIR)/$(OUTPUT_DIS)
 	@$(OBJDUMP) -S $(OUTPUT_DIR)/$(OUTPUT_ELF) > $(OUTPUT_DIR)/$(OUTPUT_DIS)
 
 
 load_lds-y:$(OUTPUT_DIR) $(OBJS)
 
-	@echo "    " create $(OUTPUT_DIR)/$(OUTPUT_ELF)
+	@echo "    " [$(ARCH)]  create $(OUTPUT_DIR)/$(OUTPUT_ELF)
 	@$(LD) -Tboot.lds $(OBJS) -o $(OUTPUT_DIR)/$(OUTPUT_ELF) $(LFLAGS) $(LIB_DIR)  
 	
-	@echo "    " create $(OUTPUT_DIR)/$(OUTPUT_BIN)
+	@echo "    " [$(ARCH)]  create $(OUTPUT_DIR)/$(OUTPUT_BIN)
 	@$(OBJCOPY) -O binary -S $(OUTPUT_DIR)/$(OUTPUT_ELF) $(OUTPUT_DIR)/$(OUTPUT_BIN)
 
 
-	@echo "    " create $(OUTPUT_DIR)/$(OUTPUT_DIS)
+	@echo "    " [$(ARCH)]  create $(OUTPUT_DIR)/$(OUTPUT_DIS)
 	@$(OBJDUMP) -S $(OUTPUT_DIR)/$(OUTPUT_ELF) > $(OUTPUT_DIR)/$(OUTPUT_DIS)
 
 #################################################################
 %.o:%.c
-	@echo "    " compile $^
+	@echo "    " [$(ARCH)]  compile $^
 	@$(CC) -o $@ -c $^ $(CC_FLAGS) $(INCLUDE_DIR)
 %.o:%.cpp
 	@echo "    " compile $^
@@ -256,7 +258,7 @@ $(MAKE_DIR):
 
 .PHONY: clean disclean
 clean:
-	@-rm $(OBJS)  \
+	@-rm -f $(OBJS)  \
 		$(OUTPUT_DIR)/$(OUTPUT_DIS) \
 		$(OUTPUT_DIR)/$(OUTPUT_ELF) \
 		$(OUTPUT_DIR)/$(OUTPUT_BIN) \

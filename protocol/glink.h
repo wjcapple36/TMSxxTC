@@ -48,11 +48,13 @@ extern "C" {
 #define GLINK_OFFSET_USER 32
 #define GLINK_OFFSET_CMDID 28
 
-#ifdef _MANAGE
-	#define GLINK_MANAGE_ADDR	0x3e	///< 网管地址（无实际用途用）
-#else
-	#define GLINK_MANAGE_ADDR	0x3e	///< 网管地址（无实际用途用）
-#endif
+///< 最大允许16个网管连接 0x30 ~ 0x3F 虽然协议文档里只允许 0x3B ~ 0x3F
+#define GLINK_MASK_MADDR	0x30	///< 网管地址掩码
+#define GLINK_MANAGE_ADDR	0x3e	///< 网管地址
+
+
+
+
 #define GLINK_CU_ADDR      0x0e	///< MCU地址（无实际用途用）
 #define GLINK_4412_ADDR 0x0a
 #define GLINK_DEV_ADDR 0x0b

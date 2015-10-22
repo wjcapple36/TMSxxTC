@@ -771,7 +771,7 @@ struct cmd_prompt cmd_siplist[] =
 // ##########################  gver ##########################
 struct cmd_prompt cmd_gver_dev_list[] = 
 {
-	PROMPT_NODE("'param'","<dev frame/slot>", 	NULL, NULL),
+	PROMPT_NODE("'param'","<frame/slot/dev>", 	NULL, NULL),
 	PROMPT_NODE(NULL, NULL, NULL, NULL),
 };
 struct cmd_prompt cmd_gverlist[] = 

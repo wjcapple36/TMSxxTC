@@ -20,10 +20,33 @@ TODO：详细描述
 #include <stdio.h>
 #include "tmsxx.h"
 #include "time.h"
+#include <stdarg.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+inline int unuse_echo(const char *__restrict __format, ...)
+{
+	return 0;
+}
+#ifdef _MANAGE
+	int (*fecho)(const char *__restrict __format, ...) = unuse_echo;
+#else
+	int (*fecho)(const char *__restrict __format, ...) = printf;
+#endif
+
+
+void tms_Echo(int en)
+{
+	if (en) {
+		fecho = printf;
+	}
+	else {
+		fecho = unuse_echo;
+	}
+}
+
 void PrintfMemory(uint8_t *buf, uint32_t len)
 {
 	for (int i = 0; i < len; i++) {
@@ -245,8 +268,9 @@ static int32_t tms_AnalyseTick(struct tms_context *pcontext, int8_t *pdata, int3
 	return 0;
 }
 
-
-//#include "protocol/md5.h"
+#ifdef USE_MD5
+#include "protocol/md5.h"
+#endif
  /**
  * @brief	ID_UPDATE 0x10000001 在线升级
  * @param[in]	fd 套接字文件描述符
@@ -299,10 +323,14 @@ int32_t tms_Update(
 	unsigned char md5int[16];
 	unsigned char md5str[33];
 
-//	CMD5::MD5Int((unsigned char *)pdata, flen ,md5int);
-//	CMD5::MD5Int2Str(md5int, md5str);
-//	memcpy(md5.md5, md5str, strlen((char*)md5str));//debug
+#ifdef USE_MD5
+	CMD5::MD5Int((unsigned char *)pdata, flen ,md5int);
+	CMD5::MD5Int2Str(md5int, md5str);
+	memcpy(md5.md5, md5str, strlen((char*)md5str));//debug
 	printf("\tmd5: %s\n",md5str);
+#else
+	printf("\tunse MD5\n");
+#endif
 
 
 	// Step 3. 发送
@@ -525,7 +553,7 @@ static int32_t tms_AnalyseCommand(struct tms_context *pcontext, int8_t *pdata, i
 	struct glink_base *pbase_hdr;
 	pbase_hdr = (struct glink_base*)(pdata + sizeof(int32_t));
 	char *pval = (char*)(pdata + GLINK_OFFSET_DATA);
-	printf("len = %d cmd:[%s]\n", strlen(pval), pval);
+	dbg_tms("len = %d cmd:[%s]\n", strlen(pval), pval);
 
 	// sh_analyse(pval, strlen(pval));
 
@@ -643,7 +671,7 @@ static int32_t tms_AnalyseGetDevType(struct tms_context *pcontext, int8_t *pdata
 	pval->slot = htonl(pval->slot);
 
 	printf("tms_AnalyseGetDevType\n");
-	printf("val:f%d/s%x\n", pval->frame, pval->slot);
+	printf("\tval:f%d/s%x\n", pval->frame, pval->slot);
 	//fun(, , pdev)
 	
 	return 0;
@@ -1274,6 +1302,10 @@ uint32_t tms_RetDeviceComposition_any(
 		plist->slot = htonl(ptlist->slot);
 		plist->type  = htonl(ptlist->type);
 		plist->port  = htonl(ptlist->port);
+		plist->reserved0 = htonl(plist->reserved0);
+		plist->reserved1 = htonl(plist->reserved1);
+		plist->reserved2 = htonl(plist->reserved2);
+		plist->reserved3 = htonl(plist->reserved3);
 		plist++;
 		ptlist++;
 	}
@@ -1328,7 +1360,7 @@ uint32_t tms_RetDeviceComposition(
 
 
 
-
+// 0x80000067
 static int32_t tms_AnalyseRetDeviceComposition(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
 	printf("tms_AnalyseRetDeviceComposition()\n");
@@ -1354,6 +1386,10 @@ static int32_t tms_AnalyseRetDeviceComposition(struct tms_context *pcontext, int
 		ptlist->slot      = htonl(ptlist->slot);
 		ptlist->type      = htonl(ptlist->type);
 		ptlist->port      = htonl(ptlist->port);
+		ptlist->reserved0 = htonl(ptlist->reserved0);
+		ptlist->reserved1 = htonl(ptlist->reserved1);
+		ptlist->reserved2 = htonl(ptlist->reserved2);
+		ptlist->reserved3 = htonl(ptlist->reserved3);
 		ptlist++;
 	}
 
@@ -3337,7 +3373,7 @@ void tms_Print_tms_retotdr_event(struct tms_retotdr_event_hdr *pevent_hdr, struc
 
 	// printf("EventID: %s\n",pevent_hdr->eventid);
 	// printf("\n------------------------------------------------------------------------\n");
-	printf("%s\t%s\t%8.12s\t%8.12s\t%8.12s\t%8.12s\n", 
+	fecho("%s\t%s\t%8.12s\t%8.12s\t%8.12s\t%8.12s\n", 
 		"dist", "type", "att", "lost", "ref", "link");
 	printf("------------------------------------------------------------------------\n");
 	// p32d = (uint32_t*)pevent_val;	
@@ -3958,11 +3994,14 @@ int32_t tms_ReportOLPAction(
 
 	pmem = (uint8_t*)&olpaction;
 	tms_FillGlinkFrame(&base_hdr, paddr);
-	if (0 == fd) {
-		// fd = 
-		tms_SelectFdByAddr(&base_hdr.dst);
-	}
+
 	glink_Build(&base_hdr, ID_REPORT_OLP_ACTION, sizeof(struct tms_report_olp_action));
+	if (paddr != NULL && paddr->dst == GLINK_MASK_MADDR) {
+		ret =  tms_SendAllManager(&base_hdr, pmem, sizeof(struct tms_report_olp_action));
+	}
+	if (0 == fd) {
+		fd = tms_SelectFdByAddr(&base_hdr.dst);
+	}	
 	ret = glink_Send(fd, &base_hdr, pmem, sizeof(struct tms_report_olp_action));
 	return ret;
 }
@@ -4046,12 +4085,17 @@ int32_t tms_AlarmOPM(
 	int ret;
 
 	tms_FillGlinkFrame(&base_hdr, paddr);
-	if (0 == fd) {
-		// fd = 
-		tms_SelectFdByAddr(&base_hdr.dst);
-	}
+
 	glink_Build(&base_hdr, ID_ALARM_OPM, len);
+	if (paddr != NULL && paddr->dst == GLINK_MASK_MADDR) {
+		ret = tms_SendAllManager(&base_hdr, pmem, len);
+		goto _Free;
+	}
+	if (0 == fd) {
+		fd = tms_SelectFdByAddr(&base_hdr.dst);
+	}	
 	ret = glink_Send(fd, &base_hdr, pmem, len);
+_Free:;
 	free(pmem);
 	return ret;
 }
@@ -4125,12 +4169,16 @@ int32_t tms_AlarmOPMChange(
 	int ret;
 
 	tms_FillGlinkFrame(&base_hdr, paddr);
-	if (0 == fd) {
-		// fd = 
-		tms_SelectFdByAddr(&base_hdr.dst);
-	}
+
 	glink_Build(&base_hdr, ID_ALARM_OPM_CHANGE, len);
+	if (paddr != NULL && paddr->dst == GLINK_MASK_MADDR) {
+		return tms_SendAllManager(&base_hdr, pmem, len);
+	}
+	if (0 == fd) {
+		fd = tms_SelectFdByAddr(&base_hdr.dst);
+	}	
 	ret = glink_Send(fd, &base_hdr, pmem, len);
+
 	free(pmem);
 	return ret;
 }
@@ -4153,7 +4201,7 @@ int32_t tms_AlarmOPMChange(
  * @param	pevent_val OTDR 事件内容
  * @param	pchain  曲线链路信息
  * @param	pchain  曲线链路信息
- * @retval	cmdID 命令ID，这里固定填死 ID_ALARM_LINE
+ * @param	cmdID 命令ID，这里固定填死 ID_ALARM_LINE
  * @remarks	
  * @see	
  */
@@ -4246,13 +4294,26 @@ int32_t tms_AlarmLine(
 			sizeof(struct tms_retotdr_event_val ) * pevent_hdr->count +
 			sizeof(struct tms_retotdr_chain);
 	
-	tms_FillGlinkFrame(&base_hdr, paddr);
-	if (0 == fd) {
-		// fd = 
-		tms_SelectFdByAddr(&base_hdr.dst);
-	}
 
+
+	tms_FillGlinkFrame(&base_hdr, paddr);
 	glink_Build(&base_hdr, cmdID, len);
+	if (paddr != NULL && paddr->dst == GLINK_MASK_MADDR) {
+		return tms_SendAllManagerDot(&base_hdr,
+					8,
+					NULL,
+					(uint8_t*)&alarm,      sizeof(struct tms_alarm_line_hdr),
+					(uint8_t*)&test_hdr,   sizeof(struct tms_retotdr_test_hdr),
+					(uint8_t*)&test_param, sizeof(struct tms_retotdr_test_param),
+					(uint8_t*)&data_hdr,   sizeof(struct tms_retotdr_data_hdr),
+					(uint8_t*)&data_val,   sizeof(struct tms_retotdr_data_val) * pdata_hdr->count,
+					(uint8_t*)&event_hdr,  sizeof(struct tms_retotdr_event_hdr),
+					(uint8_t*)&event_val,  sizeof(struct tms_retotdr_event_val) * pevent_hdr->count,
+					(uint8_t*)&chain,      sizeof(struct tms_retotdr_chain));
+	}
+	if (0 == fd) {
+		fd = tms_SelectFdByAddr(&base_hdr.dst);
+	}
 	glink_SendHead(fd, &base_hdr);	
 	glink_SendSerial(fd, (uint8_t*)&alarm,      sizeof(struct tms_alarm_line_hdr));
 	glink_SendSerial(fd, (uint8_t*)&test_hdr,   sizeof(struct tms_retotdr_test_hdr));
@@ -4267,7 +4328,7 @@ int32_t tms_AlarmLine(
 	return 0;
 }
 // ID_ALARM_LINE			0x80000030
-// 该函数未测试过
+// 已测试通过
 static int32_t tms_AnalyseAlarmLine(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
 	struct tms_alarm_line_hdr     *palarm;
@@ -4278,8 +4339,6 @@ static int32_t tms_AnalyseAlarmLine(struct tms_context *pcontext, int8_t *pdata,
 	struct tms_retotdr_event_hdr  *pevent_hdr;
 	struct tms_retotdr_event_val  *pevent_val;
 	struct tms_retotdr_chain      *pchain;
-
-	
 
 	if ((uint32_t)(len - GLINK_OFFSET_DATA) < sizeof(struct tms_alarm_line_hdr) +
 			sizeof(struct tms_retotdr_test_hdr ) + 
@@ -4293,6 +4352,10 @@ static int32_t tms_AnalyseAlarmLine(struct tms_context *pcontext, int8_t *pdata,
 	}
 
 	palarm      = (struct tms_alarm_line_hdr   *)(pdata + GLINK_OFFSET_DATA );
+	printf("%d %d %d\n", 
+		htonl(palarm->frame),
+		htonl(palarm->slot),
+		htonl(palarm->port));
 	ptest_hdr   = (struct tms_retotdr_test_hdr   *)(((char*)palarm)      + sizeof(struct tms_alarm_line_hdr) );
 	ptest_param = (struct tms_retotdr_test_param *)(((char*)ptest_hdr)   + sizeof(struct tms_retotdr_test_hdr));
 	pdata_hdr   = (struct tms_retotdr_data_hdr   *)(((char*)ptest_param) + sizeof(struct tms_retotdr_test_param));
@@ -4319,8 +4382,6 @@ static int32_t tms_AnalyseAlarmLine(struct tms_context *pcontext, int8_t *pdata,
 	pevent_val  = (struct tms_retotdr_event_val  *)(((char*)pevent_hdr) + sizeof(struct tms_retotdr_event_hdr));
 	pchain      = (struct tms_retotdr_chain      *)(((char*)pevent_val) + sizeof(struct tms_retotdr_event_val) * htonl(pevent_hdr->count));
 
-	
-	PrintfMemory((uint8_t*)ptest_hdr, sizeof(struct tms_retotdr_test_hdr));
 	
 	// Part x 告警数据头
 	palarm->alarm_type 	   = htonl(palarm->alarm_type);
@@ -4415,8 +4476,9 @@ int32_t tms_AlarmHW(
         plist->level  = htonl(ptlist->level);
         plist->frame  = htonl(ptlist->frame);
         plist->slot   = htonl(ptlist->slot);
+        plist->reason = htonl(ptlist->reason);
 
-
+#if 0
         // 将short按照网络字节发送，你妈B
         memcpy(plist->reason, ptlist->reason, 128);
         preason  = (uint16_t*)plist->reason;
@@ -4427,6 +4489,7 @@ int32_t tms_AlarmHW(
         }
         preason  = (uint16_t*)ptlist->reason;
         // PrintfMemory((uint8_t*)preason, 128);
+#endif
 
 
         memcpy(plist->time,   ptlist->time,   20);
@@ -4439,15 +4502,17 @@ int32_t tms_AlarmHW(
     struct glink_base  base_hdr;
     int ret;
 
-    tms_FillGlinkFrame(&base_hdr, paddr);
-    if (0 == fd) {
-        // fd =
-        tms_SelectFdByAddr(&base_hdr.dst);
-    }
-    // glink_Build(&base_hdr, ID_RET_COMPOSITION, len);
-    glink_Build(&base_hdr, ID_ALARM_HW, len);
-    ret = glink_Send(fd, &base_hdr, pmem, len);
-    free(pmem);
+	glink_Build(&base_hdr, ID_ALARM_HW, len);
+	if (paddr != NULL && paddr->dst == GLINK_MASK_MADDR) {
+		ret = tms_SendAllManager(&base_hdr, pmem, len);
+		goto _Free;
+	}
+	if (0 == fd) {
+		fd = tms_SelectFdByAddr(&base_hdr.dst);
+	}	
+	ret = glink_Send(fd, &base_hdr, pmem, len);
+_Free:;
+	free(pmem);
     return ret;
 }
 
@@ -4472,13 +4537,16 @@ static int32_t tms_AnalyseAlarmHW(struct tms_context *pcontext, int8_t *pdata, i
         ptlist->level      = htonl(ptlist->level);
         ptlist->frame      = htonl(ptlist->frame);
         ptlist->slot       = htonl(ptlist->slot);
+        ptlist->reason     = htonl(ptlist->reason);
         ptlist++;
 
+#if 0
         preason  = (uint16_t*)plist->reason;
         for (int k = 0;k < 128/2;k++) {
             *preason = htons(*preason);
             preason++;
         }
+#endif
     }
 
     printf("tms_AnalyseAlarmHW\n");
@@ -4771,7 +4839,7 @@ int32_t tms_RetOTDRCycle_V2(
 	alarm.port = htonl(palarm->port);
 	alarm.alarm_position = htonl(palarm->alarm_position);
 	memcpy(alarm.time, palarm->time, 20);
-	alarm.reserve0 = 0;
+	alarm.reserve0 = htonl(palarm->reserve0);
 
 	// Part A.1
 	test_hdr.osw_frame  = htonl(ptest_hdr->osw_frame);
@@ -4893,6 +4961,14 @@ static int32_t tms_AnalyseRetOTDRCycle_V2(struct tms_context *pcontext, int8_t *
 	}
 	pevent_val  = (struct tms_retotdr_event_val  *)(((char*)pevent_hdr) + sizeof(struct tms_retotdr_event_hdr));
 	pchain      = (struct tms_retotdr_chain      *)(((char*)pevent_val) + sizeof(struct tms_retotdr_event_val) * htonl(pevent_hdr->count));
+
+	palarm->alarm_type 		= htonl(palarm->alarm_type);
+	palarm->alarm_level 	= htonl(palarm->alarm_level);
+	palarm->frame 			= htonl(palarm->frame);
+	palarm->slot 			= htonl(palarm->slot);
+	palarm->port 			= htonl(palarm->port);
+	palarm->alarm_position 	= htonl(palarm->alarm_position);
+	palarm->reserve0 		= htonl(palarm->reserve0);
 
 	// Part A.1
 	ptest_hdr->osw_frame  = htonl(ptest_hdr->osw_frame);
@@ -5854,8 +5930,9 @@ uint32_t tms_RetAlarmHWChange(
 	    plist->level  = htonl(ptlist->level);
 	    plist->frame  = htonl(ptlist->frame);
 	    plist->slot   = htonl(ptlist->slot);
+	    plist->reason = htonl(ptlist->reason);
 
-
+#if 0
 	    // 将short按照网络字节发送，你妈B
 	    memcpy(plist->reason, ptlist->reason, 128);
 	    preason  = (uint16_t*)plist->reason;
@@ -5866,7 +5943,7 @@ uint32_t tms_RetAlarmHWChange(
 	    }
 	    preason  = (uint16_t*)ptlist->reason;
 	    // PrintfMemory((uint8_t*)preason, 128);
-
+#endif
 
 	    memcpy(plist->time,   ptlist->time,   20);
 
@@ -5879,12 +5956,17 @@ uint32_t tms_RetAlarmHWChange(
 	int ret;
 
 	tms_FillGlinkFrame(&base_hdr, paddr);
-	if (0 == fd) {
-	    // fd =
-	    tms_SelectFdByAddr(&base_hdr.dst);
+
+	glink_Build(&base_hdr, ID_ALARM_OPM, len);
+	if (paddr != NULL && paddr->dst == GLINK_MASK_MADDR) {
+		ret = tms_SendAllManager(&base_hdr, pmem, len);
+		goto _Free;
 	}
-	glink_Build(&base_hdr, ID_RET_ALARM_HW_CHANGE, len);
+	if (0 == fd) {
+		fd = tms_SelectFdByAddr(&base_hdr.dst);
+	}	
 	ret = glink_Send(fd, &base_hdr, pmem, len);
+_Free:;
 	free(pmem);
 	return ret;
 }
@@ -5964,10 +6046,152 @@ int32_t tms_RetAlarmSoundState(int fd, struct glink_addr *paddr, uint32_t state)
 	ret = glink_Send(fd, &base_hdr, (uint8_t*)&data_state, 4);
 	return ret;	
 }
+
+/**
+ * @brief	ID_GET_TOTAL_OP_ALARM		0x80000076 ///< 查询总的光功告警
+ */
+
+int32_t tms_GetTotalOPAlarm(int fd, struct glink_addr *paddr)
+{
+	return tms_MCUtoDevice(fd, 0, 0 , 0, DEV_MCU, 0, ID_GET_TOTAL_OP_ALARM, 0);
+}
+
+/**
+ * @brief	ID_RET_TOTAL_OP_ALARM	0x80000077 ///< 主控返回总的光功告警
+ * @retval	>0 发送成功
+ * @retval	0 发送失败，该链接失效，立即断开
+ * @remarks	
+ * @see	
+ */
+int32_t tms_RetTotalOPAlarm(int fd, struct glink_addr *paddr,
+	int32_t type,
+	int32_t count,
+	struct tms_total_op_alarm_val *pval)
+{
+	int len;
+	struct tms_total_op_alarm_hdr hdr;
+	struct tms_total_op_alarm_val *ptlist;
+
+	hdr.type  = htonl(type);
+	hdr.count = htonl(count);
+
+	ptlist = pval;
+	for (int i = 0; i < count; i++) {
+		ptlist->frame		= htonl(ptlist->frame);
+		ptlist->slot		= htonl(ptlist->slot);
+		ptlist->port		= htonl(ptlist->port);
+		ptlist->alarm_level	= htonl(ptlist->alarm_level);
+		ptlist->cur_power	= htonl(ptlist->cur_power);
+		ptlist++;
+	}
+	struct glink_base  base_hdr;
+	
+
+	len = sizeof(struct tms_total_op_alarm_hdr) + count * sizeof(struct tms_total_op_alarm_val);
+	tms_FillGlinkFrame(&base_hdr, paddr);
+	glink_Build(&base_hdr, ID_GET_TOTAL_OP_ALARM, len);
+	if (paddr != NULL && paddr->dst == GLINK_MASK_MADDR) {
+		return tms_SendAllManagerDot(&base_hdr,
+					2,
+					NULL,
+					(uint8_t*)&hdr,      sizeof(struct tms_total_op_alarm_hdr),
+					(uint8_t*)&pval,   sizeof(struct tms_total_op_alarm_val));
+	}
+	if (0 == fd) {
+		fd = tms_SelectFdByAddr(&base_hdr.dst);
+	}
+	glink_Build(&base_hdr, ID_GET_TOTAL_OP_ALARM, len);
+	glink_SendHead(fd, &base_hdr);
+	glink_SendSerial(fd, (uint8_t*)&hdr,   sizeof(struct tms_total_op_alarm_hdr));
+	glink_SendSerial(fd, (uint8_t*)&pval,   count * sizeof(struct tms_total_op_alarm_val));
+	glink_SendTail(fd);
+
+
+	return 0;
+}
+// 0x80000077
+static int32_t tms_AnalyseRetTotalOPAlarm(struct tms_context *pcontext, int8_t *pdata, int32_t len)
+{
+	return 0;
+}
+
+/**
+ * @brief	ID_GET_TOTAL_HW_ALARM	0x80000078 ///< 查询总的硬件告警
+ * @see	
+ */
+
+int32_t tms_GetTotalHwAlarm(int fd, struct glink_addr *paddr)
+{
+	return tms_MCUtoDevice(fd, 0, 0 , 0, DEV_MCU, 0, ID_GET_TOTAL_HW_ALARM, 0);
+}
+
+
+/**
+ * @brief	ID_GET_OLP_ACTION_LOG	0x80000079 ///< 网管查询OLP切换记录
+ * @see	
+ */
+
+int32_t tms_GetOLPActionLog(int fd, struct glink_addr *paddr)
+{
+	return tms_MCUtoDevice(fd, 0, 0 , 0, DEV_MCU, 0, ID_GET_OLP_ACTION_LOG, 0);
+}
+
+
+/**
+ * @brief	ID_RET_OLP_ACTION_LOG	0x80000080 ///< 返回OLP切换记录
+ * @retval	>0 发送成功
+ * @retval	0 发送失败，该链接失效，立即断开
+ * @remarks	
+ * @see	
+ */
+int32_t tms_RetOLPActionLog(int fd, struct glink_addr *paddr,
+	int32_t count,
+	struct tms_olp_action_log_val *pval)
+{
+	int len;
+	struct tms_olp_action_log_hdr hdr;
+	struct tms_olp_action_log_val *ptlist;
+
+	hdr.count = htonl(count);
+
+	ptlist = pval;
+	for (int i = 0; i < count; i++) {
+		ptlist->frame	= htonl(ptlist->frame);
+		ptlist->slot	= htonl(ptlist->slot);
+		ptlist->type	= htonl(ptlist->type);
+		ptlist->sw_type	= htonl(ptlist->sw_type);
+		ptlist->sw_port	= htonl(ptlist->sw_port);
+		ptlist++;
+	}
+	struct glink_base  base_hdr;
+	
+
+	len = sizeof(struct tms_olp_action_log_hdr) + count * sizeof(struct tms_olp_action_log_val);
+	tms_FillGlinkFrame(&base_hdr, paddr);
+	if (0 == fd) {
+		// fd = 
+		tms_SelectFdByAddr(&base_hdr.dst);
+	}
+	glink_Build(&base_hdr, ID_RET_OLP_ACTION_LOG, len);
+	glink_SendHead(fd, &base_hdr);
+	glink_SendSerial(fd, (uint8_t*)&hdr,   sizeof(struct tms_olp_action_log_hdr));
+	glink_SendSerial(fd, (uint8_t*)&pval,   count * sizeof(struct tms_olp_action_log_val));
+	glink_SendTail(fd);
+
+
+	return 0;
+}
+// 0x80000080
+static int32_t tms_AnalyseRetOLPActionLog(struct tms_context *pcontext, int8_t *pdata, int32_t len)
+{
+	return 0;
+}
+
+
+
+
 ////////////////////////////////////////////////////////////////////////
 // 数据包分析
-
-
 // 命令名列表0x1000xxxx、0x6000xxxx、0x8000xxxx
 static struct pro_list g_cmdname_0x1000xxxx[] = 
 {
@@ -6129,6 +6353,17 @@ static struct pro_list g_cmdname_0x8000xxxx[] = {
 {"ID_ALARM_SOUND_ON_OFF"},
 {"ID_GET_ALARM_SOUND_STATE"},
 {"ID_RET_ALARM_SOUND_STATE"},
+{"ID_GET_TOTAL_OP_ALARM"},
+{"ID_RET_TOTAL_OP_ALARM"},
+{"ID_GET_TOTAL_HW_ALARM"},
+{"ID_GET_OLP_ACTION_LOG"},
+{"--"},
+{"--"},
+{"--"},
+{"--"},
+{"--"},
+{"--"},
+{"ID_RET_OLP_ACTION_LOG"},
 
 
 
@@ -6211,47 +6446,116 @@ int32_t tms_Transmit2Manager(struct tms_context *pcontext, int8_t *pdata, int32_
 {
 	int fd;
 	struct glink_base  base_hdr;
-	int src,dst;
+	uint32_t src,dst;
 
 	struct glink_base *pbase_hdr;
 	pbase_hdr = (struct glink_base*)(pdata + sizeof(int32_t));
 	src = htonl(pbase_hdr->src);
 	dst = htonl(pbase_hdr->dst);
 
-	printf("tms_Transmit2Manager()\n");
-	printf("\t%x , %x\n",src,dst);
+	dbg_tms("tms_Transmit2Manager()\n");
+	dbg_tms("\t%x , %x\n",src,dst);
 
 	// 过滤设备发往MCU的数据包，不向网管转发
 	if (dst == GLINK_4412_ADDR || 
         src == GLINK_4412_ADDR ||
-        dst != GLINK_MANAGE_ADDR) {
-		printf("self command\n");
+        GLINK_MASK_MADDR != (dst & GLINK_MASK_MADDR)) {
+		dbg_tms("can't not transmit to manager\n");
 		return 0;
 	}
-
-
-	// pbase_hdr->pklen 	= htonl(pbase_hdr->pklen);
-	// pbase_hdr->version 	= htonl(pbase_hdr->version);
-	// pbase_hdr->src 		= htonl(pbase_hdr->src);
-	// pbase_hdr->dst 		= htonl(pbase_hdr->dst);
-	// pbase_hdr->type 		= htons(pbase_hdr->type);
-	// pbase_hdr->pkid 		= htons(pbase_hdr->pkid);
-	// pbase_hdr->reserve 	= htonl(pbase_hdr->reserve);
-	// pbase_hdr->cmdid 	= htonl(pbase_hdr->cmdid);
-	// pbase_hdr->datalen 	= htonl(pbase_hdr->datalen);
-
 
 	pbase_hdr->dst = htonl(GLINK_MANAGE_ADDR);
 	pbase_hdr->src = htonl(GLINK_4412_ADDR);
 	// PrintfMemory((uint8_t*)pdata,20);
-	fd = tms_GetManageFd();
-	printf("manager fd = %d\n", fd);
+	fd = tms_SelectFdByAddr(&dst);
+	dbg_tms("manager fd = %d\n", fd);
 	if (fd == 0) {
 		return 0;
 	}
 	return glink_SendSerial(fd, (uint8_t*)pdata, len);
 }
 
+// 向所有网管转发
+int32_t tms_Transmit2AllManager(struct tms_context *pcontext, int8_t *pdata, int32_t len)
+{
+
+}
+
+/**
+ * @brief	向所有网管群发发送
+ 			只能应用于动态分配内存的接口
+ * @param	pbase_hdr glink_base 描述信息
+ * @param	pdata 数据内容
+ * @param	len 数据长度
+ * @see	tms_SendAllManagerDot
+ */
+
+int32_t tms_SendAllManager(struct glink_base  *pbase_hdr, uint8_t *pdata, int32_t len)
+{
+	int fd;
+	uint32_t dst;
+	// 以后改用 tms_SelectFdByIndex
+	for (dst = 0x3a; dst <= 0x3f; dst++) {
+		fd = tms_SelectFdByAddr(&dst);
+		// 没有该地址的网管
+		if (0 == fd) {
+			continue;
+		}
+		dbg_tms("send all manager %x\n", dst);
+		pbase_hdr->dst = dst;
+		glink_Send(fd, pbase_hdr, pdata, len);
+	}
+	return 1;
+}
+
+/**
+ * @brief	向所有网管群发发送，类似printf的可变参数，群发
+ 			应用于连续、非连续内存的接口
+ * @param	pbase_hdr glink_base 描述信息
+ * @param	group 有多少组参数，参数 data，len 为一组
+ * @param	fmt 无用，填 NULL
+ * @param	pdata 参数以 data1，len1，data2，len2...规则
+  * @see	tms_SendAllManager
+ */
+
+int32_t tms_SendAllManagerDot(struct glink_base  *pbase_hdr, int group, uint8_t *fmt,...)
+{
+	va_list args;
+	int fd;
+	uint32_t dst;
+	uint8_t *pdata;
+	uint32_t len;	
+	int i;
+	
+	
+
+	// 以后改用 tms_SelectFdByIndex
+	for (dst = 0x3a; dst <= 0x3f; dst++) {
+		fd = tms_SelectFdByAddr(&dst);
+		// 没有该地址的网管
+		if (0 == fd) {
+			continue;
+		}
+		dbg_tms("send all manager %x\n", dst);
+		pbase_hdr->dst = dst;
+
+
+		glink_SendHead(fd, pbase_hdr);
+		va_start(args, (const char*)fmt);
+		for (i = 0; i < group; i++) {
+			
+			
+			pdata = va_arg(args, uint8_t*);
+			len = va_arg(args, int);
+			glink_SendSerial(fd, (uint8_t*)pdata,      len);
+		}
+		glink_SendTail(fd);
+		va_end(args);
+	}
+	
+
+	return 0;
+}
 // 拷贝本地字节序到本地用户空间
 static int32_t tms_Copy2Use(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
@@ -6804,6 +7108,18 @@ struct tms_analyse_array sg_analyse_0x8000xxxx[] =
 {	tms_AnalyseUnuse	,0},//	0x80000074	ID_GET_ALARM_SOUND_STATE
 {	tms_AnalyseUnuse	,8},//	0x80000075	ID_RET_ALARM_SOUND_STATE
 
+{	tms_AnalyseUnuse	,0},//	0x80000076	ID_GET_TOTAL_OP_ALARM
+{	tms_AnalyseRetTotalOPAlarm	,8},//	0x80000077	ID_RET_TOTAL_OP_ALARM
+{	tms_AnalyseUnuse	,0},//	0x80000078	ID_GET_TOTAL_HW_ALARM
+{	tms_AnalyseUnuse	,0},//	0x80000079	ID_GET_OLP_ACTION_LOG
+{	tms_AnalyseUnuse	,8},//	0x8000007A	--
+{	tms_AnalyseUnuse	,8},//	0x8000007B	--
+{	tms_AnalyseUnuse	,8},//	0x8000007C	--
+{	tms_AnalyseUnuse	,8},//	0x8000007D	--
+{	tms_AnalyseUnuse	,8},//	0x8000007E	--
+{	tms_AnalyseUnuse	,8},//	0x8000007F	--
+{	tms_AnalyseRetOLPActionLog	,8},//	0x80000080	ID_RET_OLP_ACTION_LOG
+
 };
 /**
  * @brief	分析TMSxx协议数据帧，传递到该函数的数据必须是一个合法的glink帧结构
@@ -6833,7 +7149,7 @@ int32_t tms_Analyse(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 	// 	(ID_TRACE0 > cmdid &&  ID_TRACE3 < cmdid)  )
 	if (cmdid != ID_TICK)
 	{
-		printf("\n[frame]:-----[ %d ] cmdid [%8.8x] fd [%d]", len, cmdid, pcontext->fd);	
+		fecho("\n[frame]:-----[ %d ] cmdid [%8.8x] fd [%d]", len, cmdid, pcontext->fd);	
 		tms_PrintCmdName(cmdid);
 	}
 
@@ -6855,7 +7171,7 @@ int32_t tms_Analyse(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 	switch(cmdh) {
 	case 0x80000000:
 		if (cmdl >= sizeof(sg_analyse_0x8000xxxx) / sizeof(struct tms_analyse_array)) {
-			printf("0x80000000 out of cmd memory!!! ");
+			fecho("0x80000000 out of cmd memory!!! ");
 			goto _Unknow;
 		}
 		pcontext->ptr_analyse_arr = sg_analyse_0x8000xxxx + cmdl;
@@ -6864,7 +7180,7 @@ int32_t tms_Analyse(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 		break;
 	case 0x60000000:
 		if (cmdl >= sizeof(sg_analyse_0x6000xxxx) / sizeof(struct tms_analyse_array)) {
-			printf("0x60000000 out of cmd memory!!!\n");
+			fecho("0x60000000 out of cmd memory!!!\n");
 			goto _Unknow;
 		}
 		pcontext->ptr_analyse_arr = sg_analyse_0x6000xxxx + cmdl;
@@ -6873,7 +7189,7 @@ int32_t tms_Analyse(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 		break;
 	case 0x10000000:
 		if (cmdl >= sizeof(sg_analyse_0x1000xxxx) / sizeof(struct tms_analyse_array)) {
-			printf("0x10000000 out of cmd memory!!!\n");
+			fecho("0x10000000 out of cmd memory!!!\n");
 			goto _Unknow;
 		}
 		pcontext->ptr_analyse_arr = sg_analyse_0x1000xxxx + cmdl;
@@ -6882,7 +7198,7 @@ int32_t tms_Analyse(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 		break;
 	default:
 _Unknow:;
-		printf("printf unknow 0x%8.8x\n", cmdid);
+		fecho("unknow command id 0x%8.8x\n", cmdid);
 		break;
 	}
 	
@@ -6898,7 +7214,7 @@ _Unknow:;
 		pwhichArr->ptrfun( pcontext, pdata, len);
 		break;
 	case PROCCESS_2MANAGE:
-        printf("PROCCESS_2MANAGE\n");
+        fecho("PROCCESS_2MANAGE\n");
 		tms_Transmit2Manager( pcontext, pdata, len);
 		pwhichArr->ptrfun( pcontext, pdata, len);
 		break;
@@ -6906,18 +7222,18 @@ _Unknow:;
 		pwhichArr->ptrfun(pcontext, pdata, len);
 		break;
 	case PROCCESS_COPY2USE:
-        printf("PROCCESS_COPY2USE\n");
+        fecho("PROCCESS_COPY2USE\n");
 		pwhichArr->ptrfun(pcontext, pdata, len);
 		tms_Copy2Use(pcontext, pdata, len);
 		break;
 	case PROCCESS_2DEV_AND_COPY2USE:
-        printf("PROCCESS_2DEV_AND_COPY2USE\n");
+        fecho("PROCCESS_2DEV_AND_COPY2USE\n");
 		tms_Transmit2Dev( pcontext, pdata, len);
 		pwhichArr->ptrfun(pcontext, pdata, len);
 		tms_Copy2Use(pcontext, pdata, len);
 		break;
 	case PROCCESS_2MANAGE_AND_COPY2USE:
-		printf("PROCCESS_2MANAGE_AND_COPY2USE\n");
+		fecho("PROCCESS_2MANAGE_AND_COPY2USE\n");
 		tms_Transmit2Manager( pcontext, pdata, len);
 		pwhichArr->ptrfun( pcontext, pdata, len);
 		tms_Copy2Use( pcontext, pdata, len);
@@ -6925,18 +7241,18 @@ _Unknow:;
 	case PROCCESS_DONOT:
 		break;
 	case PROCCESS_SPECAIAL:
-		printf("specail help!!!!!!!\n");
+		fecho("specail help!!!!!!!\n");
 		pwhichArr->ptrfun(pcontext, pdata, len);
 		tms_Copy2Use(pcontext, pdata, len);
 		break;
 	case PROCCESS_2MANAGE_OR_COPY2USE:
-		printf("manage or copy2use????\n");
+		fecho("manage or copy2use????\n");
 		break;
 	case PROCCESS_2DEV_OR_COPY2USE:
-		printf("do nothing\n");
+		fecho("do nothing\n");
 		break;
 	default:
-		printf("undefine dowhat!!!!!\n");
+		fecho("undefine dowhat!!!!!\n");
 		break;
 	}
 	return 0;
@@ -7093,8 +7409,7 @@ int32_t tms_GetManageFd()
 
 int32_t tms_SelectFdByAddr(uint32_t *paddr)
 {
-    return tms_GetCUFd();
-	printf("dest addr %x\n", *paddr);
+    // return tms_GetCUFd();
 	// addr 无效
 	if (0 == paddr) {
 		return 0;
@@ -7107,6 +7422,30 @@ int32_t tms_SelectFdByAddr(uint32_t *paddr)
 	}
 	// 未找到
 	return 0;
+}
+
+int32_t tms_CountList(struct tms_man_base *list, int32_t count)
+{
+	int index = 0;
+	struct tms_man_base *plist;
+	int i;
+	int ret;
+
+	plist = list;
+	ret = 0;
+	for (int i = 0;i < MANAGE_COUNT; i++) {
+		if (sg_manage.fd_addr[i] == 0) {
+			continue;
+		}
+
+		if (ret >= count) {
+			return ret;
+		}
+		ret++;
+		plist->fd = sg_manage.fd[i];
+		plist->addr = sg_manage.fd_addr[i];
+		plist++;
+	}
 }
 
 /**

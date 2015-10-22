@@ -18,8 +18,8 @@ SRCS-y += shell/cmd/cmd_server.c \
 
 SRCS-y += protocol/glink.c \
 		protocol/tmsxx.c \
-		shell/cmd/cmd_tmsxx.c 
-		# protocol/MD5.cpp
+		shell/cmd/cmd_tmsxx.c  \
+		protocol/md5.cpp
 # SRCS-y +=protocol/tr485.c \
 # 		protocol/tr485_hw.c 
 
