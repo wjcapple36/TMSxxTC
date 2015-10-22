@@ -2023,15 +2023,7 @@ int32_t tms_RetMCUTime(int fd, struct glink_addr *paddr, uint8_t *time);
 int32_t tms_RetAlarmSoundState(int fd, struct glink_addr *paddr, uint32_t state);
 void tms_Echo(int en);
 int32_t tms_SendAllManager(struct glink_base  *pbase_hdr, uint8_t *pdata, int32_t len);
-// int32_t tms_AnyGetOTDRTest(
-// 		int fd, 
-// 		struct glink_addr *paddr, 
-// 		int32_t frame, 
-// 		int32_t slot, 
-// 		// int32_t type, 
-// 		int32_t port, 
-// 		struct tms_getotdr_test_param *val, 
-// 		int32_t cmdID);
+int32_t tms_SendAllManagerDot(struct glink_base  *pbase_hdr, int group, uint8_t *fmt,...);
 #ifdef __cplusplus
 }
 #endif

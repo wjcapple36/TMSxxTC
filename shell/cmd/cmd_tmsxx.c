@@ -3359,6 +3359,7 @@ int cmd_tmsall(int argc, char **argv)
 			printf("Error over range\n");
 		}
 	}
+#ifdef TMS_DEBUG
 	else if(argc == 2 && strcmp(argv[1], "olprep") == 0) {
 		struct glink_addr base;
 		base.dst = GLINK_MASK_MADDR;
@@ -3366,6 +3367,83 @@ int cmd_tmsall(int argc, char **argv)
 		base.pkid = 12;
 		tms_ReportOLPAction(fd, &base, sg_frameid, sg_slotid, OLP_SWITCH_ACTION_PERSION, OLP_SWITCH_A);
 	}
+	else if(argc == 2 && strcmp(argv[1], "alarmline") == 0) {
+		struct tms_alarm_line_hdr     alarm;
+		struct tms_retotdr_test_hdr   test_hdr;
+		struct tms_retotdr_test_param test_param;
+		struct tms_retotdr_data_hdr   data_hdr;
+		struct tms_retotdr_data_val   data_val[10] = {1,2,3,4,5,6};
+		struct tms_retotdr_event_hdr  event_hdr;
+		struct tms_retotdr_event_val  event_val;
+		struct tms_retotdr_chain      chain;
+		
+		struct glink_addr base;
+		base.dst = GLINK_MASK_MADDR;
+		base.src = GLINK_4412_ADDR;
+		base.pkid = 12;
+
+		alarm.alarm_type = 1;
+		alarm.alarm_level = 1;
+		alarm.frame = 1;
+		alarm.slot = 1;
+		alarm.port = 1;
+		alarm.alarm_position = 1;
+		alarm.time[0] = '1';
+		alarm.time[1] = '\0';
+		alarm.reserve0 = 1;
+
+		test_hdr.osw_frame = 1;
+		test_hdr.osw_slot = 1;
+		test_hdr.osw_type = 1;
+		test_hdr.osw_port = 1;
+		test_hdr.time[0] = '1';
+		test_hdr.time[1] = '\0';
+
+		test_hdr.otdr_frame = 1;
+		test_hdr.otdr_slot = 1;
+		test_hdr.otdr_type = 1;
+		test_hdr.otdr_port = 1;
+		test_param.rang = 1000;
+		test_param.wl = 11241;
+		test_param.pw = 31;
+		test_param.time = 12;
+		test_param.gi = 1.1;
+		test_param.end_threshold = 1.2;
+		test_param.none_reflect_threshold = 1.2;
+		test_param.sample = 0;
+		test_param.reserve0 = 0;
+		test_param.reserve1  = 0;
+		
+		data_hdr.dpid[0] = '\0';
+		data_hdr.count = 10;
+
+
+		event_hdr.eventid[0] = '\0';
+		event_hdr.count = 1;
+
+		event_val.distance = 0;
+		event_val.event_type = 0;
+		event_val.att = 0;
+		event_val.loss = 0;
+		event_val.reflect = 0;
+		event_val.link_loss = 0;
+		bzero(&chain, sizeof(struct tms_retotdr_chain));
+
+		tms_AlarmLine(
+			fd, 
+			&base,
+			// NULL,
+			&alarm,
+			&test_hdr, 		
+			&test_param, 
+			&data_hdr, 
+			&data_val[0], 
+			&event_hdr, 
+			&event_val, 
+			&chain,
+			ID_ALARM_LINE);
+	}
+#endif
 	
 
 
@@ -4785,7 +4863,6 @@ int cmd_remotecmd(int argc, char **argv)
 	}
 	return 0;
 }
-
 W_BOOT_CMD(r, cmd_remotecmd, "cmd epoll server send");
 int cmd_term_connect(int argc,char **argv)
 {
@@ -4795,7 +4872,7 @@ int cmd_term_connect(int argc,char **argv)
 	char strout[64];
 	int ret;
 
-	// goto _Next;
+
 	if (argc < 3) {
 		printf("Usage:\n");
 		printf("\tconnect <IP> <port>\n");

@@ -1,5 +1,14 @@
 /*! \page workhis TMSxxTC 项目工作日志
-2015-10-20: Menglong Wu
+2015-10-22: Menglong Wu
+	- Add tms_SendAllManagerDot 可变参数向网管转发
+	- Test tms_AlarmLine 上测试测试群发成功，测试方法：
+		+ 启动服务器A
+		+ 在另一控制台启动服务器B
+		+ B 发起连接分别模拟0x3f、0x3e网管 tc 127.0.0.1 6000 f,tc 127.0.0.1 6000 e
+		+ A 返回OLP动作告警，tms alarmline
+		+ B 两个模拟网管都能收到信息
+
+2015-10-21: Menglong Wu
 	- Think 在【任务进度】命令解析函数表.xlsx里统计需要群发的数据包
 	- Add tms_SendAllManager 向多网管群发
 	- Test tms_ReportOLPAction 上测试测试群发成功，测试方法：
@@ -7,6 +16,7 @@
 		+ 在另一控制台启动服务器B
 		+ B 发起连接分别模拟0x3f、0x3e网管 tc 127.0.0.1 6000 f,tc 127.0.0.1 6000 e
 		+ A 返回OLP动作告警，tms olprep
+		+ B 两个模拟网管都能收到信息
 	- TODO tms_Transmit2AllManager 网络层主动转发阿
 	- TODO tms_SendAllManagerDot 可变参数向网管转发
 

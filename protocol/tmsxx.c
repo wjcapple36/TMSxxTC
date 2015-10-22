@@ -3997,7 +3997,7 @@ int32_t tms_ReportOLPAction(
 
 	glink_Build(&base_hdr, ID_REPORT_OLP_ACTION, sizeof(struct tms_report_olp_action));
 	if (paddr != NULL && paddr->dst == GLINK_MASK_MADDR) {
-		return tms_SendAllManager(&base_hdr, pmem, sizeof(struct tms_report_olp_action));
+		ret =  tms_SendAllManager(&base_hdr, pmem, sizeof(struct tms_report_olp_action));
 	}
 	if (0 == fd) {
 		fd = tms_SelectFdByAddr(&base_hdr.dst);
@@ -4085,12 +4085,17 @@ int32_t tms_AlarmOPM(
 	int ret;
 
 	tms_FillGlinkFrame(&base_hdr, paddr);
-	if (0 == fd) {
-		// fd = 
-		tms_SelectFdByAddr(&base_hdr.dst);
-	}
+
 	glink_Build(&base_hdr, ID_ALARM_OPM, len);
+	if (paddr != NULL && paddr->dst == GLINK_MASK_MADDR) {
+		ret = tms_SendAllManager(&base_hdr, pmem, len);
+		goto _Free;
+	}
+	if (0 == fd) {
+		fd = tms_SelectFdByAddr(&base_hdr.dst);
+	}	
 	ret = glink_Send(fd, &base_hdr, pmem, len);
+_Free:;
 	free(pmem);
 	return ret;
 }
@@ -4164,12 +4169,16 @@ int32_t tms_AlarmOPMChange(
 	int ret;
 
 	tms_FillGlinkFrame(&base_hdr, paddr);
-	if (0 == fd) {
-		// fd = 
-		tms_SelectFdByAddr(&base_hdr.dst);
-	}
+
 	glink_Build(&base_hdr, ID_ALARM_OPM_CHANGE, len);
+	if (paddr != NULL && paddr->dst == GLINK_MASK_MADDR) {
+		return tms_SendAllManager(&base_hdr, pmem, len);
+	}
+	if (0 == fd) {
+		fd = tms_SelectFdByAddr(&base_hdr.dst);
+	}	
 	ret = glink_Send(fd, &base_hdr, pmem, len);
+
 	free(pmem);
 	return ret;
 }
@@ -4192,7 +4201,7 @@ int32_t tms_AlarmOPMChange(
  * @param	pevent_val OTDR 事件内容
  * @param	pchain  曲线链路信息
  * @param	pchain  曲线链路信息
- * @retval	cmdID 命令ID，这里固定填死 ID_ALARM_LINE
+ * @param	cmdID 命令ID，这里固定填死 ID_ALARM_LINE
  * @remarks	
  * @see	
  */
@@ -4285,13 +4294,43 @@ int32_t tms_AlarmLine(
 			sizeof(struct tms_retotdr_event_val ) * pevent_hdr->count +
 			sizeof(struct tms_retotdr_chain);
 	
-	tms_FillGlinkFrame(&base_hdr, paddr);
-	if (0 == fd) {
-		// fd = 
-		tms_SelectFdByAddr(&base_hdr.dst);
-	}
 
+
+	tms_FillGlinkFrame(&base_hdr, paddr);
 	glink_Build(&base_hdr, cmdID, len);
+	if (paddr != NULL && paddr->dst == GLINK_MASK_MADDR) {
+		// printf("sizeof(struct tms_alarm_line_hdr) = %d\n", sizeof(struct tms_alarm_line_hdr));
+		// printf("sizeof(struct tms_retotdr_test_hdr) = %d\n", sizeof(struct tms_retotdr_test_hdr));
+		// printf("sizeof(struct tms_retotdr_test_param) = %d\n", sizeof(struct tms_retotdr_test_param));
+		// printf("sizeof(struct tms_retotdr_data_hdr) = %d\n", sizeof(struct tms_retotdr_data_hdr));
+		// printf("sizeof(struct tms_retotdr_data_val) = %d\n", sizeof(struct tms_retotdr_data_val));
+		// printf("sizeof(struct tms_retotdr_event_hdr) = %d\n", sizeof(struct tms_retotdr_event_hdr));
+		// printf("sizeof(struct tms_retotdr_event_val) = %d\n", sizeof(struct tms_retotdr_event_val));
+		// printf("sizeof(struct tms_retotdr_chain) = %d\n", sizeof(struct tms_retotdr_chain));
+
+		// PrintfMemory((uint8_t*)&alarm,      sizeof(struct tms_alarm_line_hdr));
+		// PrintfMemory((uint8_t*)&test_hdr,   sizeof(struct tms_retotdr_test_hdr));
+		// PrintfMemory((uint8_t*)&test_param, sizeof(struct tms_retotdr_test_param));
+		// PrintfMemory((uint8_t*)&data_hdr,   sizeof(struct tms_retotdr_data_hdr));
+		// PrintfMemory((uint8_t*)&data_val,   sizeof(struct tms_retotdr_data_val) * pdata_hdr->count);
+		// PrintfMemory((uint8_t*)&event_hdr,  sizeof(struct tms_retotdr_event_hdr));
+		// PrintfMemory((uint8_t*)&event_val,  sizeof(struct tms_retotdr_event_val) * pevent_hdr->count);
+		// PrintfMemory((uint8_t*)&chain,      sizeof(struct tms_retotdr_chain));
+		return tms_SendAllManagerDot(&base_hdr,
+					8,
+					NULL,
+					(uint8_t*)&alarm,      sizeof(struct tms_alarm_line_hdr),
+					(uint8_t*)&test_hdr,   sizeof(struct tms_retotdr_test_hdr),
+					(uint8_t*)&test_param, sizeof(struct tms_retotdr_test_param),
+					(uint8_t*)&data_hdr,   sizeof(struct tms_retotdr_data_hdr),
+					(uint8_t*)&data_val,   sizeof(struct tms_retotdr_data_val) * pdata_hdr->count,
+					(uint8_t*)&event_hdr,  sizeof(struct tms_retotdr_event_hdr),
+					(uint8_t*)&event_val,  sizeof(struct tms_retotdr_event_val) * pevent_hdr->count,
+					(uint8_t*)&chain,      sizeof(struct tms_retotdr_chain));
+	}
+	if (0 == fd) {
+		fd = tms_SelectFdByAddr(&base_hdr.dst);
+	}
 	glink_SendHead(fd, &base_hdr);	
 	glink_SendSerial(fd, (uint8_t*)&alarm,      sizeof(struct tms_alarm_line_hdr));
 	glink_SendSerial(fd, (uint8_t*)&test_hdr,   sizeof(struct tms_retotdr_test_hdr));
@@ -4306,7 +4345,7 @@ int32_t tms_AlarmLine(
 	return 0;
 }
 // ID_ALARM_LINE			0x80000030
-// 该函数未测试过
+// 已测试通过
 static int32_t tms_AnalyseAlarmLine(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
 	struct tms_alarm_line_hdr     *palarm;
@@ -4317,8 +4356,6 @@ static int32_t tms_AnalyseAlarmLine(struct tms_context *pcontext, int8_t *pdata,
 	struct tms_retotdr_event_hdr  *pevent_hdr;
 	struct tms_retotdr_event_val  *pevent_val;
 	struct tms_retotdr_chain      *pchain;
-
-	
 
 	if ((uint32_t)(len - GLINK_OFFSET_DATA) < sizeof(struct tms_alarm_line_hdr) +
 			sizeof(struct tms_retotdr_test_hdr ) + 
@@ -4332,6 +4369,10 @@ static int32_t tms_AnalyseAlarmLine(struct tms_context *pcontext, int8_t *pdata,
 	}
 
 	palarm      = (struct tms_alarm_line_hdr   *)(pdata + GLINK_OFFSET_DATA );
+	printf("%d %d %d\n", 
+		htonl(palarm->frame),
+		htonl(palarm->slot),
+		htonl(palarm->port));
 	ptest_hdr   = (struct tms_retotdr_test_hdr   *)(((char*)palarm)      + sizeof(struct tms_alarm_line_hdr) );
 	ptest_param = (struct tms_retotdr_test_param *)(((char*)ptest_hdr)   + sizeof(struct tms_retotdr_test_hdr));
 	pdata_hdr   = (struct tms_retotdr_data_hdr   *)(((char*)ptest_param) + sizeof(struct tms_retotdr_test_param));
@@ -4358,8 +4399,6 @@ static int32_t tms_AnalyseAlarmLine(struct tms_context *pcontext, int8_t *pdata,
 	pevent_val  = (struct tms_retotdr_event_val  *)(((char*)pevent_hdr) + sizeof(struct tms_retotdr_event_hdr));
 	pchain      = (struct tms_retotdr_chain      *)(((char*)pevent_val) + sizeof(struct tms_retotdr_event_val) * htonl(pevent_hdr->count));
 
-	
-	PrintfMemory((uint8_t*)ptest_hdr, sizeof(struct tms_retotdr_test_hdr));
 	
 	// Part x 告警数据头
 	palarm->alarm_type 	   = htonl(palarm->alarm_type);
@@ -6479,8 +6518,59 @@ int32_t tms_SendAllManager(struct glink_base  *pbase_hdr, uint8_t *pdata, int32_
  * @param	pdata 参数以 data1，len1，data2，len2...规则
   * @see	tms_SendAllManager
  */
-int32_t tms_SendAllManagerDot(struct glink_base  *pbase_hdr, uint8_t *pdata,...)
+  // void fun1(int a,int fmt,...)
+  // {
+  // 	va_list args;
+  // 	int i;
+  // 	char *pstr;
+  // 	int len = 2;
+
+  	
+
+  // 	va_start(args, (const char*)fmt);
+  // 	// i=vfun1(a,fmt,args);
+  // 	pstr = va_arg(args,char*);
+  // 	len = va_arg(args, int);
+  // 	printf("%s %d\n",pstr,len);
+  // 	va_end(args);
+  // }
+#include <stdarg.h>
+int32_t tms_SendAllManagerDot(struct glink_base  *pbase_hdr, int group, uint8_t *fmt,...)
 {
+	va_list args;
+	int fd;
+	uint32_t dst;
+	uint8_t *pdata;
+	uint32_t len;	
+	int i;
+	
+	
+
+	// 以后改用 tms_SelectFdByIndex
+	for (dst = 0x3a; dst <= 0x3f; dst++) {
+		fd = tms_SelectFdByAddr(&dst);
+		// 没有该地址的网管
+		if (0 == fd) {
+			continue;
+		}
+		dbg_tms("send all manager %x\n", dst);
+		pbase_hdr->dst = dst;
+
+
+		glink_SendHead(fd, pbase_hdr);
+		va_start(args, (const char*)fmt);
+		for (i = 0; i < group; i++) {
+			
+			
+			pdata = va_arg(args, uint8_t*);
+			len = va_arg(args, int);
+			glink_SendSerial(fd, (uint8_t*)pdata,      len);
+		}
+		glink_SendTail(fd);
+		va_end(args);
+	}
+	
+
 	return 0;
 }
 // 拷贝本地字节序到本地用户空间

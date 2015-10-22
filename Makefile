@@ -131,9 +131,7 @@ BUILD_DATE="$(shell date "+%Y-%m-%d_%H:%M:%S")"
 INCLUDE_DIR	+= -I./include -I./osnet -I./shell -I./ -I./src -I/usr/include/readline
 LFLAGS		+= -lreadline -lpthread -lhistory -lncurses -lsqlite3 -lmd5
 LIB_DIR 	+= 
-CFLAGS      += -DBUILD_DATE=\"$(BUILD_DATE)\"  -DPRJ_VERSION=\"$(PRJ_VERSION)\" -DPRJ_NAME=\"$(PRJ_NAME)\" \
-				# -DTMS_DEBUG
-
+CFLAGS      += -DBUILD_DATE=\"$(BUILD_DATE)\"  -DPRJ_VERSION=\"$(PRJ_VERSION)\" -DPRJ_NAME=\"$(PRJ_NAME)\" 
 ifeq ("$(ARCH)", "x86")
 	INCLUDE_DIR	+= 
 	LFLAGS		+= -ltermcap  
@@ -187,7 +185,9 @@ OBJCOPY = $(CROSS_COMPILE)objcopy
 # CFLAGS		- Compile general option
 # CC_FLAGS		- Compile only for *.c file option
 # CS_FLAGS		- Compile only for *.S file option
-CFLAGS		+= -O -g  	 -Wall -static -rdynamic -D_UNUSE_QT_ -fshort-wchar  -DUSE_MD5
+CFLAGS		+= -O -g  	 -Wall -static -rdynamic -D_UNUSE_QT_ -fshort-wchar  \
+-DUSE_MD5 \
+-DTMS_DEBUG
 ifeq ("$(GCC_G++)","gcc") # 只有gcc编译器才使用该选项，g++无此选项
 	CC_FLAGS    = -std=gnu99
 else
