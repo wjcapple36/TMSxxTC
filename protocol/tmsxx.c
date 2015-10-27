@@ -131,8 +131,7 @@ static int32_t tms_AnalyseUnuse(struct tms_context *pcontext, int8_t *pdata, int
 // static int32_t tms_Transmit2Manager(struct tms_context *pcontext, int8_t *pdata, int32_t len);
 
 // 每机框12个槽位，最大支持16机框
-#define MAX_FRAME 16
-#define MAX_SLOT 12
+
 struct tms_devbase sg_devnet[MAX_FRAME+1][MAX_SLOT] = {0};
 struct tms_manage sg_manage = {0};
 int sg_echo_tick = 0;
@@ -3368,20 +3367,20 @@ void tms_Print_tms_retotdr_event(struct tms_retotdr_event_hdr *pevent_hdr, struc
 
 	// printf("len = %d-----\n", strlen((char*)pevent_hdr->eventid));
 	// PrintfMemory((uint8_t*)pevent_hdr->eventid, 16);
-	printf("EventID: %s\n------------------------------------------------------------------------\n",
+	fecho("EventID: %s\n------------------------------------------------------------------------\n",
 				pevent_hdr->eventid);
 
 	// printf("EventID: %s\n",pevent_hdr->eventid);
 	// printf("\n------------------------------------------------------------------------\n");
 	fecho("%s\t%s\t%8.12s\t%8.12s\t%8.12s\t%8.12s\n", 
 		"dist", "type", "att", "lost", "ref", "link");
-	printf("------------------------------------------------------------------------\n");
+	fecho("------------------------------------------------------------------------\n");
 	// p32d = (uint32_t*)pevent_val;	
 	
 	struct tms_retotdr_event_val  *ptevent_val;
 	ptevent_val = pevent_val;
 	for (register int i = 0;i < pevent_hdr->count; i++) {
-		printf("%d\t%d\t%8.2f\t%8.2f\t%8.2f\t%8.2f\n", 
+		fecho("%d\t%d\t%8.2f\t%8.2f\t%8.2f\t%8.2f\n", 
 				ptevent_val->distance, 
 				ptevent_val->event_type, 
 				ptevent_val->att, 
@@ -3391,8 +3390,8 @@ void tms_Print_tms_retotdr_event(struct tms_retotdr_event_hdr *pevent_hdr, struc
 
 		ptevent_val++;
 	}
-	printf("------------------------------------------------------------------------\n");
-	printf("                                                       Event count %3d\n", pevent_hdr->count);
+	fecho("------------------------------------------------------------------------\n");
+	fecho("                                                       Event count %3d\n", pevent_hdr->count);
 	// printf("                                  Event count %d ID %s\n", pevent_hdr->count, pevent_hdr->eventid);
 }
 
@@ -7697,7 +7696,7 @@ void tms_AddDev(int32_t frame, int32_t slot, struct tms_devbase *pdev)
  * @see	
  */
 
-int32_t tms_GetFrame(int32_t frame, struct tms_devbase (*pdev)[12])
+int32_t tms_GetFrame(int32_t frame, struct tms_devbase (*pdev)[MAX_SLOT])
 {
 	if ((uint32_t)frame >= MAX_FRAME) {
 		return 0;

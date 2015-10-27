@@ -4328,12 +4328,13 @@ int cmd_otdr(int argc, char **argv)
 
 	// otdr test <osw frame/slot/port>
 	if (argc == 5 && memcmp(argv[1], "test", strlen(argv[1])) == 0) {
+		int otdrport;
 		frame = atoi(argv[2]);
 		slot = atoi(argv[3]);
 		port = atoi(argv[4]);
+		otdrport = port;
 
-
-		tms_GetOTDRTest(sg_sockfdid, NULL, frame, slot, DEV_OTDR,port, 0,&test_param);
+		tms_GetOTDRTest(sg_sockfdid, NULL, frame, slot, DEV_OTDR,port, otdrport,&test_param);
 		return 0;
 	}
 
@@ -4700,7 +4701,7 @@ int cmd_setip(int argc, char **argv)
 }
 int cmd_update(int argc, char **argv)
 {
-	struct tms_devbase oneframe[12];
+	struct tms_devbase oneframe[MAX_SLOT];
 	int havedev;
 	char strout[256];
 	int ret;
@@ -4723,7 +4724,7 @@ int cmd_update(int argc, char **argv)
 			ret = snprintf(strout, 64, "update com refurbish");
 			tc.offset += ret;
 			
-			for (int k = 0; k < 12; k++) {
+			for (int k = 0; k < MAX_SLOT; k++) {
 				if (oneframe[k].fd != 0) {
 					havedev = 1;
 					ret = snprintf(tc.strout + tc.offset, tc.empty - tc.offset, " %d %d %d %d ",
@@ -5008,7 +5009,7 @@ void sh_analyse (char *fmt, long len);
 int cmd_intface(int argc, char **argv)
 {
 	int frame = 0, slot = 0, sockfd = 0;
-	struct tms_devbase oneframe[12];
+	struct tms_devbase oneframe[MAX_SLOT];
 
 	if (argc == 2) {
 		char c = 0;
@@ -5089,7 +5090,7 @@ W_BOOT_CMD(interface, cmd_intface, "cmd epoll server send");
 int cmd_device(int argc, char **argv)
 {
 	int frame = 0, slot = 0;
-	struct tms_devbase oneframe[12];
+	struct tms_devbase oneframe[MAX_SLOT];
 
 	if (argc == 2 || argc == 3) {
 		char c = 0;
@@ -5459,21 +5460,21 @@ int DispFrame(struct tms_devbase *pframe, uint32_t flag, struct trace_cache *ptc
 	}
 	// printf("ptc = %x",(int)ptc);
 	ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset,
-			"-------------------------------------------------\n");
+			"-----------------------------------------------------------------\n");
 	ptc->offset += ret;
 
-	for (int k = 0; k < 12; k++) {
+	for (int k = 0; k < MAX_SLOT; k++) {
 		ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset, 
 				"|%2.2d ", k);
 		ptc->offset += ret;		
 	}
 
 	ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset, 
-			"|\n-------------------------------------------------\n");
+			"|\n-----------------------------------------------------------------\n");
 	ptc->offset += ret;
 
 	for (int i = 0; i < 5; i++) {
-		for (int k = 0; k < 12; k++) {
+		for (int k = 0; k < MAX_SLOT; k++) {
 			// 防止溢出
 			if ((uint32_t)pframe[k].type < sizeof(devName) / sizeof(char[8])) {
 				ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset, 
@@ -5484,20 +5485,20 @@ int DispFrame(struct tms_devbase *pframe, uint32_t flag, struct trace_cache *ptc
 		ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset, "|\n");
 		ptc->offset += ret;
 	}
-	for (int k = 0; k < 12; k++) {
+	for (int k = 0; k < MAX_SLOT; k++) {
 		ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset,
 				"|%2.2d ", pframe[k].port);
 		ptc->offset += ret;
 	}
 
 	ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset, 
-		"|\n-------------------------------------------------\n");
+		"|\n-----------------------------------------------------------------\n");
 	ptc->offset += ret;
 
 	if (flag & 0x01) {
 		ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset, "Socket Fd:\n");
 		ptc->offset += ret;
-		for (int i = 0; i < 12; i++) {
+		for (int i = 0; i < MAX_SLOT; i++) {
 			if (pframe[i].fd == 0) {
 				ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset, "%2.2d:no    ", i);
 				ptc->offset += ret;
@@ -5506,7 +5507,7 @@ int DispFrame(struct tms_devbase *pframe, uint32_t flag, struct trace_cache *ptc
 				ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset, "%2.2d:%-5.0d ", i, pframe[i].fd);
 				ptc->offset += ret;
 			}
-			if (i == 5) {
+			if (i == (MAX_SLOT/2 - 1) ) {
 				ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset, "\n");
 				ptc->offset += ret;
 			}
@@ -5611,7 +5612,7 @@ int cmd_Disp(int argc, char **argv)
 	int frametotal = 0, slottotal = 0;
 	int slot = 0;
 	char strout[1024];
-	struct tms_devbase oneframe[12];
+	struct tms_devbase oneframe[MAX_SLOT];
 	// struct _dispinf cbval;
 	struct trace_cache tc;
 	int ret;
@@ -5641,7 +5642,7 @@ int cmd_Disp(int argc, char **argv)
 			havedev = 0;
 			slot = 0;
 			tms_GetFrame(i, &oneframe);
-			for (int k = 0; k < 12; k++) {
+			for (int k = 0; k < MAX_SLOT; k++) {
 				if (oneframe[k].fd != 0) {
 					havedev = 1;
 					slottotal++;

@@ -11,6 +11,7 @@
 		+ tms_CountList
 		+ disp mananger
 		+ DispMananger
+	- <h3>发布doxygen帮助文档，此次更新从2015-08-06开始</h3>	
 
 2015-10-21: Menglong Wu
 	- Think 在【任务进度】命令解析函数表.xlsx里统计需要群发的数据包

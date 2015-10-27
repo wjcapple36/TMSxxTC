@@ -56,7 +56,10 @@ extern "C" {
  				( ((uint8_t*)(ptrA)) + sizeof(struct_A) + \
 				   sizeof(struct_B) * (int32_t)(B_Count-1) <= ((uint8_t*)(PtrEnd)-sizeof(struct_B)) )
 
-
+////////////////////////////////////////////////////////////////////////////////
+// 机框，槽位数
+#define MAX_FRAME 16
+#define MAX_SLOT 16
 
 ////////////////////////////////////////////////////////////////////////////////
 // Section 1 返回值
@@ -1614,7 +1617,7 @@ int32_t tms_ManageCount();
 int32_t tms_AddManage(struct tms_context *pcontext, int fd, int32_t type);
 // int32_t tms_DelManage(int fd);
 int32_t tms_DelManage(struct tms_context *pcontext, int fd);
-int32_t tms_GetFrame(int32_t frame, struct tms_devbase (*pdev)[12]);
+int32_t tms_GetFrame(int32_t frame, struct tms_devbase (*pdev)[MAX_SLOT]);
 
 void tms_Init();
 int32_t tms_CfgMCUOSWCycle(

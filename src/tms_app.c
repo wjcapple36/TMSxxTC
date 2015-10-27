@@ -78,22 +78,22 @@ int unuse_copy2use(char *buf, int datalen, int msec, void *ptr)
 int32_t tms_OnGetDeviceComposition(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
 	printf("OnGetDeviceComposition\n");
-	struct tms_dev_composition_val devcom[16*12];
+	struct tms_dev_composition_val devcom[16*MAX_SLOT];
 
 	int havedev;
 	int frametotal = 0,slottotal = 0;
 	int slot = 0;
-	struct tms_devbase oneframe[12];
+	struct tms_devbase oneframe[MAX_SLOT];
 
 	int count = 0;
 
 	for (int i = 0; i < 16; i++) {
 		tms_GetFrame(i, &oneframe);
-		for (int k = 0;k < 12;k++) {
-			devcom[i*12+k].frame = oneframe[k].frame;
-			devcom[i*12+k].slot  = oneframe[k].slot;
-			devcom[i*12+k].type  = oneframe[k].type;
-			devcom[i*12+k].port  = oneframe[k].port;
+		for (int k = 0;k < MAX_SLOT;k++) {
+			devcom[i*MAX_SLOT+k].frame = oneframe[k].frame;
+			devcom[i*MAX_SLOT+k].slot  = oneframe[k].slot;
+			devcom[i*MAX_SLOT+k].type  = oneframe[k].type;
+			devcom[i*MAX_SLOT+k].port  = oneframe[k].port;
 			count++;
 		}
 	}
@@ -367,12 +367,12 @@ int32_t tms_OnCfgOTDRRef(struct tms_context *pcontext,
 // 调试用
 int32_t tms_OnSpAnyGetOTDRTest(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
-    struct tms_devbase oneframe[12];
+    struct tms_devbase oneframe[MAX_SLOT];
     int fd;
 
     for (int i = 0; i < 16; i++) {
         tms_GetFrame(i, &oneframe);
-        for (int k = 0; k < 12; k++) {
+        for (int k = 0; k < MAX_SLOT; k++) {
             if (oneframe[k].fd != 0 && oneframe[k].type == DEV_OTDR) {
                 fd = oneframe[k].fd;
                 goto _Find;
@@ -387,12 +387,12 @@ _Find:;
 
 int32_t tms_OnSpSendSMS(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
-	struct tms_devbase oneframe[12];
+	struct tms_devbase oneframe[MAX_SLOT];
 	int fd;
 
 	for (int i = 0; i < 16; i++) {
 		tms_GetFrame(i, &oneframe);
-		for (int k = 0; k < 12; k++) {
+		for (int k = 0; k < MAX_SLOT; k++) {
 			if (oneframe[k].fd != 0 && oneframe[k].type == DEV_SMS) {
 				fd = oneframe[k].fd;
 				goto _Find;
