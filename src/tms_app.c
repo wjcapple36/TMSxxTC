@@ -420,7 +420,7 @@ int32_t tms_OnSpAck(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 	return 0;
 }
 
-int32_t tms_OnRetDevType(struct tms_context *pcontext, struct tms_dev_port *pval)
+int32_t tms_OnRetDevType(struct tms_context *pcontext, struct tms_ret_dev_type *pval)
 {
 	struct pro_list typelist[] = {
 		{"Dev Undefine"}, 

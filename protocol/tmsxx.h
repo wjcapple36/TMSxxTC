@@ -453,6 +453,17 @@ struct tms_dev_port
 	int32_t port;
 };
 
+struct tms_ret_dev_type
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+	int32_t port;
+	int32_t reserved0;
+	int32_t reserved1;
+	int32_t reserved2;
+	int32_t reserved3;
+};
 // #define tms_dev_base tms_dev_port 
 	
 struct tms_dev_composition
@@ -1356,7 +1367,7 @@ struct tms_callback
 	int32_t (*pf_OnSpAnyGetOTDRTest)(struct tms_context *pcontext, int8_t *pdata, int32_t len);
 	int32_t (*pf_OnSpSendSMS)(struct tms_context *pcontext, int8_t *pdata, int32_t len);
 	int32_t (*pf_OnSpAck)(struct tms_context *pcontext, int8_t *pdata, int32_t len);
-	int32_t (*pf_OnRetDevType)(struct tms_context *pcontext, struct tms_dev_port *pval);
+	int32_t (*pf_OnRetDevType)(struct tms_context *pcontext, struct tms_ret_dev_type *pval);
 	int32_t (*pf_OnRetVersion)(struct tms_context *pcontext, struct tms_dev_version *pval);
 	int32_t (*pf_OnRetAnyOP)(struct tms_context *pcontext, struct tms_any_op *phdr, struct tms_any_op_val  *plist);
 	int32_t (*pf_OnGetSerialNumber)(struct tms_context *pcontext);
@@ -1415,6 +1426,10 @@ int32_t tms_MCU_RetDeviceType(
 	int32_t slot, 
 	int32_t type, 
 	int32_t port);
+int32_t tms_MCU_RetDeviceType_V2(
+	int     fd, 
+	struct glink_addr *paddr, 
+	struct tms_ret_dev_type *pval);
 // int32_t tms_MCU_GetOPMRayPower(
 int32_t tms_MCU_GetOPMAlarm(
 	int     fd, 

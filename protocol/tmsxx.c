@@ -702,6 +702,35 @@ int32_t tms_MCU_RetDeviceType(
 {
 	return tms_MCUtoDevice(fd, paddr, frame, slot, DEV_OPM, 0, ID_RET_DEVTYPE, sizeof(struct tms_dev_port));
 }
+int32_t tms_MCU_RetDeviceType_V2(
+	int     fd, 
+	struct glink_addr *paddr, 
+	struct tms_ret_dev_type *pval)
+{
+	struct tms_ret_dev_type val;
+	val.frame = htonl(pval->frame);
+	val.slot  = htonl(pval->slot);
+	val.type  = htonl(pval->type);
+	val.port  = htonl(pval->port);
+	val.reserved0 = htonl(pval->reserved0);
+	val.reserved1 = htonl(pval->reserved1);
+	val.reserved2 = htonl(pval->reserved2);
+	val.reserved3 = htonl(pval->reserved3);
+
+	struct glink_base  base_hdr;
+	uint8_t *pmem;
+	int ret;
+
+	pmem = (uint8_t*)&val;
+	tms_FillGlinkFrame(&base_hdr, paddr);
+	if (0 == fd) {
+		// fd = 
+		tms_SelectFdByAddr(&base_hdr.dst);
+	}
+	glink_Build(&base_hdr, ID_RET_DEVTYPE, sizeof(tms_ret_dev_type));
+	ret = glink_Send(fd, &base_hdr, pmem, sizeof(tms_ret_dev_type));
+	return ret;
+}
 
 //0x60000001
 static int32_t tms_AnalyseRetDevType(struct tms_context *pcontext, int8_t *pdata, int32_t len)
@@ -718,12 +747,16 @@ static int32_t tms_AnalyseRetDevType(struct tms_context *pcontext, int8_t *pdata
 		{"DEV_OLP"}, 
 		{"DEV_SMS"}, 
 	};
-	struct tms_dev_port *pval;
-	pval = (struct tms_dev_port *)(pdata + GLINK_OFFSET_DATA);
+	struct tms_ret_dev_type *pval;
+	pval = (struct tms_ret_dev_type *)(pdata + GLINK_OFFSET_DATA);
 	pval->frame = htonl(pval->frame);
 	pval->slot = htonl(pval->slot);
 	pval->type = htonl(pval->type);
 	pval->port = htonl(pval->port);
+	pval->reserved0 = htonl(pval->reserved0);
+	pval->reserved1 = htonl(pval->reserved1);
+	pval->reserved2 = htonl(pval->reserved2);
+	pval->reserved3 = htonl(pval->reserved3);
 
 	printf("tms_AnalyseRetDevType\n");
 
