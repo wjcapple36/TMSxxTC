@@ -727,8 +727,8 @@ int32_t tms_MCU_RetDeviceType_V2(
 		// fd = 
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
-	glink_Build(&base_hdr, ID_RET_DEVTYPE, sizeof(tms_ret_dev_type));
-	ret = glink_Send(fd, &base_hdr, pmem, sizeof(tms_ret_dev_type));
+	glink_Build(&base_hdr, ID_RET_DEVTYPE, sizeof(struct tms_ret_dev_type));
+	ret = glink_Send(fd, &base_hdr, pmem, sizeof(struct tms_ret_dev_type));
 	return ret;
 }
 
@@ -763,8 +763,13 @@ static int32_t tms_AnalyseRetDevType(struct tms_context *pcontext, int8_t *pdata
 
 	struct tms_devbase devbase;
 	devbase.fd = pcontext->fd;
+	devbase.frame = pval->frame;
 	devbase.port = pval->port;
 	devbase.type = pval->type;
+	devbase.wave = pval->reserved0;
+	devbase.reserved0 = pval->reserved1;
+	devbase.reserved1 = pval->reserved2;
+	devbase.reserved2 = pval->reserved3;
 
 	tms_AddDev(pval->frame, pval->slot, &devbase);
 	
@@ -7711,11 +7716,15 @@ void tms_AddDev(int32_t frame, int32_t slot, struct tms_devbase *pdev)
 	if ((uint32_t)frame >= MAX_FRAME || (uint32_t)slot > MAX_SLOT) {
 		return ;
 	}
-	sg_devnet[frame][slot].fd    = pdev->fd;
-	sg_devnet[frame][slot].frame = frame;
-	sg_devnet[frame][slot].slot  = slot;
-	sg_devnet[frame][slot].port  = pdev->port;
-	sg_devnet[frame][slot].type  = pdev->type;
+	sg_devnet[frame][slot].fd        = pdev->fd;
+	sg_devnet[frame][slot].frame     = pdev->frame;
+	sg_devnet[frame][slot].slot      = pdev->slot;
+	sg_devnet[frame][slot].type      = pdev->type;
+	sg_devnet[frame][slot].port      = pdev->port;
+	sg_devnet[frame][slot].wave      = pdev->wave;
+	sg_devnet[frame][slot].reserved0 = pdev->reserved0;
+	sg_devnet[frame][slot].reserved1 = pdev->reserved1;
+	sg_devnet[frame][slot].reserved2 = pdev->reserved2;
 }
 
 

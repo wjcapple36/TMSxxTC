@@ -5638,7 +5638,7 @@ int cmd_Disp(int argc, char **argv)
 	if (argc == 2 && (flag & (FLAG_DISP_FRAME + FLAG_DISP_CON) ) ) {
 
 		// 遍历16个机框各槽位
-		for (int i = 0; i < 16; i++) {
+		for (int i = 0; i < MAX_SLOT; i++) {
 			havedev = 0;
 			slot = 0;
 			tms_GetFrame(i, &oneframe);

@@ -1,6 +1,7 @@
 /*! \page workhis TMSxxTC 项目工作日志
 2015-10-27: Menglong Wu
 	- Change 废除 tms_MCU_RetDeviceType 改成 tms_MCU_RetDeviceType_V2
+	- Change tms_AddDev,tms_GetFrame 添加保留项信息，我本人并不关注多出的信息，文金朝关注
 	
 2015-10-22: Menglong Wu
 	- Add tms_SendAllManagerDot 可变参数向网管转发
