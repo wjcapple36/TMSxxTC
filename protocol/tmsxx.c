@@ -4035,6 +4035,7 @@ int32_t tms_ReportOLPAction(
 	glink_Build(&base_hdr, ID_REPORT_OLP_ACTION, sizeof(struct tms_report_olp_action));
 	if (paddr != NULL && paddr->dst == GLINK_MASK_MADDR) {
 		ret =  tms_SendAllManager(&base_hdr, pmem, sizeof(struct tms_report_olp_action));
+		return ret;
 	}
 	if (0 == fd) {
 		fd = tms_SelectFdByAddr(&base_hdr.dst);
