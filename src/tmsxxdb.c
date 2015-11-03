@@ -5398,7 +5398,10 @@ alarm_type,alarm_level,alarm_frame,alarm_slot,alarm_port,alarm_position,alarm_ti
 
 	else if (pcondition != NULL && pmask != NULL)
 	{
-		if (pmask->id) {
+		if (pmask->id == DB_MORE) {
+			snprintf(sqlid, 64, "and id>%d", pcondition->id);
+		}
+		if (pmask->id == DB_EQ) {
 			snprintf(sqlid, 64, "and id=%d", pcondition->id);
 		}
 		// 构造SQL语句
