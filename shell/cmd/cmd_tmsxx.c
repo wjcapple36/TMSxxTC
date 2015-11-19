@@ -4773,9 +4773,9 @@ int cmd_update(int argc, char **argv)
 			type  = DEV_OPM;
 			strcpy(target, TARGET_OPM);
 		}
-		else if (strcmp(argv[5], "osw") == 0) {
+		else if (strcmp(argv[5], "osw-gx-8") == 0) {
 			type  = DEV_OSW;
-			strcpy(target, TARGET_OSW);
+			strcpy(target, TARGET_OSW_GX_8);
 		}
 		else if (strcmp(argv[5], "otdr") == 0) {
 			type  = DEV_OTDR;

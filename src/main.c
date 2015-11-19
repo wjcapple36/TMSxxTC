@@ -436,11 +436,11 @@ int main(int argc, char const *argv[])
 	// 如果不做服务器可以去除ep_Listen
 
 #ifdef TARGET_ARMV7
-	if(ep_Listen(&ep,6500)) {
+	if(ep_Listen(&ep,6000)) {
 		return 0;
 	}
 #else
-	if(ep_Listen(&ep,6500)) {
+	if(ep_Listen(&ep,6000)) {
 		return 0;
 	}
 #endif

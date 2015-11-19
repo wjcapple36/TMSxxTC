@@ -185,8 +185,8 @@ void tms_FillGlinkFrame(
 		pbase_hdr->pkid = 0;
 	}
 	else {
-		printf("tms_FillGlinkFrame()\n");
-		printf("\t src %x dst %x\n", paddr->src, paddr->dst);
+		// printf("tms_FillGlinkFrame()\n");
+		// printf("\t src %x dst %x\n", paddr->src, paddr->dst);
 		pbase_hdr->src = paddr->src;
 		pbase_hdr->dst = paddr->dst;
 		pbase_hdr->pkid = paddr->pkid;
@@ -6987,7 +6987,61 @@ static int tms_AnalyseSMSError(struct tms_context *pcontext, int8_t *pdata, int3
 	return 0;
 }
 
+// 无脑应答设备
+static int tms_AckDevice(struct tms_context *pcontext, int8_t *pdata, int32_t len)
+{
+	// pcontext->fd,
+	// int32_t tms_AckEx(
+	// int fd, 
+	// struct glink_addr *paddr, 
+	// struct tms_ack *pack)
 
+	// int fd;
+	struct tms_ack ack;
+	// uint32_t src,dst;
+	struct glink_base *pbase_hdr;
+	struct glink_addr base_hdr;
+
+	pbase_hdr = (struct glink_base*)(pdata + sizeof(int32_t));
+	
+	// printf(" ..................%s %x id %x\n", __FUNCTION__, htonl(pbase_hdr->src) ,htonl(pbase_hdr->cmdid));
+	if (htonl(pbase_hdr->src) != GLINK_DEV_ADDR) {
+		return 0;
+	}
+	
+	base_hdr.pkid = htonl(pbase_hdr->pkid);
+	base_hdr.src = htonl(pbase_hdr->dst);
+	base_hdr.dst = htonl(pbase_hdr->src);
+
+	ack.cmdid = htonl(pbase_hdr->cmdid);
+	ack.errcode = htonl(RET_SUCCESS);
+	ack.reserve1 = 0;
+	ack.reserve2 = 0;
+	ack.reserve3 = 0;
+	ack.reserve4 = 0;
+	tms_AckEx(pcontext->fd, &base_hdr, &ack);
+
+	
+	// struct tms_context *popt;
+	// popt = (tms_context *)ptr_opt;
+	// gl_addr.dst = popt->pgb->src;
+	// gl_addr.src = ADDR_MCU;
+	// gl_addr.pkid = popt->pgb->pkid;
+	// //fd = tms_SelectFdByAddr(&gl_addr.dst);
+	// fd = popt->fd;
+	// bzero(&ack, sizeof(tms_ack));
+	// ack.cmdid = res_cmd;
+	// ack.errcode = res_code;
+	// ack.reserve1 = MCU_CARD&0x0000FFFF;
+	// ack.reserve2 = MCU_CARD<<16&0xFFFF0000;
+	// ack.reserve3 = opt;
+	// tms_AckEx(fd, &gl_addr,&ack);
+	// #if USR_DEBUG
+	// qDebug("mcu_ack fd %d src 0x%x dst 0x%x res_code %d cmd 0x%x",\
+	// 	fd, gl_addr.src, gl_addr.dst, res_code, res_cmd);
+	// #endif
+	return 0;
+}
 
 
 static struct tms_analyse_array sg_analyse_0x1000xxxx[] = 
@@ -7176,8 +7230,9 @@ int32_t tms_Analyse(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 	struct glink_base *pbase_hdr, glinkbase;
 	struct tms_analyse_array *pwhichArr = NULL;
 
-
-	
+#ifdef CONFIG_ACK_DEVICE
+	tms_AckDevice(pcontext, pdata, len);
+#endif
 	pbase_hdr = (struct glink_base*)(pdata + sizeof(int32_t));
 	cmdid = htonl(pbase_hdr->cmdid);
 	cmdh = cmdid & 0xf0000000;
@@ -7293,6 +7348,7 @@ _Unknow:;
 		fecho("undefine dowhat!!!!!\n");
 		break;
 	}
+	
 	return 0;
 }
 

@@ -1204,15 +1204,15 @@ int ThreadRunServerAndShell(struct ep_t *pep)
 	tms_Init();
 	tms_Callback(&tcb);
 	tms_UseEpollServer(pep);
-    ep_Interface(pep, 2);           // 初始化ep接口
-    ep_Callback(pep);               // 设在epollserver在本工程的回掉函数
+	ep_Interface(pep, 2);           // 初始化ep接口
+	ep_Callback(pep);               // 设在epollserver在本工程的回掉函数
 
 #ifdef _MANAGE
     if(ep_Listen(pep,6000)) {     // 监听TCP 0.0.0.0:6500端口
         return 0;
     }
 #else
-	if(ep_Listen(pep,6500)) {     // 监听TCP 0.0.0.0:6500端口
+	if(ep_Listen(pep,6000)) {     // 监听TCP 0.0.0.0:6500端口
         return 0;
     }
 #endif

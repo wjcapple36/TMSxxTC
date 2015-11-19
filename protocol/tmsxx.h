@@ -116,7 +116,8 @@ extern "C" {
 #define TARGET_PWU				"pwu.bin" ///<电源板
 #define TARGET_MCU				"mcu.bin" ///<主控板
 #define TARGET_OPM				"opm.bin" ///<光功率模块板
-#define TARGET_OSW				"osw.bin" ///<光开关板
+// #define TARGET_OSW				"osw.bin" ///<光开关板
+#define TARGET_OSW_GX_8				"osw-gx-8.bin" ///<光开关板
 #define TARGET_OTDR				"otdr.exe" ///<OTDR板
 #define TARGET_OLS				"ols.bin" ///<光源板
 #define TARGET_OLP				"olp.bin" ///<光功率板
