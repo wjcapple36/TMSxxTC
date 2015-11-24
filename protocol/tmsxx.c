@@ -758,12 +758,14 @@ static int32_t tms_AnalyseRetDevType(struct tms_context *pcontext, int8_t *pdata
 	pval->reserved2 = htonl(pval->reserved2);
 	pval->reserved3 = htonl(pval->reserved3);
 
+
 	printf("tms_AnalyseRetDevType\n");
 
 
 	struct tms_devbase devbase;
 	devbase.fd = pcontext->fd;
 	devbase.frame = pval->frame;
+	devbase.slot = pval->slot;
 	devbase.port = pval->port;
 	devbase.type = pval->type;
 	devbase.wave = pval->reserved0;
@@ -7773,6 +7775,7 @@ void tms_AddDev(int32_t frame, int32_t slot, struct tms_devbase *pdev)
 	if ((uint32_t)frame >= MAX_FRAME || (uint32_t)slot > MAX_SLOT) {
 		return ;
 	}
+
 	sg_devnet[frame][slot].fd        = pdev->fd;
 	sg_devnet[frame][slot].frame     = pdev->frame;
 	sg_devnet[frame][slot].slot      = pdev->slot;

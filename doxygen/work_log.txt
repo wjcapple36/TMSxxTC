@@ -1,4 +1,14 @@
 /*! \page workhis TMSxxTC 项目工作日志
+2015-11-24: Menglong Wu
+	- Bug TC网管获取设备组成信息失败，设备返回的update com refurbish内容槽位好错误
+
+2015-11-19: Menglong Wu
+	- Project 基本完成MCU单板测试工程 producttest.elf
+
+2015-11-17: Menglong Wu
+	- Add 无脑响应设备数据，防止刷屏
+-----
+
 2015-10-27: Menglong Wu
 	- Change 废除 tms_MCU_RetDeviceType 改成 tms_MCU_RetDeviceType_V2
 	- Change tms_AddDev,tms_GetFrame 添加保留项信息，我本人并不关注多出的信息，文金朝关注

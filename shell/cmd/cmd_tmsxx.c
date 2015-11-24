@@ -4637,6 +4637,7 @@ void AnalyseComposition(int argc, char **argv)
 		dev.type  = atoi(argv[index]); index++;
 		dev.port  = atoi(argv[index]); index++;
 
+		printf("%d %d %d %d\n", dev.frame, dev.slot, dev.type, dev.port);
 		tms_AddDev(dev.frame, dev.slot, &dev);
 	}
 }
@@ -4713,7 +4714,7 @@ int cmd_update(int argc, char **argv)
 			memcmp(argv[2], "request", strlen(argv[2])) == 0) {
 
 		// 遍历16个机框各槽位
-		for (int i = 0; i < 16; i++) {
+		for (int i = 0; i < MAX_SLOT; i++) {
 			havedev = 0;
 			tms_GetFrame(i, &oneframe);
 			tc.strout = strout;
