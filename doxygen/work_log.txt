@@ -1,4 +1,8 @@
 /*! \page workhis TMSxxTC 项目工作日志
+2015-12-03: Menglong Wu
+	- Change 加回网管心跳机制，但网管不回应心跳不主动断开
+	- Issus 貌似tms_AddManage检测网管地址冲突有漏洞，
+
 2015-11-24: Menglong Wu
 	- Bug TC网管获取设备组成信息失败，设备返回的update com refurbish内容槽位好错误
 

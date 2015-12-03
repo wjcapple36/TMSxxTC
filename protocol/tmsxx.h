@@ -86,6 +86,10 @@ extern "C" {
 #define RET_SAVE_SOURCE             19///<存在两个相同的源地址连接，两个网管
 #define RET_CONNECT_PORT_NOT_TEST   20///<本端口属于级联端口，不能进行测试
 #define RET_MODULE_ROUTE_NO_EXIST   21///<模块路由不存在
+#define RET_MODULE_ROUTE_ILLEGALT   22///<模块路由非法
+#define RET_SMS_PHONE_ILLEGALT          23 /// 短信电话非法
+#define RET_SMS_TEXT_VOERFLOW          24 /// 短信内容长度越界
+#define RET_SMS_EQ_ERROR                     25 //短信猫设备故障
 
 ////////////////////////////////////////////////////////////////////////////////
 // Section  Proccess 数据包处理方式
@@ -116,8 +120,8 @@ extern "C" {
 #define TARGET_PWU				"pwu.bin" ///<电源板
 #define TARGET_MCU				"mcu.bin" ///<主控板
 #define TARGET_OPM				"opm.bin" ///<光功率模块板
-// #define TARGET_OSW				"osw.bin" ///<光开关板
-#define TARGET_OSW_GX_8				"osw-gx-8.bin" ///<光开关板
+#define TARGET_OSW_GX_8                                "osw-gx-8.bin" ///<光开关板
+#define TARGET_OSW				"osw.bin" ///<光开关板
 #define TARGET_OTDR				"otdr.exe" ///<OTDR板
 #define TARGET_OLS				"ols.bin" ///<光源板
 #define TARGET_OLP				"olp.bin" ///<光功率板
@@ -2049,6 +2053,8 @@ void tms_Echo(int en);
 int32_t tms_SendAllManager(struct glink_base  *pbase_hdr, uint8_t *pdata, int32_t len);
 int32_t tms_SendAllManagerDot(struct glink_base  *pbase_hdr, int group, uint8_t *fmt,...);
 int32_t tms_CountList(struct tms_man_base *list, int32_t count);
+int32_t tms_RetOLPActionLog(int fd, struct glink_addr *paddr, int32_t count, struct tms_olp_action_log_val *pval);
+int32_t tms_ManageCount();
 #ifdef __cplusplus
 }
 #endif

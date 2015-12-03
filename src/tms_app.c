@@ -667,8 +667,97 @@ void *ThreadConnectCU(void *arg)
 	struct ep_t *pep = (struct ep_t*)arg;
 	struct ep_con_t client;
 	
+	int server_fd;
+	int server_cnt;
+	uint32_t server_addr;
+	struct glink_addr gl_addr;
 	bzero(&client, sizeof(struct ep_con_t));
+
+	
+#ifdef _MANAGE
 	return 0;
+#endif
+	
+	usleep(3000000);//延时3s，防止x86下efence奔溃
+	
+	gl_addr.pkid = 0;
+	gl_addr.src = TMS_DEFAULT_LOCAL_ADDR;
+	while(1) {
+		for (server_addr = 0x3a; server_addr <=0x3f;  server_addr++) {
+			server_fd = tms_SelectFdByAddr(&server_addr);
+			gl_addr.dst = server_addr;
+
+			if (server_fd) {
+				// printf("ser cnt %d\n", server_fd);
+				tms_Tick(server_fd, &gl_addr);	
+			}
+
+		}
+		
+
+		// if (g_en_connect_cu == 1 && 0 == tms_ManageCount()) {
+		// 	if (0 == ep_Connect(pep,&client, "192.168.0.253", 6000) ) {
+		// 	// if (0 == ep_Connect(pep,&client, "192.168.1.251", 6000) ) {
+		//     	printf("connect CU success :  %s:%d\n", 
+		// 					inet_ntoa(client.loc_addr.sin_addr),
+		// 					htons(client.loc_addr.sin_port));
+
+		//     	// ptmsapp = (struct tmsxx_app*)client.ptr;
+		//     	// pcontext = &ptmsapp->context;
+		//     	// printf("pcontext %d\n", pcontext->fd);
+		//     	// pcontext = (struct tms_context*) ((struct tmsxx_app*)client.ptr->context);
+		//     	tms_AddManage(NULL,client.sockfd, 0);
+		//     	tms_SetCUFd(client.sockfd);
+		//     	sleep(5);
+		//     }
+		//     else {
+		//     	sleep(5);
+		//     	continue;
+		//     }
+	 //    	}
+	    #if 0
+	    // if (g_en_connect_cu == 1 && 0 != tms_ManageCount()) {
+	    if (g_en_connect_cu == 1 && 0 != client.sockfd) {
+	    	struct tmsxx_app *ptapp = (struct tmsxx_app*)client.ptr;
+			
+			for (int i = 0;i < 10; i++) {
+				tms_Tick(client.sockfd, NULL);
+				sleep(3);
+
+				if (ptapp->context.tick == 0) {
+					if (i < 6) {
+						printf("continue send TICK to cu %d\n",i);
+						continue;
+					}
+					else {
+						tms_SetCUFd(0);
+						tms_DelManage(NULL,client.sockfd); // 解决bug
+						ep_Close(pep, NULL, client.sockfd);
+						client.sockfd = 0;
+						break;
+					}
+				}
+				else {
+					break;
+				}
+			}
+			ptapp->context.tick = 0;
+	    }
+	    #endif
+	    sleep(10);
+	}
+    
+
+}
+#if 0
+void *ThreadConnectCU(void *arg)
+{
+	struct tmsxx_app *ptmsapp;
+	struct tms_context *pcontext;
+	struct ep_t *pep = (struct ep_t*)arg;
+	struct ep_con_t client;
+	
+	bzero(&client, sizeof(struct ep_con_t));
 #ifdef _MANAGE
 	return 0;
 #endif
@@ -726,6 +815,7 @@ void *ThreadConnectCU(void *arg)
     
 
 }
+#endif
 
 #ifdef __cplusplus
 }

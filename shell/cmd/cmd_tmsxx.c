@@ -4866,6 +4866,18 @@ int cmd_remotecmd(int argc, char **argv)
 	return 0;
 }
 W_BOOT_CMD(r, cmd_remotecmd, "cmd epoll server send");
+
+/**
+ * 重复的地址链接会被MCU断掉
+ * tc <ip> <port> [glink addr index]
+ * 	glink addr index	glink addr
+ *		a		0x3a
+ *		b		0x3b
+ *		c		0x3c
+ *		d		0x3d
+ *		e		0x3d
+ *		f		0x3f
+ */
 int cmd_term_connect(int argc,char **argv)
 {
 	struct ep_con_t client;
@@ -4893,7 +4905,7 @@ int cmd_term_connect(int argc,char **argv)
 		// 发送 序列号请求 ID_GET_SN 必须在 Im Trace 之前，
 		// 保证先将Trace网管的地址加入MCU的缓存
 		ret = snprintf(strout, 64, "sn");
-		// tms_Command(client.sockfd, NULL, strout, ret + 1);
+		tms_Command(client.sockfd, NULL, strout, ret + 1);
 
 		if (argc == 4) {
 			struct glink_addr gl;
