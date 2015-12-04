@@ -207,6 +207,7 @@ W_BOOT_CMD(epsend,cmd_epsend,"cmd epoll server send");
 int cmd_unhook(int argc,char **argv)
 {
 	signal(SIGINT, NULL);
+	return 0;
 }
 W_BOOT_CMD(unhook,cmd_unhook,"cmd epoll server send");
 /**

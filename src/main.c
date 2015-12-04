@@ -190,204 +190,204 @@ extern void ep_Callback(struct ep_t *pep);
 #include <stdlib.h>	
 #include <iconv.h>
 //代码转换:从一种编码转为另一种编码
-int code_convert(char *from_charset,char *to_charset,char *inbuf,int inlen,char *outbuf,int outlen)
-{
-	iconv_t cd;
-	int rc;
-	char **pin = &inbuf;
-	char **pout = &outbuf;
+// int code_convert(char *from_charset,char *to_charset,char *inbuf,int inlen,char *outbuf,int outlen)
+// {
+// 	iconv_t cd;
+// 	int rc;
+// 	char **pin = &inbuf;
+// 	char **pout = &outbuf;
 
-	cd = iconv_open(to_charset,from_charset);
-	if (cd==0) return -1;
+// 	cd = iconv_open(to_charset,from_charset);
+// 	if (cd==0) return -1;
 
-	memset(outbuf,0,outlen);
-	if (iconv(cd,pin,(size_t*)&inlen,pout,(size_t*)(outlen))==-1) return -1;
-	// iconv(iconv_t __cd, char **__inbuf, size_t *__inbytesleft, char **__outbuf, size_t *__outbytesleft)
-	iconv_close(cd);
-	return 0;
-}
-//UNICODE码转为GB2312码
-int u2g(char *inbuf,int inlen,char *outbuf,int outlen)
-{
-	return code_convert("utf-8","gb2312",inbuf,inlen,outbuf,outlen);
-}
-//GB2312码转为UNICODE码
-int g2u(char *inbuf,size_t inlen,char *outbuf,size_t outlen)
-{
-	return code_convert("gb2312","utf-8",inbuf,inlen,outbuf,outlen);
-}
-#define OUTLEN 600
-void fun3()
-{
-	char in_utf8[100] = "姝ｅ?ㄥ??瑁?";
-	char in_gb2312[100] = "正在安装";
-	char out[OUTLEN] = {0};
-	int rc;
-	char **pin = (char**)&in_utf8;
-	char **pout= (char**)&out;
-	size_t inlen = 100, outlen = OUTLEN;
+// 	memset(outbuf,0,outlen);
+// 	if (iconv(cd,pin,(size_t*)&inlen,pout,(size_t*)(outlen))==-1) return -1;
+// 	// iconv(iconv_t __cd, char **__inbuf, size_t *__inbytesleft, char **__outbuf, size_t *__outbytesleft)
+// 	iconv_close(cd);
+// 	return 0;
+// }
+// //UNICODE码转为GB2312码
+// int u2g(char *inbuf,int inlen,char *outbuf,int outlen)
+// {
+// 	return code_convert("utf-8","gb2312",inbuf,inlen,outbuf,outlen);
+// }
+// //GB2312码转为UNICODE码
+// int g2u(char *inbuf,size_t inlen,char *outbuf,size_t outlen)
+// {
+// 	return code_convert("gb2312","utf-8",inbuf,inlen,outbuf,outlen);
+// }
+// #define OUTLEN 600
+// void fun3()
+// {
+// 	char in_utf8[100] = "姝ｅ?ㄥ??瑁?";
+// 	char in_gb2312[100] = "正在安装";
+// 	char out[OUTLEN] = {0};
+// 	int rc;
+// 	char **pin = (char**)&in_utf8;
+// 	char **pout= (char**)&out;
+// 	size_t inlen = 100, outlen = OUTLEN;
 
-	iconv_t cd;
-	//unicode码转为gb2312码
-	// rc = u2g(in_utf8,strlen(in_utf8)/2,out,OUTLEN);
-	rc = code_convert("gb2312","utf-8",in_utf8,strlen(in_utf8),out,OUTLEN);
-	// cd = iconv_open("gb2312","utf-8");
-	// iconv(cd, pin, &inlen, pout, &outlen);
-	// iconv_close(cd);
-	printf("unicode-->gb2312 out=%sn",out);
-	//gb2312码转为unicode码
-	// rc = g2u(in_gb2312,strlen(in_gb2312),out,OUTLEN);
-	// printf("gb2312-->unicode out=%sn",out);
-}
+// 	iconv_t cd;
+// 	//unicode码转为gb2312码
+// 	// rc = u2g(in_utf8,strlen(in_utf8)/2,out,OUTLEN);
+// 	rc = code_convert("gb2312","utf-8",in_utf8,strlen(in_utf8),out,OUTLEN);
+// 	// cd = iconv_open("gb2312","utf-8");
+// 	// iconv(cd, pin, &inlen, pout, &outlen);
+// 	// iconv_close(cd);
+// 	printf("unicode-->gb2312 out=%sn",out);
+// 	//gb2312码转为unicode码
+// 	// rc = g2u(in_gb2312,strlen(in_gb2312),out,OUTLEN);
+// 	// printf("gb2312-->unicode out=%sn",out);
+// }
 
 
 
-void fun()
-{
-	// setlocale(LC_ALL,"chs"); 
-	setlocale(LC_ALL,"zh_CN.utf-8");
-	wchar_t wstr[30] = L"中国abcd";
-	char cstr[30] = "中国";
-	wchar_t wcstr[90]= {0};
-	char strinput[90]= {0};
+// void fun()
+// {
+// 	// setlocale(LC_ALL,"chs"); 
+// 	setlocale(LC_ALL,"zh_CN.utf-8");
+// 	wchar_t wstr[30] = L"中国abcd";
+// 	char cstr[30] = "中国";
+// 	wchar_t wcstr[90]= {0};
+// 	char strinput[90]= {0};
 
-	printf("wchar_t:\n");
-	PrintfMemory((uint8_t*)wstr,30);
-	printf("char:\n");
-	PrintfMemory((uint8_t*)cstr,30);
+// 	printf("wchar_t:\n");
+// 	PrintfMemory((uint8_t*)wstr,30);
+// 	printf("char:\n");
+// 	PrintfMemory((uint8_t*)cstr,30);
 
-	// wscanf(L"%s",wcstr);
-	// printf("wchar:\n");
-	// PrintfMemory((uint8_t*)wcstr,30);	
+// 	// wscanf(L"%s",wcstr);
+// 	// printf("wchar:\n");
+// 	// PrintfMemory((uint8_t*)wcstr,30);	
 	
-	// scanf("%s", strinput);
-	// printf("char:\n");
-	// PrintfMemory((uint8_t*)strinput,30);	
+// 	// scanf("%s", strinput);
+// 	// printf("char:\n");
+// 	// PrintfMemory((uint8_t*)strinput,30);	
 
 
-	// printf((char*)L"str %s\n",str);
-	// printf("cstr %s\n",cstr);
-	// wprintf(L"cstr %s\n\n",wstr);
-	// wsprintf wcstr
-	size_t len, ls;
+// 	// printf((char*)L"str %s\n",str);
+// 	// printf("cstr %s\n",cstr);
+// 	// wprintf(L"cstr %s\n\n",wstr);
+// 	// wsprintf wcstr
+// 	size_t len, ls;
 
 
-	// setlocale(LC_ALL,"zh_CN");
+// 	// setlocale(LC_ALL,"zh_CN");
 	
-	len = mbstowcs(wcstr, cstr, 90);
-	perror("wcstombs ");
+// 	len = mbstowcs(wcstr, cstr, 90);
+// 	perror("wcstombs ");
 
-	printf("conv:\n");
-	PrintfMemory((uint8_t*)wcstr,30);	
-	return ;
-	setlocale(LC_ALL,"POSIX");
+// 	printf("conv:\n");
+// 	PrintfMemory((uint8_t*)wcstr,30);	
+// 	return ;
+// 	setlocale(LC_ALL,"POSIX");
 	
-	len = mbstowcs(wcstr, cstr, 90);
-	perror("wcstombs ");
+// 	len = mbstowcs(wcstr, cstr, 90);
+// 	perror("wcstombs ");
 
-	setlocale(LC_ALL,"C");
+// 	setlocale(LC_ALL,"C");
 	
-	len = mbstowcs(wcstr, cstr, 90);
-	perror("wcstombs ");
+// 	len = mbstowcs(wcstr, cstr, 90);
+// 	perror("wcstombs ");
 
-	setlocale(LC_ALL,"en_AG.utf8");
+// 	setlocale(LC_ALL,"en_AG.utf8");
 	
-	len = mbstowcs(wcstr, cstr, 90);
-	perror("wcstombs ");
+// 	len = mbstowcs(wcstr, cstr, 90);
+// 	perror("wcstombs ");
 
-	setlocale(LC_ALL,"zh_HK.gb2312");
+// 	setlocale(LC_ALL,"zh_HK.gb2312");
 	
-	len = mbstowcs(wcstr, cstr, 90);
-	perror("wcstombs ");
+// 	len = mbstowcs(wcstr, cstr, 90);
+// 	perror("wcstombs ");
 
-	setlocale(LC_ALL,"zh_HK.utf8");
+// 	setlocale(LC_ALL,"zh_HK.utf8");
 	
-	len = mbstowcs(wcstr, cstr, 90);
-	perror("wcstombs ");
+// 	len = mbstowcs(wcstr, cstr, 90);
+// 	perror("wcstombs ");
 
-	setlocale(LC_ALL,"zh_HK.utf8");
+// 	setlocale(LC_ALL,"zh_HK.utf8");
 	
-	len = mbstowcs(wcstr, cstr, 90);
-	perror("wcstombs ");
+// 	len = mbstowcs(wcstr, cstr, 90);
+// 	perror("wcstombs ");
 
-	setlocale(LC_ALL,"zh_HK.utf8");
+// 	setlocale(LC_ALL,"zh_HK.utf8");
 	
-	len = mbstowcs(wcstr, cstr, 90);
-	perror("wcstombs ");
+// 	len = mbstowcs(wcstr, cstr, 90);
+// 	perror("wcstombs ");
 
-	setlocale(LC_ALL,"zh_HK.utf8");
-	ls = mbstowcs(NULL,cstr,0)+1;
-	len = mbstowcs(wcstr, cstr, 90);
-
-
+// 	setlocale(LC_ALL,"zh_HK.utf8");
+// 	ls = mbstowcs(NULL,cstr,0)+1;
+// 	len = mbstowcs(wcstr, cstr, 90);
 
 
-	printf("len = %d %d\n", len,ls);
-	perror("wcstombs ");
+
+
+// 	printf("len = %d %d\n", len,ls);
+// 	perror("wcstombs ");
 	
-	len = wcslen(wcstr);
-	printf("len = %d %d\n", len,ls);
-	PrintfMemory((uint8_t*)wcstr,60);	
+// 	len = wcslen(wcstr);
+// 	printf("len = %d %d\n", len,ls);
+// 	PrintfMemory((uint8_t*)wcstr,60);	
 	
-}
+// }
 
-int fun2()
-{
-	setlocale(LC_ALL,"zh_CN.GB18030");
-    wchar_t wcstr[50] = L"字符测试123abc";
+// int fun2()
+// {
+// 	setlocale(LC_ALL,"zh_CN.GB18030");
+//     wchar_t wcstr[50] = L"字符测试123abc";
 
-    for (int i = 0; i < 50; i++) {
-    	printf("%4.4x\n ",wcstr[i]);
-    }
-    int len = wcslen(wcstr)+1;
-    printf("len = %d \n",len);
-    for(int i = 0; i < len; i++)
-        printf("0x%08x ",wcstr[i]);
-    printf("\n");
+//     for (int i = 0; i < 50; i++) {
+//     	printf("%4.4x\n ",wcstr[i]);
+//     }
+//     int len = wcslen(wcstr)+1;
+//     printf("len = %d \n",len);
+//     for(int i = 0; i < len; i++)
+//         printf("0x%08x ",wcstr[i]);
+//     printf("\n");
 
-    char str[55] = {0};    
-    int n = wcstombs(str,wcstr,55);
-    if(-1 == n)
-    {
-    perror("wcstombs ");
-    exit(-1);
-    }    
-    printf("n = %d\n",n);
-    for(int i = 0; i < n+1; i++)
-        printf("0x%08x ",str[i]);
-    printf("\n");    
-    wchar_t wch[50]={0};
-    int m = mbstowcs(wch,str,n);    
-    if(m == -1)
-    {
-    perror("Converting");
-    exit(-1);
-    }
-    printf("m = %d\n",m);
-    for(int i =0; i<m+1;i++)
-    printf("0x%08x ",wch[i]);
-    printf("\n");
-    return 0;
+//     char str[55] = {0};    
+//     int n = wcstombs(str,wcstr,55);
+//     if(-1 == n)
+//     {
+//     perror("wcstombs ");
+//     exit(-1);
+//     }    
+//     printf("n = %d\n",n);
+//     for(int i = 0; i < n+1; i++)
+//         printf("0x%08x ",str[i]);
+//     printf("\n");    
+//     wchar_t wch[50]={0};
+//     int m = mbstowcs(wch,str,n);    
+//     if(m == -1)
+//     {
+//     perror("Converting");
+//     exit(-1);
+//     }
+//     printf("m = %d\n",m);
+//     for(int i =0; i<m+1;i++)
+//     printf("0x%08x ",wch[i]);
+//     printf("\n");
+//     return 0;
 
 
 
-}
+// }
 #include <netdb.h> 
 // #include <sockets.h>
 #include <stdio.h>
 
 
-#define SERVER_NAME     "bule-sea.6655.la"  //服务器域名地址
+// #define SERVER_NAME     "bule-sea.6655.la"  //服务器域名地址
 
-void dns()
-{
-	struct hostent *host;
-	struct in_addr addr;
-	//DNS地址解析   
-	host = gethostbyname(SERVER_NAME);
-	addr.s_addr = *(unsigned long *)host->h_addr;
-	printf("Server IP Address:%s\r\n" , inet_ntoa(addr));  
-}
+// void dns()
+// {
+// 	struct hostent *host;
+// 	struct in_addr addr;
+// 	//DNS地址解析   
+// 	host = gethostbyname(SERVER_NAME);
+// 	addr.s_addr = *(unsigned long *)host->h_addr;
+// 	printf("Server IP Address:%s\r\n" , inet_ntoa(addr));  
+// }
 
 int main(int argc, char const *argv[])
 {	

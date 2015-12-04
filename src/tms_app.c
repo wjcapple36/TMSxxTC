@@ -77,7 +77,9 @@ int unuse_copy2use(char *buf, int datalen, int msec, void *ptr)
 
 int32_t tms_OnGetDeviceComposition(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
-	printf("OnGetDeviceComposition\n");
+	printf("%s()%d\n", __FUNCTION__, __LINE__);
+	return 0;
+#if 0
 	struct tms_dev_composition_val devcom[16*MAX_SLOT];
 
 	int havedev;
@@ -100,12 +102,13 @@ int32_t tms_OnGetDeviceComposition(struct tms_context *pcontext, int8_t *pdata, 
 	printf("count = %d\n",count);
 	// tms_RetDeviceComposition(pcontext->fd, NULL, count,devcom);
 	return 0;
+#endif
 }
 
 
 
 
-struct tms_dev_composition_val sg_appdevcom[17][12] = {0};
+struct tms_dev_composition_val sg_appdevcom[17][12] = {{{0}}};
 
 // extern int DispFrame(struct tms_devbase *pframe,uint32_t flag);
 
@@ -173,7 +176,7 @@ int32_t tms_OnRetDeviceComposition(struct tms_context *pcontext, int8_t *pdata, 
 	struct tms_devbase oneframe[12];
 
 	struct tms_dev_composition_val *ptlist;
-	int frame;
+
 
 
 	ptlist = plist;
@@ -410,7 +413,7 @@ _Find:;
 int32_t tms_OnSpAck(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
 	struct tms_ack *pval;
-	int cmdid;
+	uint32_t cmdid;
 	pval = (struct tms_ack *)(pdata + GLINK_OFFSET_DATA);
 	cmdid   = htonl(pval->cmdid);
 
@@ -533,7 +536,8 @@ int32_t tms_OnRetAnyOP(struct tms_context *pcontext, struct tms_any_op *phdr, st
 
 int32_t tms_OnGetSerialNumber(struct tms_context *pcontext)
 {
-    return 0;
+	return 0;
+#if 0
 	tdb_sn_t input, mask;
 	tdb_sn_t *ppout;
 	int row;
@@ -558,16 +562,17 @@ int32_t tms_OnGetSerialNumber(struct tms_context *pcontext)
 		struct glink_addr gl;
 		gl.src = GLINK_4412_ADDR;
 		gl.dst = GLINK_MANAGE_ADDR;
-        gl.pkid = pcontext->pgb->pkid;
+        	gl.pkid = pcontext->pgb->pkid;
 		ret = snprintf(strout, 64,"%s",ppout[r].sn);
-        tms_RetSerialNumber(tms_GetCUFd(), &gl, (uint8_t (*)[128])strout);
-		printf("cu fd %d\n", tms_GetCUFd());
+        	tms_RetSerialNumber(tms_GetCUFd(), &gl, (uint8_t (*)[128])strout);
+		printf("cu fd %d %d\n", tms_GetCUFd());
 		break;
 	}
 	
 	// 注意，用完后必须释放
 	free(ppout);
 	return 0;
+#endif
 }
 
 extern int DispRoute_V2(struct tdb_route *prl, int count, struct trace_cache *ptc);
@@ -662,13 +667,13 @@ void tms_SetCB(void *fun)
 
 void *ThreadConnectCU(void *arg)
 {
-	struct tmsxx_app *ptmsapp;
-	struct tms_context *pcontext;
-	struct ep_t *pep = (struct ep_t*)arg;
+	// struct tmsxx_app *ptmsapp;
+	// struct tms_context *pcontext;
+	// struct ep_t *pep = (struct ep_t*)arg;
 	struct ep_con_t client;
 	
 	int server_fd;
-	int server_cnt;
+	// int server_cnt;
 	uint32_t server_addr;
 	struct glink_addr gl_addr;
 	bzero(&client, sizeof(struct ep_con_t));
@@ -747,7 +752,7 @@ void *ThreadConnectCU(void *arg)
 	    sleep(10);
 	}
     
-
+	return NULL;
 }
 #if 0
 void *ThreadConnectCU(void *arg)

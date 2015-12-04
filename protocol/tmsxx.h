@@ -204,7 +204,8 @@ extern "C" {
 #define ID_RET_DEV_STATE_FROM_TU	0x60000012 ///<TU板卡返回其所在机框的板卡插拔状态
 #define ID_GET_POWER_STATE_FROM_TU 	0x60000013 ///<工控板向TU板卡查询其所在机框的电源组成信息
 #define ID_RET_POWER_STATE_FROM_TU 	0x60000014 ///<TU板卡返回其所在机框的电源组成信息
-
+#define ID_MCU_GET_DEV_ALARM	 	0x60000015 ///<工控板查询某槽位上总的硬件告警
+#define ID_DEV_RET_MCU_ALARM	 	0x60000016 ///<各业务单板向MCU返回总的硬件告警
 ////////////////////////////////////////////////////////////////////////////////
 // 命令类型:网管与MCU之间的通信
 ///<网管查询MCU的设备序列号
@@ -489,7 +490,14 @@ struct tms_dev_composition_val
 	int32_t reserved3;
 };
 
-
+// 0x60000012
+struct tms_dev_status_from_tu
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+	int32_t dev_status;
+};
 
 struct tms_alarm_hw_change
 {
