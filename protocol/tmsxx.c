@@ -615,7 +615,20 @@ int32_t tms_MCUtoDevice(
 	ret = glink_Send(fd, &base_hdr, pmem, len);
 	return ret;
 }
+/**
+ * @brief	通用发送接口，数据长度必须是4的倍数，，不能存在于网络字节序无关的1字节
+ * @see	
+ */
 
+int32_t tms_MCUtoDevice_Ex(
+	int     fd, 
+	struct glink_addr *paddr, 
+	int32_t cmdID,
+	char *pdata,
+	int32_t len)
+{
+	return 0;
+}
 /**
  * @brief	部分拥有数据分析，数据长度必须是4的倍数，所有数据均是4字节段，不能存在于网络字节序无关的1字节
  * @param	pdata glink帧
@@ -6272,6 +6285,7 @@ static struct pro_list g_cmdname_0x6000xxxx[] = {
 {"ID_RET_POWER_STATE_FROM_TU"},
 {"ID_MCU_GET_DEV_ALARM"},
 {"ID_DEV_RET_MCU_ALARM"},
+{"ID_OLP_REQUEST_OTDR"},
 
 };
 
@@ -6728,11 +6742,12 @@ uint32_t tms_GetPowerStateFromTU(
  */
 uint32_t tms_MCUGeTDevAlarm(
 	int fd,
+	struct glink_addr *paddr,
 	int32_t frame,
 	int32_t slot,
 	int32_t type)
 {
-	return 0;
+	return tms_MCUtoDevice(fd, paddr, frame, slot, type, 0, ID_MCU_GET_DEV_ALARM, sizeof(struct tms_mcu_get_dev_alarm));
 }
 
 // ID_DEV_RET_MCU_ALARM	 	0x60000016 ///<各业务单板向MCU返回总的硬件告警
@@ -6741,26 +6756,43 @@ static int32_t tms_AnalyseDevRetMCUAlarm(struct tms_context *pcontext, int8_t *p
 	// 下面仅仅是个模板
 	// int tcount;
 	// #define CHECK_PTR(ptrA, struct_A, struct_B, B_Count, PtrEnd) 	
-	// tcount = htonl(count);
-	// tms_Conv_Nx4Byte((uint32_t*)plist, (uint32_t*)plist, size*count);
-	// struct glink_base  base_hdr;
-	// int len;
+	struct tms_alarm_hw *pcfg_hdr;
+	struct tms_alarm_hw_val  *plist, *ptlist;
 
-	// len = 	sizeof(int32_t) + (size * count);
-	
-	// tms_FillGlinkFrame(&base_hdr, paddr);
-	// if (0 == fd) {
-	// 	// fd = 
-	// 	tms_SelectFdByAddr(&base_hdr.dst);
-	// }
-	// glink_Build(&base_hdr, cmdid, len);
-	// glink_SendHead(fd, &base_hdr);
-	// glink_SendSerial(fd, (uint8_t*)&tcount,   sizeof(int32_t));
-	// glink_SendSerial(fd, (uint8_t*)plist,   size * count);
-	// glink_SendTail(fd);
+	pcfg_hdr = (struct tms_alarm_hw*)(pdata + GLINK_OFFSET_DATA);
+	if ( !CHECK_PTR(
+		pcfg_hdr, 
+		struct tms_alarm_hw, 
+		struct tms_alarm_hw_val, 
+		htonl(pcfg_hdr->count), 
+		pdata + len)) {
+		
+		return -1;
+	}
+	plist    = (struct tms_alarm_hw_val*)  (pdata + GLINK_OFFSET_DATA + sizeof(struct tms_alarm_hw));
+	// PrintfMemory((uint8_t *)plist, sizeof(struct tms_alarm_hw_val));
+
+	pcfg_hdr->alarm_type  = htonl(pcfg_hdr->alarm_type);
+	pcfg_hdr->count = htonl(pcfg_hdr->count);
+
+    	// TODO：防止count溢出
+	ptlist = plist;
+	for (int i = 0; i < pcfg_hdr->count; i++) {
+		ptlist->level      = htonl(ptlist->level);
+		ptlist->frame      = htonl(ptlist->frame);
+		ptlist->slot       = htonl(ptlist->slot);
+		ptlist->reason     = htonl(ptlist->reason);
+		ptlist++;
+	}
 	return 0;
 }
 
+// ID_OLP_REQUEST_OTDR		0x60000017 ///<OLP板卡向MCU请求OTDR测试
+static int32_t tms_AnalyseOLPRequestOTDR(struct tms_context *pcontext, int8_t *pdata, int32_t len)
+{
+	tms_AnalyseMCUtoDevice(pdata, sizeof(struct tms_olp_request_otdr));
+	return 0;
+}
 
 
 
@@ -7137,6 +7169,10 @@ static struct tms_analyse_array sg_analyse_0x6000xxxx[] =
 {	tms_AnalyseRetDevStateFromTU	,0},//	0x60000012	ID_RET_DEV_STATE_FROM_TU
 {	tms_AnalyseUnuse	,8},//	0x60000013	ID_GET_POWER_STATE_FROM_TU
 {	tms_AnalyseUnuse	,8},//	0x60000014	ID_RET_POWER_STATE_FROM_TU
+{	tms_AnalyseUnuse	,8},//	0x60000015	ID_MCU_GET_DEV_ALARM
+{	tms_AnalyseDevRetMCUAlarm	,0},//	0x60000016	ID_DEV_RET_MCU_ALARM
+{	tms_AnalyseDevRetMCUAlarm	,0},//	0x60000017	ID_OLP_REQUEST_OTDR
+
 };
 
 struct tms_analyse_array sg_analyse_0x8000xxxx[] = 
