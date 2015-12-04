@@ -87,7 +87,7 @@ Rotation is separate from addition to prevent recomputation.
   }
 
 
-
+#ifdef  USE_MD5
 class CMD5  
 {
 public:
@@ -107,7 +107,7 @@ public:
 	virtual ~CMD5();
 
 };
-
+#endif
 
 
 #ifdef __cplusplus

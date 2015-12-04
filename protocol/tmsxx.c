@@ -26,10 +26,17 @@ TODO：详细描述
 extern "C" {
 #endif
 
+#ifdef USE_INLINE
 inline int unuse_echo(const char *__restrict __format, ...)
 {
 	return 0;
 }
+#else
+int unuse_echo(const char *__restrict __format, ...)
+{
+	return 0;
+}
+#endif
 #ifdef _MANAGE
 	int (*fecho)(const char *__restrict __format, ...) = unuse_echo;
 #else
@@ -6727,7 +6734,14 @@ uint32_t tms_GetPowerStateFromTU(
 }
 //todo---
 
-// 
+/**
+ * @brief	ID_RET_POWER_STATE_FROM_TU 	0x60000014 ///<TU板卡返回其所在机框的电源组成信息
+ */
+static int32_t tms_AnalyseRetPowerStateFromTU(struct tms_context *pcontext, int8_t *pdata, int32_t len)
+{
+	return tms_AnalyseMCUtoDevice(pdata, sizeof(struct tms_mcu_get_dev_alarm));
+}
+
 /**
  * @brief	ID_MCU_GET_DEV_ALARM	 	0x60000015 ///<工控板查询某槽位上总的硬件告警
  * @param[in]	fd 套接字文件描述符
@@ -6749,6 +6763,8 @@ uint32_t tms_MCUGeTDevAlarm(
 {
 	return tms_MCUtoDevice(fd, paddr, frame, slot, type, 0, ID_MCU_GET_DEV_ALARM, sizeof(struct tms_mcu_get_dev_alarm));
 }
+
+
 
 // ID_DEV_RET_MCU_ALARM	 	0x60000016 ///<各业务单板向MCU返回总的硬件告警
 static int32_t tms_AnalyseDevRetMCUAlarm(struct tms_context *pcontext, int8_t *pdata, int32_t len)
@@ -7168,7 +7184,7 @@ static struct tms_analyse_array sg_analyse_0x6000xxxx[] =
 {	tms_AnalyseUnuse	,8},//	0x60000011	ID_GET_DEV_STATE_FROM_TU
 {	tms_AnalyseRetDevStateFromTU	,0},//	0x60000012	ID_RET_DEV_STATE_FROM_TU
 {	tms_AnalyseUnuse	,8},//	0x60000013	ID_GET_POWER_STATE_FROM_TU
-{	tms_AnalyseUnuse	,8},//	0x60000014	ID_RET_POWER_STATE_FROM_TU
+{	tms_AnalyseRetPowerStateFromTU	,0},//	0x60000014	ID_RET_POWER_STATE_FROM_TU
 {	tms_AnalyseUnuse	,8},//	0x60000015	ID_MCU_GET_DEV_ALARM
 {	tms_AnalyseDevRetMCUAlarm	,0},//	0x60000016	ID_DEV_RET_MCU_ALARM
 {	tms_AnalyseDevRetMCUAlarm	,0},//	0x60000017	ID_OLP_REQUEST_OTDR

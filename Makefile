@@ -188,7 +188,8 @@ OBJCOPY = $(CROSS_COMPILE)objcopy
 CFLAGS		+= -O -g  	 -Wall -static -rdynamic -D_UNUSE_QT_ -fshort-wchar  \
 			-DUSE_MD5 \
 			-DTMS_DEBUG \
-			-DCONFIG_ACK_DEVICE
+			-DCONFIG_ACK_DEVICE \
+			-DUSE_INLINE
 ifeq ("$(GCC_G++)","gcc") # 只有gcc编译器才使用该选项，g++无此选项
 	CC_FLAGS    = -std=gnu99
 else
