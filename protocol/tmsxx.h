@@ -515,6 +515,14 @@ struct tms_dev_ret_mcu_alarm
 	int32_t type;
 	int32_t count;
 };
+struct tms_dev_ret_mcu_alarm_val
+{
+	int32_t level;
+	int32_t frame;
+	int32_t slot;
+	uint32_t reason;
+	int8_t time[20];
+};
 
 // 0x60000017 ID_OLP_REQUEST_OTDR
 struct tms_olp_request_otdr
@@ -526,14 +534,7 @@ struct tms_olp_request_otdr
 };
 
 
-struct tms_dev_ret_mcu_alarm_val
-{
-	int32_t level;
-	int32_t frame;
-	int32_t slot;
-	uint32_t reason;
-	int8_t time[20];
-};
+
 
 struct tms_alarm_hw_change
 {

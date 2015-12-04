@@ -6772,23 +6772,26 @@ static int32_t tms_AnalyseDevRetMCUAlarm(struct tms_context *pcontext, int8_t *p
 	// 下面仅仅是个模板
 	// int tcount;
 	// #define CHECK_PTR(ptrA, struct_A, struct_B, B_Count, PtrEnd) 	
-	struct tms_alarm_hw *pcfg_hdr;
-	struct tms_alarm_hw_val  *plist, *ptlist;
+	struct tms_dev_ret_mcu_alarm *pcfg_hdr;
+	struct tms_dev_ret_mcu_alarm_val  *plist, *ptlist;
 
-	pcfg_hdr = (struct tms_alarm_hw*)(pdata + GLINK_OFFSET_DATA);
+	pcfg_hdr = (struct tms_dev_ret_mcu_alarm*)(pdata + GLINK_OFFSET_DATA);
 	if ( !CHECK_PTR(
 		pcfg_hdr, 
-		struct tms_alarm_hw, 
-		struct tms_alarm_hw_val, 
+		struct tms_dev_ret_mcu_alarm, 
+		struct tms_dev_ret_mcu_alarm_val, 
 		htonl(pcfg_hdr->count), 
 		pdata + len)) {
 		
 		return -1;
 	}
-	plist    = (struct tms_alarm_hw_val*)  (pdata + GLINK_OFFSET_DATA + sizeof(struct tms_alarm_hw));
+	plist    = (struct tms_dev_ret_mcu_alarm_val*)  (pdata + GLINK_OFFSET_DATA + sizeof(struct tms_dev_ret_mcu_alarm));
 	// PrintfMemory((uint8_t *)plist, sizeof(struct tms_alarm_hw_val));
 
-	pcfg_hdr->alarm_type  = htonl(pcfg_hdr->alarm_type);
+	pcfg_hdr->alarm_type = htonl(pcfg_hdr->alarm_type);
+	pcfg_hdr->frame = htonl(pcfg_hdr->frame);
+	pcfg_hdr->slot = htonl(pcfg_hdr->slot);
+	pcfg_hdr->type = htonl(pcfg_hdr->type);
 	pcfg_hdr->count = htonl(pcfg_hdr->count);
 
     	// TODO：防止count溢出
