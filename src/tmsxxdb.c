@@ -705,20 +705,20 @@ int tmsdb_CheckDb()
 			memcpy(dst, pcol_data, col_byte); \
 		} \
 }
-
-//#define TEXT_COPY_S(pstmt, index, dst, max) \
-//{ \
-//		const void *pcol_data; \
-//		int col_byte; \
-//		pcol_data          = sqlite3_column_blob(pstmt,index); \
-//		if (pcol_data) { \
-//			col_byte = strlen((char*)pcol_data);  \
-//			col_byte = col_byte > (max) ? (max) : col_byte; \
-//			memcpy(dst, pcol_data, col_byte); \
-//			dst[col_byte] = '\0';\
-//		} \
-//}
-
+/*
+#define TEXT_COPY_S(pstmt, index, dst, max) \
+{ \
+		const void *pcol_data; \
+		int col_byte; \
+		pcol_data          = sqlite3_column_blob(pstmt,index); \
+		if (pcol_data) { \
+			col_byte = strlen((char*)pcol_data);  \
+			col_byte = col_byte > (max) ? (max) : col_byte; \
+			memcpy(dst, pcol_data, col_byte); \
+			dst[col_byte] = '\0';\
+		} \
+}
+*/
 
 
 #define TEXT_COPY_S(pstmt, index, dst, max) \
@@ -1028,7 +1028,7 @@ int tmsdb_Insert_dev_map(
 		int count)
 {
 	sqlite3 *db;
-	char *errMsg = NULL;
+	// char *errMsg = NULL;
 	int rc;
 	char sql[1024];
 	sqlite3_stmt *pstmt;

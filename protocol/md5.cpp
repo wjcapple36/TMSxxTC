@@ -22,6 +22,10 @@ static char THIS_FILE[]=__FILE__;
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
+static unsigned char PADDING[64] = {
+  0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 CMD5::CMD5()
 {
@@ -140,8 +144,8 @@ unsigned char * CMD5::MD5Int(unsigned char *src, unsigned int inlen, unsigned ch
 {
 	MD5_CTX ctx;
 	unsigned char md[16];
-	char buf[33]={'\0'};
-	char tmp[3]={'\0'};
+	// char buf[33]={'\0'};
+	// char tmp[3]={'\0'};
 	int i;
 
 	MD5Init(&ctx);

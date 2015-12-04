@@ -1888,9 +1888,9 @@ _Delete:;
 		}
 	}
 	else {
-_Usage:;
-		printf("\tatb add\n");
-		printf("\tatb del\n");
+// _Usage:;
+// 		printf("\tatb add\n");
+// 		printf("\tatb del\n");
 	}
 
 
@@ -3372,7 +3372,7 @@ int cmd_tmsall(int argc, char **argv)
 		struct tms_retotdr_test_hdr   test_hdr;
 		struct tms_retotdr_test_param test_param;
 		struct tms_retotdr_data_hdr   data_hdr;
-		struct tms_retotdr_data_val   data_val[10] = {1,2,3,4,5,6};
+		struct tms_retotdr_data_val   data_val[10] = {{1},{2},{3},{4},{5},{6}};
 		struct tms_retotdr_event_hdr  event_hdr;
 		struct tms_retotdr_event_val  event_val;
 		struct tms_retotdr_chain      chain;
@@ -3693,7 +3693,7 @@ int cmd_gver(int argc, char **argv)
 
 	// gver dev <frame/slot>
 	else if (argc == 5 && memcmp(argv[1], "dev", strlen(argv[1])) == 0) {
-		struct tms_devbase devbase;
+		// struct tms_devbase devbase;
 		frame = atoi(argv[2]);
 		slot  = atoi(argv[3]);
 
@@ -4138,6 +4138,9 @@ int cmd_olp(int argc, char **argv)
 		}
 		else if  ('s' == (argv[4][0] | 0x20)) {
 			port = OLP_SWITCH_B;
+		}
+		else {
+			return 0;
 		}
 
 		if ( (unsigned int)port < 7) {
@@ -4647,12 +4650,12 @@ void AnalyseComposition(int argc, char **argv)
 int cmd_sn(int argc, char **argv)
 {
 	char strout[64];
-	int ret;
+	// int ret;
 
 	printf("send sn\n");
 	// sn 
 	if (argc == 1) {
-		ret = snprintf(strout, 64,"sn request");
+		snprintf(strout, 64,"sn request");
 		// tms_Command(sg_sockfdid, NULL, strout, ret + 1);
 		tms_GetSerialNumber(sg_sockfdid, NULL);
 	}
@@ -4795,6 +4798,9 @@ int cmd_update(int argc, char **argv)
 			type  = DEV_SMS;
 			strcpy(target, TARGET_SMS);
 			// todo 计算MD5
+		}
+		else {
+			return 0;
 		}
 
 		// 读取bin文件
@@ -4940,7 +4946,7 @@ int cmd_im(int argc, char **argv)
 		tms_Command(sg_sockfdid, NULL, strout, sizeof(strout));
 	}
 	else if (argc == 3 && memcmp(argv[1], "add", strlen(argv[1])) == 0) {	
-		int fd = tms_GetTempFd();
+		// int fd = tms_GetTempFd();
 		// tms_AddManage(0, fd, MT_TRACE);
 	}
 

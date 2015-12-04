@@ -204,7 +204,9 @@ extern "C" {
 #define ID_RET_DEV_STATE_FROM_TU	0x60000012 ///<TU板卡返回其所在机框的板卡插拔状态
 #define ID_GET_POWER_STATE_FROM_TU 	0x60000013 ///<工控板向TU板卡查询其所在机框的电源组成信息
 #define ID_RET_POWER_STATE_FROM_TU 	0x60000014 ///<TU板卡返回其所在机框的电源组成信息
-
+#define ID_MCU_GET_DEV_ALARM	 	0x60000015 ///<工控板查询某槽位上总的硬件告警
+#define ID_DEV_RET_MCU_ALARM	 	0x60000016 ///<各业务单板向MCU返回总的硬件告警
+#define ID_OLP_REQUEST_OTDR		0x60000017 ///<OLP板卡向MCU请求OTDR测试
 ////////////////////////////////////////////////////////////////////////////////
 // 命令类型:网管与MCU之间的通信
 ///<网管查询MCU的设备序列号
@@ -489,7 +491,49 @@ struct tms_dev_composition_val
 	int32_t reserved3;
 };
 
+// 0x60000012
+struct tms_dev_status_from_tu
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+	int32_t dev_status;
+};
+// 0x60000015 ID_MCU_GET_DEV_ALARM
+struct tms_mcu_get_dev_alarm
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+};
+// 0x60000016 ID_DEV_RET_MCU_ALARM
+struct tms_dev_ret_mcu_alarm
+{
+	int32_t	alarm_type;
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+	int32_t count;
+};
 
+// 0x60000017 ID_OLP_REQUEST_OTDR
+struct tms_olp_request_otdr
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+	int32_t port;
+};
+
+
+struct tms_dev_ret_mcu_alarm_val
+{
+	int32_t level;
+	int32_t frame;
+	int32_t slot;
+	uint32_t reason;
+	int8_t time[20];
+};
 
 struct tms_alarm_hw_change
 {
