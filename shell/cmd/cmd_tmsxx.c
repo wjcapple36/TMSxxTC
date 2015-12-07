@@ -4468,9 +4468,9 @@ int cmd_produce(int argc, char **argv)
 
 	// prod <dev frame/slot/type>
 	if (argc == 5) {
-		frame = atoi(argv[1]);
-		slot  = atoi(argv[2]);
-		type = DevStr2Int(argv[3]);
+		frame = atoi(argv[2]);
+		slot  = atoi(argv[3]);
+		type = DevStr2Int(argv[4]);
 		struct glink_addr gl;
 
 		tms_GetDevProduce(sg_sockfdid, NULL, frame, slot, type);
