@@ -6490,8 +6490,6 @@ _Unknow:;
 // static 
 int32_t tms_Transmit2Dev(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
-	printf("tra 2 dev\n");
-	
 	int fd;
 	uint32_t frame, slot;
 	struct tms_devbase out;
@@ -6502,7 +6500,6 @@ int32_t tms_Transmit2Dev(struct tms_context *pcontext, int8_t *pdata, int32_t le
 	slot  = htonl(pval->slot);
 
 	fd = tms_GetDevBaseByLocation(frame, slot, &out);
-	printf("dev fd = %d\n", fd);
 	// 色号吧不存在
 	if (fd == 0) {
 		// TODO 发送错误码
