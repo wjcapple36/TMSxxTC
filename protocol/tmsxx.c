@@ -1742,6 +1742,7 @@ static int32_t tms_AnalyseCfgMCUUniteAnyOSW(struct tms_context *pcontext, int8_t
 			struct tms_cfg_mcu_u_any_osw_val, 
 			htonl(pcfg_hdr->count), 
 			pdata + len)) {
+		printf("Err: %s():%d\n",__FUNCTION__,__LINE__);
 		return -1;
 	}
 	plist   = (struct tms_cfg_mcu_u_any_osw_val*)(pdata + GLINK_OFFSET_DATA +  + sizeof(struct tms_cfg_mcu_u_any_osw));
@@ -2898,6 +2899,7 @@ static int32_t tms_AnalyseCfgOTDRRef(struct tms_context *pcontext, int8_t *pdata
 			struct tms_retotdr_data_val, 
 			htonl(pdata_hdr->count), 
 			pdata + len)) {
+		printf("Err: %s():%d\n",__FUNCTION__,__LINE__);
 		return -1;
 	}
 	pdata_val   = (struct tms_retotdr_data_val   *)(((char*)pdata_hdr) + sizeof(struct tms_retotdr_data_hdr));
@@ -2909,6 +2911,7 @@ static int32_t tms_AnalyseCfgOTDRRef(struct tms_context *pcontext, int8_t *pdata
 			struct tms_retotdr_event_val, 
 			htonl(pevent_hdr->count), 
 			pdata + len)) {
+		printf("Err: %s():%d\n",__FUNCTION__,__LINE__);
 		return -1;
 	}
 	pevent_val  = (struct tms_retotdr_event_val  *)(((char*)pevent_hdr) + sizeof(struct tms_retotdr_event_hdr));
@@ -3038,6 +3041,7 @@ int32_t tms_AnalyseCfgMCUOSWCycle_any(struct tms_context *pcontext, int8_t *pdat
 			struct tms_cfg_mcu_osw_cycle_val, 
 			htonl(pcfg_hdr->count), 
 			pdata + len)) {
+		printf("Err: %s():%d\n",__FUNCTION__,__LINE__);
 		return -1;
 	}
 	plist    = (struct tms_cfg_mcu_osw_cycle_val*)(pdata + GLINK_OFFSET_DATA + sizeof(struct tms_cfg_mcu_osw_cycle));
@@ -3740,6 +3744,7 @@ static int32_t tms_AnalyseAnyRetOTDRTest(struct tms_context *pcontext, int8_t *p
 			struct tms_retotdr_data_val, 
 			htonl(pdata_hdr->count), 
 			pdata + len)) {
+		printf("Err: %s():%d\n",__FUNCTION__,__LINE__);
 		return -1;
 	}
 	pdata_val   = (struct tms_retotdr_data_val   *)(((char*)pdata_hdr) + sizeof(struct tms_retotdr_data_hdr));
@@ -3751,6 +3756,7 @@ static int32_t tms_AnalyseAnyRetOTDRTest(struct tms_context *pcontext, int8_t *p
 			struct tms_retotdr_event_val, 
 			htonl(pevent_hdr->count), 
 			pdata + len)) {
+		printf("Err: %s():%d\n",__FUNCTION__,__LINE__);
 		return -1;
 	}
 	pevent_val  = (struct tms_retotdr_event_val  *)(((char*)pevent_hdr) + sizeof(struct tms_retotdr_event_hdr));
@@ -4426,6 +4432,7 @@ static int32_t tms_AnalyseAlarmLine(struct tms_context *pcontext, int8_t *pdata,
 			struct tms_retotdr_data_val, 
 			htonl(pdata_hdr->count), 
 			pdata + len)) {
+		printf("Err: %s():%d\n",__FUNCTION__,__LINE__);
 		return -1;
 	}
 	pdata_val   = (struct tms_retotdr_data_val   *)(((char*)pdata_hdr) + sizeof(struct tms_retotdr_data_hdr));
@@ -4437,6 +4444,7 @@ static int32_t tms_AnalyseAlarmLine(struct tms_context *pcontext, int8_t *pdata,
 			struct tms_retotdr_event_val, 
 			htonl(pevent_hdr->count), 
 			pdata + len)) {
+		printf("Err: %s():%d\n",__FUNCTION__,__LINE__);
 		return -1;
 	}
 	pevent_val  = (struct tms_retotdr_event_val  *)(((char*)pevent_hdr) + sizeof(struct tms_retotdr_event_hdr));
@@ -5006,6 +5014,7 @@ static int32_t tms_AnalyseRetOTDRCycle_V2(struct tms_context *pcontext, int8_t *
 			struct tms_retotdr_data_val, 
 			htonl(pdata_hdr->count), 
 			pdata + len)) {
+		printf("Err: %s():%d\n",__FUNCTION__,__LINE__);
 		return -1;
 	}
 	pdata_val   = (struct tms_retotdr_data_val   *)(((char*)pdata_hdr) + sizeof(struct tms_retotdr_data_hdr));
@@ -5017,6 +5026,7 @@ static int32_t tms_AnalyseRetOTDRCycle_V2(struct tms_context *pcontext, int8_t *
 			struct tms_retotdr_event_val, 
 			htonl(pevent_hdr->count), 
 			pdata + len)) {
+		printf("Err: %s():%d\n",__FUNCTION__,__LINE__);
 		return -1;
 	}
 	pevent_val  = (struct tms_retotdr_event_val  *)(((char*)pevent_hdr) + sizeof(struct tms_retotdr_event_hdr));
@@ -5363,7 +5373,7 @@ int32_t tms_AnalyseListFrame(struct tms_context *pcontext, int8_t *pdata, int32_
 			size, 
 			htonl(*pcount), 
 			pdata + len)) {
-		printf("frame err\n");
+		printf("Err: %s():%d\n",__FUNCTION__,__LINE__);
 		return -1;
 	}
 	plist   = (int32_t*)(pdata + GLINK_OFFSET_DATA +  + sizeof(int32_t));
@@ -6739,7 +6749,42 @@ uint32_t tms_GetPowerStateFromTU(
  */
 static int32_t tms_AnalyseRetPowerStateFromTU(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
-	return tms_AnalyseMCUtoDevice(pdata, sizeof(struct tms_mcu_get_dev_alarm));
+	// return tms_AnalyseMCUtoDevice(pdata, sizeof(struct tms_mcu_get_dev_alarm));
+	struct tms_ret_power_state_from_tu *pcfg_hdr;
+	struct tms_ret_power_state_from_tu_val  *plist, *ptlist;
+
+	pcfg_hdr = (struct tms_ret_power_state_from_tu*)(pdata + GLINK_OFFSET_DATA);
+	if ( !CHECK_PTR(
+		pcfg_hdr, 
+		struct tms_ret_power_state_from_tu, 
+		struct tms_ret_power_state_from_tu_val, 
+		htonl(pcfg_hdr->count), 
+		pdata + len)) {
+		printf("Err: %s():%d\n",__FUNCTION__,__LINE__);
+		return -1;
+	}
+	plist    = (struct tms_ret_power_state_from_tu_val*)  (pdata + GLINK_OFFSET_DATA + sizeof(struct tms_ret_power_state_from_tu));
+	// PrintfMemory((uint8_t *)plist, sizeof(struct tms_alarm_hw_val));
+
+	pcfg_hdr->frame = htonl(pcfg_hdr->frame);
+	pcfg_hdr->slot = htonl(pcfg_hdr->slot);
+	pcfg_hdr->type = htonl(pcfg_hdr->type);
+	pcfg_hdr->count = htonl(pcfg_hdr->count);
+
+    	// TODO：防止count溢出
+	ptlist = plist;
+	for (int i = 0; i < pcfg_hdr->count; i++) {
+		ptlist->frame		= htonl(ptlist->frame);
+		ptlist->slot		= htonl(ptlist->slot);
+		ptlist->type		= htonl(ptlist->type);
+		ptlist->port		= htonl(ptlist->port);
+		ptlist->reserve0	= htonl(ptlist->reserve0);
+		ptlist->reserve1	= htonl(ptlist->reserve1);
+		ptlist->reserve2	= htonl(ptlist->reserve2);
+		ptlist->reserve3	= htonl(ptlist->reserve3);
+		ptlist++;
+	}
+	return 0;
 }
 
 /**
@@ -6782,7 +6827,7 @@ static int32_t tms_AnalyseDevRetMCUAlarm(struct tms_context *pcontext, int8_t *p
 		struct tms_dev_ret_mcu_alarm_val, 
 		htonl(pcfg_hdr->count), 
 		pdata + len)) {
-		
+		printf("Err: %s():%d\n",__FUNCTION__,__LINE__);
 		return -1;
 	}
 	plist    = (struct tms_dev_ret_mcu_alarm_val*)  (pdata + GLINK_OFFSET_DATA + sizeof(struct tms_dev_ret_mcu_alarm));
@@ -6868,7 +6913,7 @@ static int32_t tms_AnalyseAlarmOPMChange(struct tms_context *pcontext, int8_t *p
 			struct tms_alarm_opm_val, 
 			htonl(phdr->count), 
 			pdata + len)) {
-		printf("frame err\n");
+		printf("Err: %s():%d\n",__FUNCTION__,__LINE__);
 		return -1;
 	}
 	plist = (struct tms_alarm_opm_val*)(pdata +GLINK_OFFSET_DATA+ sizeof(struct tms_alarm_opm_change));

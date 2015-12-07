@@ -499,6 +499,31 @@ struct tms_dev_status_from_tu
 	int32_t type;
 	int32_t dev_status;
 };
+
+//###################################################################
+// 0x60000014 ID_RET_POWER_STATE_FROM_TU
+struct tms_ret_power_state_from_tu
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+	int32_t count;
+};
+
+struct tms_ret_power_state_from_tu_val
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+	int32_t port;
+	int32_t reserve0;
+	int32_t reserve1;
+	int32_t reserve2;
+	int32_t reserve3;
+
+};
+
+//#end
 // 0x60000015 ID_MCU_GET_DEV_ALARM
 struct tms_mcu_get_dev_alarm
 {
@@ -506,6 +531,8 @@ struct tms_mcu_get_dev_alarm
 	int32_t slot;
 	int32_t type;
 };
+
+//###################################################################
 // 0x60000016 ID_DEV_RET_MCU_ALARM
 struct tms_dev_ret_mcu_alarm
 {
@@ -515,6 +542,7 @@ struct tms_dev_ret_mcu_alarm
 	int32_t type;
 	int32_t count;
 };
+
 struct tms_dev_ret_mcu_alarm_val
 {
 	int32_t level;
@@ -523,6 +551,7 @@ struct tms_dev_ret_mcu_alarm_val
 	uint32_t reason;
 	int8_t time[20];
 };
+//#end
 
 // 0x60000017 ID_OLP_REQUEST_OTDR
 struct tms_olp_request_otdr
