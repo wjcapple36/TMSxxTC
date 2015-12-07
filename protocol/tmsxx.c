@@ -485,7 +485,7 @@ void tms_Trace(struct glink_addr *paddr, char *strout, int32_t len, int level)
 		// register int count;
 		fd[0] = tms_GetManageFd();
 		// count = tms_GetTCManageFd(&fd);
-		printf("count %d\n",fd[0]);
+		// printf("count %d\n",fd[0]);
 		// TmsxxV1.2
 		// if (0 == fd) {
 		// 	fd[0] = tms_SelectFdByAddr(&base_hdr.dst);
@@ -5463,12 +5463,12 @@ int32_t tms_GetDevProduce(
 	int32_t type)
 {
 	return tms_MCUtoDevice(fd, paddr, frame, slot, type, 0, ID_GET_DEV_PRODUCE, sizeof(int32_t) * 3);
-	// return tms_MCUtoDevice(fd, paddr, 0, 0, 0, 0, ID_GET_DEVTYPE, 0);
 }
 
 static int32_t tms_AnalyseGetDevProduce(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
-	return tms_AnalyseMCUtoDevice(pdata, sizeof(int32_t) * 3);
+	return tms_AnalyseMCUtoDevice(pdata, len);
+	
 }
 
 
@@ -6883,7 +6883,7 @@ static int32_t tms_AnalyseAlarmOPM(struct tms_context *pcontext, int8_t *pdata, 
 	}
 
 	printf("tms_AnalyseAlarmOPM\n");
-    printf("val:f%d/s%d/t%d\n", phdr->frame, phdr->slot, phdr->alarm_type);
+    	printf("val:f%d/s%d/t%d\n", phdr->frame, phdr->slot, phdr->alarm_type);
 	printf("count %d\n",phdr->count);
 	ptlist = plist;
 	for (int i = 0; i < phdr->count; i++) {

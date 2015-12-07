@@ -48,6 +48,7 @@ int unuse_copy2use(char *buf, int datalen, int msec, int fd)
 #endif
 int unuse_copy2use(char *buf, int datalen, int msec, void *ptr)
 {
+	return 0;
 	struct tms_context *ptms = (struct tms_context *)ptr;
 	struct glink_base *pgb = ptms->pgb;
 	uint32_t *pid;
@@ -434,7 +435,8 @@ int32_t tms_OnRetDevType(struct tms_context *pcontext, struct tms_ret_dev_type *
 		{"DEV_OTDR"}, 
 		{"DEV_OLS"}, 
 		{"DEV_OLP"}, 
-		{"DEV_SMS"}, 
+		{"DEV_SMS"},
+		{"DEV_TU"}, 
 	};
 	char strout[128];
 	int ret;

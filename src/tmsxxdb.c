@@ -103,7 +103,7 @@ extern "C" {
 #define DB_PATH "/etc/tmsxx.db"
 // #define DB_PATH "/home/wjc/src-example/mcu/tmsxx.db"
 
-static int sg_echo = 1;
+static int sg_echo = 0;
 ////////////////////////////////////////////////////////////////////////////////
 // 数据库创建
 

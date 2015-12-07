@@ -115,6 +115,7 @@ extern "C" {
 #define DEV_OLS					6	///<光源板
 #define DEV_OLP					7	///<光功率板
 #define DEV_SMS					8	///<短信模块板
+#define DEV_TU					9	///<子机框TU模块板
 
 // 在线升级设备名
 #define TARGET_PWU				"pwu.bin" ///<电源板

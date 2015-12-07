@@ -1719,6 +1719,9 @@ int32_t DevStr2Int(char *name)
 	else if (strcmp(name,"sms") == 0) {
 		return DEV_SMS;
 	}
+	else if (strcmp(name,"tu") == 0) {
+		return DEV_TU;
+	}
 	// return 0;
 	return atoi(name);
 }
@@ -4464,10 +4467,11 @@ int cmd_produce(int argc, char **argv)
 	int frame,slot, type;
 
 	// prod <dev frame/slot/type>
-	if (argc == 4) {
+	if (argc == 5) {
 		frame = atoi(argv[1]);
 		slot  = atoi(argv[2]);
 		type = DevStr2Int(argv[3]);
+		struct glink_addr gl;
 
 		tms_GetDevProduce(sg_sockfdid, NULL, frame, slot, type);
 	}
@@ -5043,7 +5047,7 @@ int cmd_intface(int argc, char **argv)
 			(unuse >= '0' && unuse <= '9') &&
 			unuse1 == 0) {
 
-			if ((unsigned int)frame > 15 || (unsigned int)slot > 11) {
+			if ((unsigned int)frame > (MAX_FRAME-1) || (unsigned int)slot > (MAX_SLOT-1)) {
 				printf("Error over range\n");
 				return 0;
 			}
@@ -5471,6 +5475,7 @@ int DispFrame(struct tms_devbase *pframe, uint32_t flag, struct trace_cache *ptc
 		{"OLS   "}, 
 		{"OLP   "}, 
 		{"GSM   "}, 
+		{"TU   "}, 
 	};
 	int ret;
 
@@ -5553,7 +5558,7 @@ int Dispinf(struct tms_devbase *pframe, uint32_t flag, struct trace_cache *ptc)
 		tms_Trace(NULL, ptc->strout, ptc->offset, LEVEL_TC);
 		ptc->offset = 0;
 	}
-	for (int i = 0; i < 12; i++) {
+	for (int i = 0; i < MAX_SLOT; i++) {
 		if (pframe[i].fd != 0) {
 			fd = pframe[i].fd;
 
@@ -5754,7 +5759,7 @@ int cmd_Disp(int argc, char **argv)
 
 	// disp manager
 	else if(argc == 2 && memcmp(argv[1], "manager", strlen(argv[1])) == 0) {
-		struct tms_man_base fdlist[16];
+		struct tms_man_base fdlist[MAX_FRAME];
 		int count;
 		
 		count = tms_CountList(fdlist, sizeof(fdlist) /  sizeof(struct tms_man_base));
@@ -5779,8 +5784,8 @@ int cmd_Disp(int argc, char **argv)
 	else if(argc == 2 && memcmp(argv[1], "clear", strlen(argv[1])) == 0 ) {
 
 _Clear:;
-		for (int i = 0; i < 16; i++) {
-			for (int j = 0; j < 12; j++) {
+		for (int i = 0; i < MAX_FRAME; i++) {
+			for (int j = 0; j < MAX_SLOT; j++) {
 				tms_RemoveByLocation(i, j);
 			}
 		}
