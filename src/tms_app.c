@@ -136,7 +136,30 @@ int32_t tmsapp_GetFrame(int32_t frame, struct tms_devbase (*pdev)[12])
 int32_t tms_OnSetIPAddress(uint8_t (*ip)[16], uint8_t (*mask)[16], uint8_t (*gw)[16])
 {
 	printf("ip  :%s\nmask:%s\ngate:%s\n",ip[0],mask[0],gw[0]);
-	return 0;
+	char strout[256];
+	snprintf(strout, 256, "/usr/MenglongWu/bin/netcard.elf %s %s %s\n",
+		ip[0], mask[0], gw[0]);
+	printf("strout: %s", strout);
+
+	int ret = system(strout);
+
+	ret = WEXITSTATUS(ret);
+
+	// 0 正确
+	// 1 ip规则错误
+	// 2 mask规则错误
+	// 3 gw规则错误
+	// 4 ip和gw不在同一网段
+	if (ret == 0) {
+		// 设置IP并配置防火墙，并同步文件系统
+		system("/etc/init.d/ifconfig-eth0");
+		system("/etc/init.d/ifconfig-wlan0");
+		system("/etc/init.d/ifconfig-eth1");
+		system("/etc/init.d/ifconfig-lan0");
+		system("/bin/deffirewall");		
+		system("sync");
+	}	
+	return ret;
 }
 int32_t tms_OnRetSerialNumber(uint8_t (*sn)[128])
 {

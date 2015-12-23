@@ -38,9 +38,9 @@ int unuse_echo(const char *__restrict __format, ...)
 }
 #endif
 #ifdef _MANAGE
-	int (*fecho)(const char *__restrict __format, ...) = unuse_echo;
+int (*fecho)(const char *__restrict __format, ...) = unuse_echo;
 #else
-	int (*fecho)(const char *__restrict __format, ...) = printf;
+int (*fecho)(const char *__restrict __format, ...) = printf;
 #endif
 
 
@@ -63,7 +63,7 @@ void PrintfMemory(uint8_t *buf, uint32_t len)
 		else {
 			printf("\n");
 		}
-		printf("%2.2x", (unsigned char)*(buf+i) );
+		printf("%2.2x", (unsigned char) * (buf + i) );
 	}
 	printf("\n");
 }
@@ -139,7 +139,7 @@ static int32_t tms_AnalyseUnuse(struct tms_context *pcontext, int8_t *pdata, int
 
 // 每机框12个槽位，最大支持16机框
 
-struct tms_devbase sg_devnet[MAX_FRAME+1][MAX_SLOT] = {{{0}}};
+struct tms_devbase sg_devnet[MAX_FRAME + 1][MAX_SLOT] = {{{0}}};
 struct tms_manage sg_manage = {{0}};
 int sg_echo_tick = 0;
 static int sg_cu_fd = 0;
@@ -149,17 +149,16 @@ static struct ep_t *psg_ep = NULL;
 // 数据帧处理方式列表
 // 根据sg_analyse_0x1000xxxx、sg_analyse_0x6000xxxx、sg_analyse_0x8000xxxx的dowhat参数
 // 选择sg_dowhat处理方式，sg_dowhat的dowhat无意义
-struct tms_analyse_array sg_dowhat[8] = 
-{
-	{tms_AnalyseUnuse, 1000}, 
-	{tms_Transmit2Dev, 1000}, 
-	{tms_Transmit2Manager, 1000}, 
-	{tms_AnalyseUnuse, 1000}, 
-	
-	{tms_AnalyseUnuse, 1000}, 
-	{tms_AnalyseUnuse, 1000}, 
-	{tms_AnalyseUnuse, 1000}, 
-	{tms_AnalyseUnuse, 1000}, 
+struct tms_analyse_array sg_dowhat[8] = {
+	{tms_AnalyseUnuse, 1000},
+	{tms_Transmit2Dev, 1000},
+	{tms_Transmit2Manager, 1000},
+	{tms_AnalyseUnuse, 1000},
+
+	{tms_AnalyseUnuse, 1000},
+	{tms_AnalyseUnuse, 1000},
+	{tms_AnalyseUnuse, 1000},
+	{tms_AnalyseUnuse, 1000},
 };
 
 // struct pro_list
@@ -178,13 +177,13 @@ struct tms_analyse_array sg_dowhat[8] =
  * @param	paddr 当paddr 为NULL时用缺省值TMS_DEFAULT_LOCAL_ADDR、TMS_DEFAULT_RMOTE_ADDR填充
  			src、dst，pkid为0
  * @retval	null
- * @remarks	
- * @see	
+ * @remarks
+ * @see
  */
 
 void tms_FillGlinkFrame(
-		struct glink_base *pbase_hdr, 
-		struct glink_addr *paddr)
+    struct glink_base *pbase_hdr,
+    struct glink_addr *paddr)
 {
 	if(paddr == NULL) {
 		pbase_hdr->src = TMS_DEFAULT_LOCAL_ADDR;
@@ -203,16 +202,16 @@ void tms_FillGlinkFrame(
  * @brief	浮点型转换成网络序，现已经没有什么用途，用内存指针代替
  * @param	null
  * @retval	null
- * @remarks	
- * @see	
+ * @remarks
+ * @see
  */
 
- float htonf(float f)
- {
- 	unsigned int i = *(unsigned int *)&f;
- 	i = htonl(i);
- 	return *(float*)&i;
- }
+float htonf(float f)
+{
+	unsigned int i = *(unsigned int *)&f;
+	i = htonl(i);
+	return *(float *)&i;
+}
 /**
  * @brief	ID_TICK 0x10000000 心跳
  * @param[in]	fd 套接字文件描述符
@@ -231,11 +230,11 @@ int32_t tms_Tick(int fd, struct glink_addr *paddr)
 {
 	// static int times = 0;
 	struct glink_base  base_hdr;
-	
+
 
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 	glink_Build(&base_hdr, ID_TICK, 0);
@@ -246,27 +245,26 @@ int32_t tms_Tick(int fd, struct glink_addr *paddr)
 static int32_t tms_AnalyseTick(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
 	struct glink_base *pbase_hdr;
-	pbase_hdr = (struct glink_base*)(pdata + sizeof(int32_t));
+	pbase_hdr = (struct glink_base *)(pdata + sizeof(int32_t));
 	pcontext->tick++;
 #ifdef _MANAGE		// 做网管，回应全部心跳
 	// tms_Tick(pcontext->fd);
 	if (sg_echo_tick == 1) {
 		printf("ack any tick fd = %d\n", pcontext->fd);
 	}
-	
+
 #else 				// 做MCU
 	if (pbase_hdr->src == htonl(GLINK_DEV_ADDR)) {	// 设备发来的心跳 src:0x0a dst:0x0b
-	// if (pbase_hdr->src == (GLINK_DEV_ADDR)) {	// 设备发来的心跳 src:0x0a dst:0x0b
+		// if (pbase_hdr->src == (GLINK_DEV_ADDR)) {	// 设备发来的心跳 src:0x0a dst:0x0b
 		tms_Tick(pcontext->fd, NULL);						// 返回心跳       src:0x0b dst 0x0a
-		if (sg_echo_tick == 1) 
-		{
+		if (sg_echo_tick == 1) {
 			printf("ack dev tick fd = %d\n", pcontext->fd);
 		}
 	}
 	// else if (pbase_hdr->src == htonl(GLINK_CU_ADDR)) {
 	else if (pbase_hdr->src == (GLINK_CU_ADDR)) {
 		if (sg_echo_tick == 1) {
-			printf("ack cu  tick fd = %d\n", pcontext->fd);	
+			printf("ack cu  tick fd = %d\n", pcontext->fd);
 		}
 	}
 
@@ -277,32 +275,32 @@ static int32_t tms_AnalyseTick(struct tms_context *pcontext, int8_t *pdata, int3
 #ifdef USE_MD5
 #include "protocol/md5.h"
 #endif
- /**
- * @brief	ID_UPDATE 0x10000001 在线升级
- * @param[in]	fd 套接字文件描述符
- * @param[in]	paddr glink帧源地址和目的地址，如果填NULL则采用默认的
- 				TMS_DEFAULT_LOCAL_ADDR和TMS_DEFAULT_RMOTE_ADDR填充，两个宏的意义通过
- 				修改tmsxx.h设定
- * @param[in]	frame 指定机框号(0 ~ MAX_FRAME)
- * @param[in]	slot 指定槽位号(0 ~ MAX_SLOT)
- * @param[in]	type 指定板卡设备类型
- * @param[in]	fname 文件的名称
- * @param[in]	flen 文件的大小，所含所有字节数
- * @param[in]	pdata 文件内容，以二进制方式读取
- * @retval	>0 发送成功
- * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
- * @see	
- */
+/**
+* @brief	ID_UPDATE 0x10000001 在线升级
+* @param[in]	fd 套接字文件描述符
+* @param[in]	paddr glink帧源地址和目的地址，如果填NULL则采用默认的
+				TMS_DEFAULT_LOCAL_ADDR和TMS_DEFAULT_RMOTE_ADDR填充，两个宏的意义通过
+				修改tmsxx.h设定
+* @param[in]	frame 指定机框号(0 ~ MAX_FRAME)
+* @param[in]	slot 指定槽位号(0 ~ MAX_SLOT)
+* @param[in]	type 指定板卡设备类型
+* @param[in]	fname 文件的名称
+* @param[in]	flen 文件的大小，所含所有字节数
+* @param[in]	pdata 文件内容，以二进制方式读取
+* @retval	>0 发送成功
+* @retval	0 发送失败，该链接失效，立即断开
+* @remarks
+* @see
+*/
 int32_t tms_Update(
-		int fd, 	
-		struct glink_addr *paddr, 
-		int32_t frame, 
-		int32_t slot, 
-		int32_t type, 
-		uint8_t (*target)[16], 
-		int32_t flen, 
-		uint8_t *pdata)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t type,
+    uint8_t (*target)[16],
+    int32_t flen,
+    uint8_t *pdata)
 {
 	struct tms_dev_update_hdr hdr;
 	// uint8_t *pfdata;
@@ -313,10 +311,10 @@ int32_t tms_Update(
 	len = sizeof(struct tms_dev_update_hdr) + flen + sizeof(struct tms_dev_md5);
 
 	printf("Send bin file:\n"
-		"\tf%d/s%d/t%d\n"
-		"\tlen   :%d Byte\n"
-		"\ttarget:%s\n",
-		frame, slot, type, flen, target[0]);
+	       "\tf%d/s%d/t%d\n"
+	       "\tlen   :%d Byte\n"
+	       "\ttarget:%s\n",
+	       frame, slot, type, flen, target[0]);
 	// Step 2.各字段复制
 	hdr.frame = htonl(frame);
 	hdr.slot  = htonl(slot);
@@ -330,10 +328,10 @@ int32_t tms_Update(
 	unsigned char md5str[33];
 
 #ifdef USE_MD5
-	CMD5::MD5Int((unsigned char *)pdata, flen ,md5int);
+	CMD5::MD5Int((unsigned char *)pdata, flen , md5int);
 	CMD5::MD5Int2Str(md5int, md5str);
-	memcpy(md5.md5, md5str, strlen((char*)md5str));//debug
-	printf("\tmd5: %s\n",md5str);
+	memcpy(md5.md5, md5str, strlen((char *)md5str)); //debug
+	printf("\tmd5: %s\n", md5str);
 #else
 	printf("\tunse MD5\n");
 #endif
@@ -341,26 +339,25 @@ int32_t tms_Update(
 
 	// Step 3. 发送
 	struct glink_base  base_hdr;
-	
+
 
 	// PrintfMemory(pdata, flen);
 
 	tms_FillGlinkFrame(&base_hdr, paddr);
-	if (0 == fd) 
-	{
-		// fd = 
+	if (0 == fd) {
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 		// tms_SelectFdByAddr(paddr->dst);
-		
+
 	}
 	glink_Build(&base_hdr, ID_UPDATE, len);
-	glink_SendHead(fd, &base_hdr);	
-	glink_SendSerial(fd, (uint8_t*)&hdr,   sizeof(struct tms_dev_update_hdr));
-	glink_SendSerial(fd, (uint8_t*)pdata, flen);
-	glink_SendSerial(fd, (uint8_t*)&md5,   sizeof(struct tms_dev_md5));
+	glink_SendHead(fd, &base_hdr);
+	glink_SendSerial(fd, (uint8_t *)&hdr,   sizeof(struct tms_dev_update_hdr));
+	glink_SendSerial(fd, (uint8_t *)pdata, flen);
+	glink_SendSerial(fd, (uint8_t *)&md5,   sizeof(struct tms_dev_md5));
 	glink_SendTail(fd);
 	return 0;
-#if 0	
+#if 0
 	uint8_t *pmem;
 	struct tms_dev_update_hdr *pver_hdr;
 	uint8_t *pfdata;
@@ -371,13 +368,13 @@ int32_t tms_Update(
 	// Step 1.分配内存并各指针指向相应内存
 	len = sizeof(struct tms_dev_update_hdr) + flen + sizeof(struct tms_dev_md5);
 
-	pmem = (uint8_t*)malloc(len);
+	pmem = (uint8_t *)malloc(len);
 	if (pmem == NULL) {
 		return -1;
 	}
-	pver_hdr = (struct tms_dev_update_hdr*)(pmem);
-	pfdata   = (uint8_t*)(pmem + sizeof(struct tms_dev_update_hdr));
-	pmd5     = (struct tms_dev_md5*)(pmem + sizeof(struct tms_dev_update_hdr) + flen);
+	pver_hdr = (struct tms_dev_update_hdr *)(pmem);
+	pfdata   = (uint8_t *)(pmem + sizeof(struct tms_dev_update_hdr));
+	pmd5     = (struct tms_dev_md5 *)(pmem + sizeof(struct tms_dev_update_hdr) + flen);
 
 	// Step 2.各字段复制
 	pver_hdr->frame = htonl(frame);
@@ -396,8 +393,8 @@ int32_t tms_Update(
 
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-	// fd = 
-	tms_SelectFdByAddr(&base_hdr.dst);
+		// fd =
+		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 	glink_Build(&base_hdr, ID_UPDATE, len);
 	ret = glink_Send(fd, &base_hdr, pmem, len);
@@ -413,9 +410,9 @@ static int32_t tms_AnalyseUpdate(struct tms_context *pcontext, int8_t *pdata, in
 	// uint8_t *pfdata;
 	struct tms_dev_md5 *pmd5;
 
-	pver_hdr = (struct tms_dev_update_hdr*)(pdata + GLINK_OFFSET_DATA);
+	pver_hdr = (struct tms_dev_update_hdr *)(pdata + GLINK_OFFSET_DATA);
 	// pfdata   = (uint8_t*)(pdata + GLINK_OFFSET_DATA + sizeof(struct tms_dev_update_hdr));
-	pmd5     = (struct tms_dev_md5*)(pdata + GLINK_OFFSET_DATA + sizeof(struct tms_dev_update_hdr) + htonl(pver_hdr->flen));
+	pmd5     = (struct tms_dev_md5 *)(pdata + GLINK_OFFSET_DATA + sizeof(struct tms_dev_update_hdr) + htonl(pver_hdr->flen));
 
 
 
@@ -425,13 +422,13 @@ static int32_t tms_AnalyseUpdate(struct tms_context *pcontext, int8_t *pdata, in
 	pver_hdr->flen  = htonl(pver_hdr->flen);
 
 	printf("tms_AnalyseUpdate\n");
-	
+
 	printf("Send bin file:\n"
-		"\tf%d/s%d/t%d\n"
-		"\tlen   :%d Byte\n"
-		"\ttarget:%s\n",
-		pver_hdr->frame, pver_hdr->slot, pver_hdr->type, pver_hdr->flen,pver_hdr->target);
-	printf("\tmd5: %s\n\n",pmd5->md5);
+	       "\tf%d/s%d/t%d\n"
+	       "\tlen   :%d Byte\n"
+	       "\ttarget:%s\n",
+	       pver_hdr->frame, pver_hdr->slot, pver_hdr->type, pver_hdr->flen, pver_hdr->target);
+	printf("\tmd5: %s\n\n", pmd5->md5);
 
 	// printf("val:f%d/s%x/t%d\n", pver_hdr->frame, pver_hdr->slot, pver_hdr->type);
 	// printf("\tlen %d\n\n", pver_hdr->flen);
@@ -439,7 +436,7 @@ static int32_t tms_AnalyseUpdate(struct tms_context *pcontext, int8_t *pdata, in
 	// printf("\tmd5 %s\n", pmd5->md5);
 	//TODO MD5
 	// fun(, , pdata);
-	
+
 	return 0;
 }
 
@@ -452,7 +449,7 @@ static int32_t tms_AnalyseUpdate(struct tms_context *pcontext, int8_t *pdata, in
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
  */
- #include <unistd.h>
+#include <unistd.h>
 void tms_Trace(struct glink_addr *paddr, char *strout, int32_t len, int level)
 {
 	struct glink_base  base_hdr;
@@ -469,7 +466,7 @@ void tms_Trace(struct glink_addr *paddr, char *strout, int32_t len, int level)
 
 		// TmsxxV1.2
 		if (0 == fd) {
-			// fd = 
+			// fd =
 			tms_SelectFdByAddr(&base_hdr.dst);
 		}
 		// end
@@ -478,9 +475,9 @@ void tms_Trace(struct glink_addr *paddr, char *strout, int32_t len, int level)
 			return ;
 		}
 		glink_Build(&base_hdr, ID_TRACE0 + level, len);
-		glink_Send(fd, &base_hdr, (uint8_t*)strout, len);
+		glink_Send(fd, &base_hdr, (uint8_t *)strout, len);
 	}
-	else if (1 ||level == 0) {
+	else if (1 || level == 0) {
 		int fd[MANAGE_COUNT];
 		// register int count;
 		fd[0] = tms_GetManageFd();
@@ -493,14 +490,14 @@ void tms_Trace(struct glink_addr *paddr, char *strout, int32_t len, int level)
 		// end
 
 		glink_Build(&base_hdr, ID_TRACE0 + level, len);
-		glink_Send(fd[0], &base_hdr, (uint8_t*)strout, len);		
+		glink_Send(fd[0], &base_hdr, (uint8_t *)strout, len);
 	}
 	else {
 		int fd[MANAGE_COUNT];
 		int count;
 		// fd[0] = tms_GetManageFd();
 		count = tms_GetTCManageFd(&fd);
-		printf("count-2 %d\n",count);
+		printf("count-2 %d\n", count);
 		// TmsxxV1.2
 		// if (0 == fd) {
 		// 	fd[0] = tms_SelectFdByAddr(&base_hdr.dst);
@@ -508,11 +505,11 @@ void tms_Trace(struct glink_addr *paddr, char *strout, int32_t len, int level)
 		// end
 
 		glink_Build(&base_hdr, ID_TRACE0 + 3, len);
-		glink_Send(fd[0], &base_hdr, (uint8_t*)strout, len);		
+		glink_Send(fd[0], &base_hdr, (uint8_t *)strout, len);
 
 	}
-	
-	//return ret;	
+
+	//return ret;
 }
 static int tms_AnalyseTrace(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
@@ -535,10 +532,10 @@ static int tms_AnalyseTrace(struct tms_context *pcontext, int8_t *pdata, int32_t
  * @retval	0 发送失败，该链接失效，立即断开
  */
 int32_t tms_Command(
-	int fd, 
-	struct glink_addr *paddr, 
-	char *strcmd, 
-	int32_t len)
+    int fd,
+    struct glink_addr *paddr,
+    char *strcmd,
+    int32_t len)
 {
 	struct glink_base  base_hdr;
 	//todo 找到后台fd
@@ -546,19 +543,19 @@ int32_t tms_Command(
 	// int ret;
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 	glink_Build(&base_hdr, ID_COMMAMD, len);
-	glink_Send(fd, &base_hdr, (uint8_t*)strcmd, len);
-	return 0;	
+	glink_Send(fd, &base_hdr, (uint8_t *)strcmd, len);
+	return 0;
 }
 
 static int32_t tms_AnalyseCommand(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
 	// struct glink_base *pbase_hdr;
 	// pbase_hdr = (struct glink_base*)(pdata + sizeof(int32_t));
-	char *pval = (char*)(pdata + GLINK_OFFSET_DATA);
+	char *pval = (char *)(pdata + GLINK_OFFSET_DATA);
 	dbg_tms("len = %d cmd:[%s]\n", strlen(pval), pval);
 
 	// sh_analyse(pval, strlen(pval));
@@ -587,18 +584,18 @@ static int32_t tms_AnalyseCommand(struct tms_context *pcontext, int8_t *pdata, i
  				frame、slot、type、port填充
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
- * @see	
+ * @remarks
+ * @see
  */
 int32_t tms_MCUtoDevice(
-	int     fd, 
-	struct glink_addr *paddr, 
-	int32_t frame, 
-	int32_t slot, 
-	int32_t type, 
-	int32_t port, 
-	int32_t cmdID, 
-	int32_t len)
+    int     fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t type,
+    int32_t port,
+    int32_t cmdID,
+    int32_t len)
 {
 	struct tms_dev_port devPort;
 
@@ -612,10 +609,10 @@ int32_t tms_MCUtoDevice(
 	uint8_t *pmem;
 	int ret;
 
-	pmem = (uint8_t*)&devPort;
+	pmem = (uint8_t *)&devPort;
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 	glink_Build(&base_hdr, cmdID, len);
@@ -624,15 +621,15 @@ int32_t tms_MCUtoDevice(
 }
 /**
  * @brief	通用发送接口，数据长度必须是4的倍数，，不能存在于网络字节序无关的1字节
- * @see	
+ * @see
  */
 
 int32_t tms_MCUtoDevice_Ex(
-	int     fd, 
-	struct glink_addr *paddr, 
-	int32_t cmdID,
-	char *pdata,
-	int32_t len)
+    int     fd,
+    struct glink_addr *paddr,
+    int32_t cmdID,
+    char *pdata,
+    int32_t len)
 {
 	return 0;
 }
@@ -642,8 +639,8 @@ int32_t tms_MCUtoDevice_Ex(
  * @param	len glink数据内容字节数（即glink帧datalen - 8）
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
- * @see	
+ * @remarks
+ * @see
  */
 static int32_t tms_AnalyseMCUtoDevice(int8_t *pdata, int32_t len)
 {
@@ -651,7 +648,7 @@ static int32_t tms_AnalyseMCUtoDevice(int8_t *pdata, int32_t len)
 
 	p32  = (uint32_t *)(pdata + GLINK_OFFSET_DATA );
 	loop = len;
-	for (register uint32_t i = 0;i < loop; i++) {
+	for (register uint32_t i = 0; i < loop; i++) {
 		*p32 = htonl(*p32);
 		p32++;
 	}
@@ -667,12 +664,12 @@ static int32_t tms_AnalyseMCUtoDevice(int8_t *pdata, int32_t len)
  				修改tmsxx.h设定
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
+ * @remarks
  * @see	tms_MCUtoDevice
  */
 int32_t tms_MCU_GetDeviceType(
-	int fd, 
-	struct glink_addr *paddr)
+    int fd,
+    struct glink_addr *paddr)
 {
 	return tms_MCUtoDevice(fd, paddr, 0, 0, DEV_OPM, 0, ID_GET_DEVTYPE, 0);
 	// return tms_MCUtoDevice(fd, paddr, 0, 0, 0, 0, ID_GET_DEVTYPE, 0);
@@ -692,7 +689,7 @@ static int32_t tms_AnalyseGetDevType(struct tms_context *pcontext, int8_t *pdata
 	printf("tms_AnalyseGetDevType\n");
 	printf("\tval:f%d/s%x\n", pval->frame, pval->slot);
 	//fun(, , pdev)
-	
+
 	return 0;
 }
 
@@ -709,23 +706,23 @@ static int32_t tms_AnalyseGetDevType(struct tms_context *pcontext, int8_t *pdata
  * @param[in]	port 指定板卡端口数
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
+ * @remarks
  * @see	tms_MCUtoDevice
  */
 int32_t tms_MCU_RetDeviceType(
-	int     fd, 
-	struct glink_addr *paddr, 
-	int32_t frame, 
-	int32_t slot, 
-	int32_t type, 
-	int32_t port)
+    int     fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t type,
+    int32_t port)
 {
 	return tms_MCUtoDevice(fd, paddr, frame, slot, DEV_OPM, 0, ID_RET_DEVTYPE, sizeof(struct tms_dev_port));
 }
 int32_t tms_MCU_RetDeviceType_V2(
-	int     fd, 
-	struct glink_addr *paddr, 
-	struct tms_ret_dev_type *pval)
+    int     fd,
+    struct glink_addr *paddr,
+    struct tms_ret_dev_type *pval)
 {
 	struct tms_ret_dev_type val;
 	val.frame = htonl(pval->frame);
@@ -741,10 +738,10 @@ int32_t tms_MCU_RetDeviceType_V2(
 	uint8_t *pmem;
 	int ret;
 
-	pmem = (uint8_t*)&val;
+	pmem = (uint8_t *)&val;
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 	glink_Build(&base_hdr, ID_RET_DEVTYPE, sizeof(struct tms_ret_dev_type));
@@ -757,15 +754,15 @@ static int32_t tms_AnalyseRetDevType(struct tms_context *pcontext, int8_t *pdata
 {
 	// sg_dowhat[pcontext->ptr_analyse_arr->dowhat].ptrfun(pcontext, pdata, len);
 	// struct pro_list typelist[] = {
-	// 	{"Dev Undefine"}, 
-	// 	{"DEV_PWU"}, 
-	// 	{"DEV_MCU"}, 
-	// 	{"DEV_OPM"}, 
-	// 	{"DEV_OSW"}, 
-	// 	{"DEV_OTDR"}, 
-	// 	{"DEV_OLS"}, 
-	// 	{"DEV_OLP"}, 
-	// 	{"DEV_SMS"}, 
+	// 	{"Dev Undefine"},
+	// 	{"DEV_PWU"},
+	// 	{"DEV_MCU"},
+	// 	{"DEV_OPM"},
+	// 	{"DEV_OSW"},
+	// 	{"DEV_OTDR"},
+	// 	{"DEV_OLS"},
+	// 	{"DEV_OLP"},
+	// 	{"DEV_SMS"},
 	// };
 	struct tms_ret_dev_type *pval;
 	pval = (struct tms_ret_dev_type *)(pdata + GLINK_OFFSET_DATA);
@@ -794,7 +791,7 @@ static int32_t tms_AnalyseRetDevType(struct tms_context *pcontext, int8_t *pdata
 	devbase.reserved2 = pval->reserved3;
 
 	tms_AddDev(pval->frame, pval->slot, &devbase);
-	
+
 	if (pcontext->ptcb->pf_OnRetDevType) {
 		pcontext->ptcb->pf_OnRetDevType(pcontext, pval);
 	}
@@ -817,7 +814,7 @@ static int32_t tms_AnalyseCUNoteManageConnect(struct tms_context *pcontext, int8
 {
 	int32_t *pval;
 
-	pval = (int32_t*)(pdata + GLINK_OFFSET_DATA);
+	pval = (int32_t *)(pdata + GLINK_OFFSET_DATA);
 	*pval = htonl(*pval);
 
 	if (pcontext->ptcb->pf_OnCUNoteManageConnect) {
@@ -827,7 +824,7 @@ static int32_t tms_AnalyseCUNoteManageConnect(struct tms_context *pcontext, int8
 }
 
 /**
- * @brief	ID_GET_OPM_OLP_RAYPOWER 0x60000004 
+ * @brief	ID_GET_OPM_OLP_RAYPOWER 0x60000004
  			工控板查询某槽位上OPM或OLP模块总的光功率告警
  * @param[in]	fd 套接字文件描述符
  * @param[in]	paddr glink帧源地址和目的地址，如果填NULL则采用默认的
@@ -842,16 +839,16 @@ static int32_t tms_AnalyseCUNoteManageConnect(struct tms_context *pcontext, int8
 
 // int32_t tms_MCU_GetOPMRayPower(
 int32_t tms_MCU_GetOPMAlarm(
-	int     fd, 
-	struct glink_addr *paddr, 
-	int32_t frame, 
-	int32_t slot)
+    int     fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot)
 {
 	return tms_MCUtoDevice(fd, paddr, frame, slot, DEV_OPM, 0, ID_GET_OPM_OLP_RAYPOWER, sizeof(struct tms_dev_type));
 }
 
 /**
- * @brief	tms_MCU_GetOLPAlarm 0x60000004 
+ * @brief	tms_MCU_GetOLPAlarm 0x60000004
  			工控板查询某槽位上OPM或OLP模块总的光功率告警
  * @param[in]	fd 套接字文件描述符
  * @param[in]	paddr glink帧源地址和目的地址，如果填NULL则采用默认的
@@ -864,10 +861,10 @@ int32_t tms_MCU_GetOPMAlarm(
  * @see	tms_MCUtoDevice
  */
 int32_t tms_MCU_GetOLPAlarm(
-	int     fd, 
-	struct glink_addr *paddr, 
-	int32_t frame, 
-	int32_t slot)
+    int     fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot)
 {
 	return tms_MCUtoDevice(fd, paddr, frame, slot, DEV_OLP, 0, ID_GET_OPM_OLP_RAYPOWER, sizeof(struct tms_dev_type));
 }
@@ -882,7 +879,7 @@ static int32_t tms_AnalyseGetOPMOLPRayPower(struct tms_context *pcontext, int8_t
 	pval->frame = htonl(pval->frame);
 	pval->slot  = htonl(pval->slot);
 	pval->type  = htonl(pval->type);
-	
+
 	printf("tms_AnalyseGetOPMOLPRayPower\n");
 	printf("val:f%d/s%x/t%x\n", pval->frame, pval->slot, pval->type);
 	return 0;
@@ -902,14 +899,14 @@ static int32_t tms_AnalyseGetOPMOLPRayPower(struct tms_context *pcontext, int8_t
  * @see	tms_MCUtoDevice
  */
 int32_t tms_MCU_OSWSwitch(
-	int     fd, 
-	struct glink_addr *paddr, 
-	int32_t frame, 
-	int32_t slot, 
-	int32_t port)
+    int     fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t port)
 {
 	// 设备类型内部自己完成
-	return tms_MCUtoDevice(fd, paddr, frame, slot, DEV_OSW, port, ID_CMD_OSW_SWITCH, sizeof(struct tms_dev_port));	
+	return tms_MCUtoDevice(fd, paddr, frame, slot, DEV_OSW, port, ID_CMD_OSW_SWITCH, sizeof(struct tms_dev_port));
 }
 
 static int32_t tms_AnalyseMCU_OSWSwitch(struct tms_context *pcontext, int8_t *pdata, int32_t len)
@@ -918,7 +915,7 @@ static int32_t tms_AnalyseMCU_OSWSwitch(struct tms_context *pcontext, int8_t *pd
 	return 0;
 }
 /**
- * @brief	ID_CMD_OTDR_TEST 0x60000006 
+ * @brief	ID_CMD_OTDR_TEST 0x60000006
  			OLP模块向工控机请求OTDR测试
  * @param[in]	fd 套接字文件描述符
  * @param[in]	paddr glink帧源地址和目的地址，如果填NULL则采用默认的
@@ -932,11 +929,11 @@ static int32_t tms_AnalyseMCU_OSWSwitch(struct tms_context *pcontext, int8_t *pd
  * @see	tms_MCUtoDevice
  */
 int32_t tms_MCU_OLPReqOTDRTest(
-	int     fd, 
-	struct glink_addr *paddr, 
-	int32_t frame, 
-	int32_t slot, 
-	int32_t port)
+    int     fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t port)
 {
 	return tms_MCUtoDevice(fd, paddr, frame, slot, DEV_OLP, port, ID_CMD_OLP_REQ_OTDR, sizeof(struct tms_dev_port));
 }
@@ -959,16 +956,16 @@ static int32_t tms_AnalyseMCU_OLPReqOTDRTest(struct tms_context *pcontext, int8_
  * @param[in]	port 指定切换的端口号
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
+ * @remarks
  * @see	tms_MCUtoDevice
  */
 
 int32_t tms_MCU_OLPStartOTDRTest(
-	int     fd, 
-	struct glink_addr *paddr, 
-	int32_t frame, 
-	int32_t slot, 
-	int32_t port)
+    int     fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t port)
 {
 	return tms_MCUtoDevice(fd, paddr, frame, slot, DEV_OLP, port, ID_CMD_OLP_START_OTDR, sizeof(struct tms_dev_port));
 }
@@ -986,15 +983,15 @@ int32_t tms_MCU_OLPStartOTDRTest(
  * @param[in]	port 指定切换的端口号
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
+ * @remarks
  * @see	tms_MCUtoDevice
  */
 int32_t tms_MCU_OLPFinishOTDRTest(
-	int     fd, 
-	struct glink_addr *paddr, 
-	int32_t frame, 
-	int32_t slot, 
-	int32_t port)
+    int     fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t port)
 {
 	return tms_MCUtoDevice(fd, paddr, frame, slot, DEV_OLP, port, ID_CMD_OLP_FINISH_OTDR, sizeof(struct tms_dev_port));
 }
@@ -1023,35 +1020,35 @@ int32_t tms_MCU_OLPFinishOTDRTest(
  * @param[in]	gw 设置网关
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
- * @see	
+ * @remarks
+ * @see
  */
 
 int32_t tms_SetIPAddress(
-	int     fd, 
-	struct glink_addr *paddr, 
-	uint8_t *ip, 
-	uint8_t *mask, 
-	uint8_t *gw)
+    int     fd,
+    struct glink_addr *paddr,
+    uint8_t *ip,
+    uint8_t *mask,
+    uint8_t *gw)
 {
 	struct tms_change_addr changeAddr;
 	uint8_t *pmem;	// 保护用户数据数据，申请内存，存储网络字节
-	
+
 
 	pmem = (uint8_t *)&changeAddr;
 	memset(&changeAddr, 0, sizeof(struct tms_change_addr));
-	strcpy((char*)changeAddr.ip,   (char*)ip);
-	strcpy((char*)changeAddr.mask, (char*)mask);
-	strcpy((char*)changeAddr.gw,   (char*)gw);
+	strcpy((char *)changeAddr.ip,   (char *)ip);
+	strcpy((char *)changeAddr.mask, (char *)mask);
+	strcpy((char *)changeAddr.gw,   (char *)gw);
 	printf("ip %s mask %s gw %s\n", changeAddr.ip, changeAddr.mask, changeAddr.gw);
 
 	// 发送
 	struct glink_base  base_hdr;
 	int ret;
-	
+
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 	glink_Build(&base_hdr, ID_CHANGE_ADDR, sizeof(struct tms_change_addr));
@@ -1063,19 +1060,40 @@ static int32_t tms_AnalyseSetIPAddress(struct tms_context *pcontext, int8_t *pda
 	uint8_t *pip;
 	uint8_t *pmask;
 	uint8_t *pgw;
+	int ret;
 
-	if (len < 16*3) {
+	if (len < 16 * 3) {
 		return -1;
 	}
-	pip = (uint8_t*)(pdata + GLINK_OFFSET_DATA);
-	pmask = (uint8_t*)(pip + 16);
-	pgw = (uint8_t*)(pmask + 16);
+	pip = (uint8_t *)(pdata + GLINK_OFFSET_DATA);
+	pmask = (uint8_t *)(pip + 16);
+	pgw = (uint8_t *)(pmask + 16);
 
 	if (pcontext->ptcb->pf_OnSetIPAddress) {
-		pcontext->ptcb->pf_OnSetIPAddress(
-			(uint8_t (*)[16])&pip[0], 
-			(uint8_t (*)[16])&pmask[0], 
-			(uint8_t (*)[16])&pgw[0]);
+		ret = pcontext->ptcb->pf_OnSetIPAddress(
+		          (uint8_t (*)[16])&pip[0],
+		          (uint8_t (*)[16])&pmask[0],
+		          (uint8_t (*)[16])&pgw[0]);
+
+		struct glink_addr gl;
+		struct tms_ack ack;
+		struct glink_base *pbase_hdr;
+
+		pbase_hdr = (struct glink_base *)(pdata + sizeof(int32_t));
+		gl.src = htonl(pbase_hdr->src);
+		gl.dst = htonl(pbase_hdr->dst);
+		gl.pkid = htonl(pbase_hdr->pkid);
+
+		if (ret == 0) {
+			ack.errcode = RET_SUCCESS;
+		}
+		else {
+			ack.errcode = RET_UNEXIST;
+		}
+
+		ack.cmdid   = ID_CHANGE_ADDR;
+
+		tms_AckEx(pcontext->fd, &gl, &ack);
 	}
 	return 0;
 }
@@ -1090,8 +1108,8 @@ static int32_t tms_AnalyseSetIPAddress(struct tms_context *pcontext, int8_t *pda
  				修改tmsxx.h设定
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
- * @see	
+ * @remarks
+ * @see
  */
 int32_t tms_GetSerialNumber(int fd, struct glink_addr *paddr)
 {
@@ -1101,23 +1119,23 @@ int32_t tms_GetSerialNumber(int fd, struct glink_addr *paddr)
 
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 	glink_Build(&base_hdr, ID_GET_SN, 0);
 	ret = glink_Send(fd, &base_hdr, NULL, 0);
 	return ret;
 }
-	
+
 static int32_t tms_AnalyseGetSerialNumber(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
-	printf("%s()\n",__FUNCTION__);
+	printf("%s()\n", __FUNCTION__);
 	if (pcontext->ptcb->pf_OnGetSerialNumber) {
 		pcontext->ptcb->pf_OnGetSerialNumber(pcontext);
 
 
 		struct glink_base *pbase_hdr, glinkbase;
-		pbase_hdr = (struct glink_base*)(pdata + sizeof(int32_t));
+		pbase_hdr = (struct glink_base *)(pdata + sizeof(int32_t));
 		glinkbase.pklen 	= htonl(pbase_hdr->pklen);
 		glinkbase.version 	= htonl(pbase_hdr->version);
 		glinkbase.src 		= htonl(pbase_hdr->src);
@@ -1143,8 +1161,8 @@ static int32_t tms_AnalyseGetSerialNumber(struct tms_context *pcontext, int8_t *
  * @param[in]	psn 序列号值长度128字节
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
- * @see	
+ * @remarks
+ * @see
  */
 int32_t tms_RetSerialNumber(int fd, struct glink_addr *paddr, uint8_t (*psn)[128])
 {
@@ -1154,19 +1172,19 @@ int32_t tms_RetSerialNumber(int fd, struct glink_addr *paddr, uint8_t (*psn)[128
 
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 
 	glink_Build(&base_hdr, ID_RET_SN, 128);
 	ret = glink_Send(fd, &base_hdr, &psn[0][0], 128);
-	return ret;	
+	return ret;
 }
 static int32_t tms_AnalyseRetSerialNumber(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
-	uint8_t *pval = (uint8_t*)(pdata + GLINK_OFFSET_DATA);
-	
-	if (pcontext->ptcb->pf_OnRetSerialNumber) {	
+	uint8_t *pval = (uint8_t *)(pdata + GLINK_OFFSET_DATA);
+
+	if (pcontext->ptcb->pf_OnRetSerialNumber) {
 		pcontext->ptcb->pf_OnRetSerialNumber((uint8_t (*)[128])&pval[0]);
 	}
 	return 0;
@@ -1182,14 +1200,14 @@ static int32_t tms_AnalyseRetSerialNumber(struct tms_context *pcontext, int8_t *
  * @param[in]	smslist 指向一个 struct tms_cfg_sms_val 一维数组
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
+ * @remarks
  * @see	tms_ClearSMSAuthorization
  */
 int32_t tms_CfgSMSAuthorization(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t count, 
-		struct tms_cfg_sms_val *smslist)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t count,
+    struct tms_cfg_sms_val *smslist)
 {
 	uint8_t *pmem;
 	struct tms_cfg_sms *pcfg_hdr;
@@ -1199,13 +1217,13 @@ int32_t tms_CfgSMSAuthorization(
 	// Step 1.分配内存并各指针指向相应内存
 	len = sizeof(struct tms_cfg_sms) + count * sizeof(struct tms_cfg_sms_val);
 
-	printf("malloc len %d\n",len);
-	pmem = (uint8_t*)malloc(len);
+	printf("malloc len %d\n", len);
+	pmem = (uint8_t *)malloc(len);
 	if (pmem == NULL) {
 		return -1;
 	}
-	pcfg_hdr = (struct tms_cfg_sms*)(pmem);
-	plist   = (struct tms_cfg_sms_val*)(pmem + sizeof(struct tms_cfg_sms));
+	pcfg_hdr = (struct tms_cfg_sms *)(pmem);
+	plist   = (struct tms_cfg_sms_val *)(pmem + sizeof(struct tms_cfg_sms));
 
 	// Step 2.各字段复制
 	pcfg_hdr->count = htonl(count);
@@ -1222,14 +1240,14 @@ int32_t tms_CfgSMSAuthorization(
 		plist++;
 		ptlist++;
 	}
-	
+
 	// Step 3. 发送
 	struct glink_base  base_hdr;
 	int ret;
 
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 	glink_Build(&base_hdr, ID_CFG_SMS, len);
@@ -1246,8 +1264,8 @@ static int32_t tms_AnalyseCfgSMSAuthorization(struct tms_context *pcontext, int8
 	struct tms_cfg_sms_val         *plist, *ptlist;
 
 	// Step 1.分配内存并各指针指向相应内存
-	pcfg_hdr = (struct tms_cfg_sms*)(pdata + GLINK_OFFSET_DATA);
-	plist   = (struct tms_cfg_sms_val*)(pdata + GLINK_OFFSET_DATA + sizeof(struct tms_cfg_sms));
+	pcfg_hdr = (struct tms_cfg_sms *)(pdata + GLINK_OFFSET_DATA);
+	plist   = (struct tms_cfg_sms_val *)(pdata + GLINK_OFFSET_DATA + sizeof(struct tms_cfg_sms));
 
 	// Step 2.各字段复制
 	pcfg_hdr->count = htonl(pcfg_hdr->count);
@@ -1277,12 +1295,12 @@ static int32_t tms_AnalyseCfgSMSAuthorization(struct tms_context *pcontext, int8
  			可能被接收端忽略，所以应用层需关注是否填写正确
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
+ * @remarks
  * @see	tms_CfgSMSAuthorization
  */
 int32_t tms_ClearSMSAuthorization(
-	int     fd, 
-	struct glink_addr *paddr)
+    int     fd,
+    struct glink_addr *paddr)
 {
 	return tms_MCUtoDevice(fd, paddr, 0, 0, 0, 0, ID_CFG_SMS_CLEAR, 0);
 }
@@ -1303,12 +1321,12 @@ static int32_t tms_AnalyseClearSMSAuthorization(struct tms_context *pcontext, in
  * @param[in]	port 指定板卡端口数
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
+ * @remarks
  * @see	tms_MCUtoDevice
  */
 uint32_t tms_GetDeviceComposition(
-		int     fd, 
-		struct glink_addr *paddr)
+    int     fd,
+    struct glink_addr *paddr)
 {
 	return tms_MCUtoDevice(fd, paddr, 0, 0, 0, 0, ID_GET_COMPOSITION, 0);
 }
@@ -1319,7 +1337,7 @@ static int32_t tms_AnalyseGetDeviceComposition(struct tms_context *pcontext, int
 	// printf("dowhat() %d\n", pcontext->ptr_analyse_arr->dowhat);
 
 	if (pcontext->ptr_analyse_arr->dowhat != 0) {
-		sg_dowhat[pcontext->ptr_analyse_arr->dowhat].ptrfun(pcontext, pdata, len);	
+		sg_dowhat[pcontext->ptr_analyse_arr->dowhat].ptrfun(pcontext, pdata, len);
 	}
 	if (pcontext->ptcb->pf_OnGetDeviceComposition) {
 		pcontext->ptcb->pf_OnGetDeviceComposition(pcontext, pdata, len);
@@ -1330,11 +1348,11 @@ static int32_t tms_AnalyseGetDeviceComposition(struct tms_context *pcontext, int
 
 // 板卡组成信息
 uint32_t tms_RetDeviceComposition_any(
-		int      fd, 
-		struct glink_addr *paddr, 
-		uint32_t count, 
-		struct tms_dev_composition_val *list,
-		int32_t cmdid)
+    int      fd,
+    struct glink_addr *paddr,
+    uint32_t count,
+    struct tms_dev_composition_val *list,
+    int32_t cmdid)
 {
 	uint8_t *pmem;
 	struct tms_dev_composition *pcfg_hdr;
@@ -1344,12 +1362,12 @@ uint32_t tms_RetDeviceComposition_any(
 	// Step 1.分配内存并各指针指向相应内存
 	len = sizeof(struct tms_dev_composition) + count * sizeof(struct tms_dev_composition_val);
 
-	pmem = (uint8_t*)malloc(len);
+	pmem = (uint8_t *)malloc(len);
 	if (pmem == NULL) {
 		return -1;
 	}
-	pcfg_hdr = (struct tms_dev_composition*)(pmem);
-	plist   = (struct tms_dev_composition_val*)(pmem + sizeof(struct tms_dev_composition));
+	pcfg_hdr = (struct tms_dev_composition *)(pmem);
+	plist   = (struct tms_dev_composition_val *)(pmem + sizeof(struct tms_dev_composition));
 
 	// Step 2.各字段复制
 	pcfg_hdr->count = htonl(count);
@@ -1368,11 +1386,11 @@ uint32_t tms_RetDeviceComposition_any(
 		plist++;
 		ptlist++;
 	}
-	
+
 
 	//   ------------------
-	printf("%s()\n",__FUNCTION__);
-	
+	printf("%s()\n", __FUNCTION__);
+
 	ptlist = list;
 	for (uint32_t i = 0; i < count; i++) {
 		printf("\tf%d/s%x/t%d/p%d\n", ptlist->frame, ptlist->slot, ptlist->type, ptlist->port);
@@ -1385,7 +1403,7 @@ uint32_t tms_RetDeviceComposition_any(
 
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 	printf("pbase src %x dst %x\n", base_hdr.src, base_hdr.dst);
@@ -1405,16 +1423,16 @@ uint32_t tms_RetDeviceComposition_any(
  * @param[in]	list 指向一个 struct tms_dev_composition 一维数组
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
+ * @remarks
  * @see	tms_RetDeviceComposition_any
  */
 uint32_t tms_RetDeviceComposition(
-		int      fd, 
-		struct glink_addr *paddr, 
-		uint32_t count, 
-		struct tms_dev_composition_val *list)
+    int      fd,
+    struct glink_addr *paddr,
+    uint32_t count,
+    struct tms_dev_composition_val *list)
 {
-	return tms_RetDeviceComposition_any(fd,paddr,count,list,ID_RET_COMPOSITION);
+	return tms_RetDeviceComposition_any(fd, paddr, count, list, ID_RET_COMPOSITION);
 }
 
 
@@ -1426,15 +1444,15 @@ static int32_t tms_AnalyseRetDeviceComposition(struct tms_context *pcontext, int
 	// printf("dowhat() %d\n", pcontext->ptr_analyse_arr->dowhat);
 
 	// if (pcontext->ptr_analyse_arr->dowhat != 0) {
-	// 	sg_dowhat[pcontext->ptr_analyse_arr->dowhat].ptrfun(pcontext, pdata, len);	
+	// 	sg_dowhat[pcontext->ptr_analyse_arr->dowhat].ptrfun(pcontext, pdata, len);
 	// }
 
 	struct tms_dev_composition 		*pcfg_hdr;
 	struct tms_dev_composition_val  *plist, *ptlist;
 
 
-	pcfg_hdr = (struct tms_dev_composition*)(pdata + GLINK_OFFSET_DATA);
-	plist    = (struct tms_dev_composition_val*)  (pdata + GLINK_OFFSET_DATA + sizeof(struct tms_dev_composition));
+	pcfg_hdr = (struct tms_dev_composition *)(pdata + GLINK_OFFSET_DATA);
+	plist    = (struct tms_dev_composition_val *)  (pdata + GLINK_OFFSET_DATA + sizeof(struct tms_dev_composition));
 
 	pcfg_hdr->count = htonl(pcfg_hdr->count);
 
@@ -1453,7 +1471,7 @@ static int32_t tms_AnalyseRetDeviceComposition(struct tms_context *pcontext, int
 	}
 
 	if (pcontext->ptcb->pf_OnRetDeviceComposition) {
-		pcontext->ptcb->pf_OnRetDeviceComposition(pcontext, pdata, len, pcfg_hdr, plist);	
+		pcontext->ptcb->pf_OnRetDeviceComposition(pcontext, pdata, len, pcfg_hdr, plist);
 	}
 	return 0;
 }
@@ -1479,21 +1497,21 @@ static int32_t tms_AnalyseRetDeviceComposition(struct tms_context *pcontext, int
  * @param[in]	end_name 光缆末端局端名称
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
+ * @remarks
  * @see	tms_CfgMCUOSWPort @see tms_CfgMCUOLPPort
  */
 int32_t tms_CfgMCUAnyPort(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t frame, 
-		int32_t slot, 
-		int32_t port, 
-		int32_t type, 
-		int32_t cmdID, 
-		uint8_t (*dev_name)[64], 
-		uint8_t (*cable_name)[64], 
-		uint8_t (*start_name)[64], 
-		uint8_t (*end_name)[64])
+    int fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t port,
+    int32_t type,
+    int32_t cmdID,
+    uint8_t (*dev_name)[64],
+    uint8_t (*cable_name)[64],
+    uint8_t (*start_name)[64],
+    uint8_t (*end_name)[64])
 {
 	uint8_t *pmem;
 	struct tms_cfg_mcu_osw_port oswmode;
@@ -1511,11 +1529,11 @@ int32_t tms_CfgMCUAnyPort(
 	struct glink_base  base_hdr;
 	int ret = 0;
 
-	pmem = (uint8_t*)&oswmode;
+	pmem = (uint8_t *)&oswmode;
 
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 	glink_Build(&base_hdr, cmdID, sizeof(struct tms_cfg_mcu_osw_port));
@@ -1525,43 +1543,43 @@ int32_t tms_CfgMCUAnyPort(
 
 static int32_t tms_AnalyseCfgMCUAnyPort(int8_t *pdata)
 {
-    struct tms_cfg_mcu_osw_port *pval;
-        uint16_t *pstr16;
-        pval  = (struct tms_cfg_mcu_osw_port*)(pdata + GLINK_OFFSET_DATA );
+	struct tms_cfg_mcu_osw_port *pval;
+	uint16_t *pstr16;
+	pval  = (struct tms_cfg_mcu_osw_port *)(pdata + GLINK_OFFSET_DATA );
 
-        pval->frame = htonl(pval->frame);
-        pval->slot  = htonl(pval->slot);
-        pval->type  = htonl(pval->type);
-        pval->port  = htonl(pval->port);
+	pval->frame = htonl(pval->frame);
+	pval->slot  = htonl(pval->slot);
+	pval->type  = htonl(pval->type);
+	pval->port  = htonl(pval->port);
 
-        pstr16  = (uint16_t*)pval->dev_name;
-        for (int k = 0;k < 64/2;k++) {
-            *pstr16 = htons(*pstr16);
-            pstr16++;
-        }
+	pstr16  = (uint16_t *)pval->dev_name;
+	for (int k = 0; k < 64 / 2; k++) {
+		*pstr16 = htons(*pstr16);
+		pstr16++;
+	}
 
-        pstr16  = (uint16_t*)pval->cable_name;
-        for (int k = 0;k < 64/2;k++) {
-            *pstr16 = htons(*pstr16);
-            pstr16++;
-        }
-        pstr16  = (uint16_t*)pval->start_name;
-        for (int k = 0;k < 64/2;k++) {
-            *pstr16 = htons(*pstr16);
-            pstr16++;
-        }
-        pstr16  = (uint16_t*)pval->end_name;
-        for (int k = 0;k < 64/2;k++) {
-            *pstr16 = htons(*pstr16);
-            pstr16++;
-        }
+	pstr16  = (uint16_t *)pval->cable_name;
+	for (int k = 0; k < 64 / 2; k++) {
+		*pstr16 = htons(*pstr16);
+		pstr16++;
+	}
+	pstr16  = (uint16_t *)pval->start_name;
+	for (int k = 0; k < 64 / 2; k++) {
+		*pstr16 = htons(*pstr16);
+		pstr16++;
+	}
+	pstr16  = (uint16_t *)pval->end_name;
+	for (int k = 0; k < 64 / 2; k++) {
+		*pstr16 = htons(*pstr16);
+		pstr16++;
+	}
 
-        printf("dev_name:%s\n", pval->dev_name);
-        printf("cable_name:%s\n", pval->cable_name);
-        printf("start_name:%s\n", pval->start_name);
-        printf("end_name:%s\n", pval->end_name);
+	printf("dev_name:%s\n", pval->dev_name);
+	printf("cable_name:%s\n", pval->cable_name);
+	printf("start_name:%s\n", pval->start_name);
+	printf("end_name:%s\n", pval->end_name);
 
-        return 0;
+	return 0;
 }
 /**
  * @brief	ID_CFG_MCU_OSW_PORT 0x80000007 网管对OLP模块的工作模式和返回时间设定
@@ -1582,15 +1600,15 @@ static int32_t tms_AnalyseCfgMCUAnyPort(int8_t *pdata)
  */
 
 int32_t tms_CfgMCUOSWPort(
-		int fd, 
-		struct glink_addr *paddr, 		
-		int32_t frame, 
-		int32_t slot, 
-		int32_t port, 
-		uint8_t (*dev_name)[64], 
-		uint8_t (*cable_name)[64], 
-		uint8_t (*start_name)[64], 
-		uint8_t (*end_name)[64])
+    int fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t port,
+    uint8_t (*dev_name)[64],
+    uint8_t (*cable_name)[64],
+    uint8_t (*start_name)[64],
+    uint8_t (*end_name)[64])
 {
 	return tms_CfgMCUAnyPort(fd, paddr, frame, slot, port, DEV_OSW, ID_CFG_MCU_OSW_PORT, dev_name, cable_name, start_name, end_name);
 }
@@ -1620,15 +1638,15 @@ static int32_t tms_AnalyseCfgMCUOSWPort(struct tms_context *pcontext, int8_t *pd
  * @see	tms_CfgMCUAnyPort
  */
 int32_t tms_CfgMCUOLPPort(
-		int fd, 
-		struct glink_addr *paddr, 		
-		int32_t frame, 
-		int32_t slot, 
-		int32_t port, 
-		uint8_t (*dev_name)[64], 
-		uint8_t (*cable_name)[64], 
-		uint8_t (*start_name)[64], 
-		uint8_t (*end_name)[64])
+    int fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t port,
+    uint8_t (*dev_name)[64],
+    uint8_t (*cable_name)[64],
+    uint8_t (*start_name)[64],
+    uint8_t (*end_name)[64])
 {
 	return tms_CfgMCUAnyPort(fd, paddr, frame, slot, port, DEV_OLP, ID_CFG_MCU_OLP_PORT, dev_name, cable_name, start_name, end_name);
 }
@@ -1637,7 +1655,7 @@ static int32_t tms_AnalyseCfgMCUOLPPort(struct tms_context *pcontext, int8_t *pd
 {
 	tms_AnalyseCfgMCUAnyPort(pdata);
 
-	
+
 	return 0;
 }
 
@@ -1665,14 +1683,14 @@ static int32_t tms_AnalyseCfgMCUOLPPort(struct tms_context *pcontext, int8_t *pd
  * @see	tms_CfgMCUUniteOPMOSW @see tms_CfgMCUUniteOLPOSW
  */
 int32_t tms_CfgMCUUniteAnyOSW(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t any_frame, 
-		int32_t any_slot, 
-		int32_t any_type, 
-		int32_t cmdID, 
-		int32_t	count, 
-		struct tms_cfg_mcu_u_any_osw_val *list)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t any_frame,
+    int32_t any_slot,
+    int32_t any_type,
+    int32_t cmdID,
+    int32_t	count,
+    struct tms_cfg_mcu_u_any_osw_val *list)
 {
 	uint8_t *pmem;
 	struct tms_cfg_mcu_u_any_osw *pcfg_hdr;
@@ -1682,12 +1700,12 @@ int32_t tms_CfgMCUUniteAnyOSW(
 	// Step 1.分配内存并各指针指向相应内存
 	len = sizeof(struct tms_cfg_mcu_u_any_osw) + count * sizeof(struct tms_cfg_mcu_u_any_osw_val);
 
-	pmem = (uint8_t*)malloc(len);
+	pmem = (uint8_t *)malloc(len);
 	if (pmem == NULL) {
 		return -1;
 	}
-	pcfg_hdr = (struct tms_cfg_mcu_u_any_osw*)(pmem);
-	plist   = (struct tms_cfg_mcu_u_any_osw_val*)(pmem + sizeof(struct tms_cfg_mcu_u_any_osw));
+	pcfg_hdr = (struct tms_cfg_mcu_u_any_osw *)(pmem);
+	plist   = (struct tms_cfg_mcu_u_any_osw_val *)(pmem + sizeof(struct tms_cfg_mcu_u_any_osw));
 
 	// Step 2.各字段复制
 	pcfg_hdr->any_frame = htonl(any_frame);
@@ -1713,14 +1731,14 @@ int32_t tms_CfgMCUUniteAnyOSW(
 		plist++;
 		ptlist++;
 	}
-	
+
 	// Step 3. 发送
 	struct glink_base  base_hdr;
 	int ret;
 
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 	glink_Build(&base_hdr, cmdID, len);
@@ -1735,17 +1753,17 @@ static int32_t tms_AnalyseCfgMCUUniteAnyOSW(struct tms_context *pcontext, int8_t
 	struct tms_cfg_mcu_u_any_osw *pcfg_hdr;
 	struct tms_cfg_mcu_u_any_osw_val         *plist, *ptlist;
 
-	pcfg_hdr = (struct tms_cfg_mcu_u_any_osw*)(pdata + GLINK_OFFSET_DATA);
+	pcfg_hdr = (struct tms_cfg_mcu_u_any_osw *)(pdata + GLINK_OFFSET_DATA);
 	if ( !CHECK_PTR(
-			pcfg_hdr, 
-			struct tms_cfg_mcu_u_any_osw, 
-			struct tms_cfg_mcu_u_any_osw_val, 
-			htonl(pcfg_hdr->count), 
-			pdata + len)) {
-		printf("Err: %s():%d\n",__FUNCTION__,__LINE__);
+	         pcfg_hdr,
+	         struct tms_cfg_mcu_u_any_osw,
+	         struct tms_cfg_mcu_u_any_osw_val,
+	         htonl(pcfg_hdr->count),
+	         pdata + len)) {
+		printf("Err: %s():%d\n", __FUNCTION__, __LINE__);
 		return -1;
 	}
-	plist   = (struct tms_cfg_mcu_u_any_osw_val*)(pdata + GLINK_OFFSET_DATA +  + sizeof(struct tms_cfg_mcu_u_any_osw));
+	plist   = (struct tms_cfg_mcu_u_any_osw_val *)(pdata + GLINK_OFFSET_DATA +  + sizeof(struct tms_cfg_mcu_u_any_osw));
 
 	// Step 2.各字段复制
 	pcfg_hdr->any_frame = htonl(pcfg_hdr->any_frame);
@@ -1792,12 +1810,12 @@ static int32_t tms_AnalyseCfgMCUUniteAnyOSW(struct tms_context *pcontext, int8_t
  * @see	tms_CfgMCUUniteAnyOSW
  */
 int32_t tms_CfgMCUUniteOPMOSW(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t frame, 
-		int32_t slot, 
-		int32_t	count, 
-		struct tms_cfg_mcu_u_any_osw_val *list)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t	count,
+    struct tms_cfg_mcu_u_any_osw_val *list)
 {
 	return tms_CfgMCUUniteAnyOSW(fd, paddr, frame, slot, DEV_OPM, ID_CFG_MCU_U_OPM_OSW, count, list);
 }
@@ -1806,7 +1824,7 @@ static int32_t tms_AnalyseCfgMCUUniteOPMOSW(struct tms_context *pcontext, int8_t
 {
 	tms_AnalyseCfgMCUUniteAnyOSW(pcontext, pdata, len);
 
-	
+
 	return 0;
 }
 /**
@@ -1824,12 +1842,12 @@ static int32_t tms_AnalyseCfgMCUUniteOPMOSW(struct tms_context *pcontext, int8_t
  * @see	tms_CfgMCUUniteAnyOSW
  */
 int32_t tms_CfgMCUUniteOLPOSW(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t frame, 
-		int32_t slot, 
-		int32_t	count, 
-		struct tms_cfg_mcu_u_any_osw_val *list)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t	count,
+    struct tms_cfg_mcu_u_any_osw_val *list)
 {
 	return tms_CfgMCUUniteAnyOSW(fd, paddr, frame, slot, DEV_OLP, ID_CFG_MCU_U_OLP_OSW, count, list);
 }
@@ -1838,7 +1856,7 @@ static int32_t tms_AnalyseCfgMCUUniteOLPOSW(struct tms_context *pcontext, int8_t
 {
 	tms_AnalyseCfgMCUUniteAnyOSW(pcontext, pdata, len);
 
-	
+
 	return 0;
 }
 
@@ -1873,14 +1891,14 @@ static int32_t tms_AnalyseCfgMCUUniteOLPOSW(struct tms_context *pcontext, int8_t
  * @see	tms_CfgMCUUniteOPMOSWClear @see	tms_CfgMCUUniteOLPOSWClear @see	tms_CfgMCUOPMPortClear @see	tms_CfgMCUOLPPortClear
  */
 int32_t tms_CfgMCUAnyPortClear(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t any_frame, 
-		int32_t any_slot, 
-		int32_t any_type, 
-		int32_t cmdID, 
-		int32_t	count, 
-		struct  tms_cfg_mcu_any_port_clear_val *list)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t any_frame,
+    int32_t any_slot,
+    int32_t any_type,
+    int32_t cmdID,
+    int32_t	count,
+    struct  tms_cfg_mcu_any_port_clear_val *list)
 {
 	uint8_t *pmem;
 	struct tms_cfg_mcu_u_any_osw *pcfg_hdr;
@@ -1890,12 +1908,12 @@ int32_t tms_CfgMCUAnyPortClear(
 	// Step 1.分配内存并各指针指向相应内存
 	len = sizeof(struct tms_cfg_mcu_u_any_osw) + count * sizeof(struct tms_cfg_mcu_any_port_clear_val);
 
-	pmem = (uint8_t*)malloc(len);
+	pmem = (uint8_t *)malloc(len);
 	if (pmem == NULL) {
 		return -1;
 	}
-	pcfg_hdr = (struct tms_cfg_mcu_u_any_osw*)(pmem);
-	plist   = (struct tms_cfg_mcu_any_port_clear_val*)(pmem + sizeof(struct tms_cfg_mcu_u_any_osw));
+	pcfg_hdr = (struct tms_cfg_mcu_u_any_osw *)(pmem);
+	plist   = (struct tms_cfg_mcu_any_port_clear_val *)(pmem + sizeof(struct tms_cfg_mcu_u_any_osw));
 
 	// Step 2.各字段复制
 	pcfg_hdr->any_frame = htonl(any_frame);
@@ -1903,10 +1921,10 @@ int32_t tms_CfgMCUAnyPortClear(
 	pcfg_hdr->any_type  = htonl(any_type);//htonl(DEV_OPM);
 	pcfg_hdr->count     = htonl(count);
 
-	printf("val:f%2.2d/s%2.2d/t%2.2d\n", 
-				any_frame, 
-				any_slot, 
-				DEV_OPM);
+	printf("val:f%2.2d/s%2.2d/t%2.2d\n",
+	       any_frame,
+	       any_slot,
+	       DEV_OPM);
 
 	// todo :防止循环count次溢出ptlist
 	ptlist = list;
@@ -1916,14 +1934,14 @@ int32_t tms_CfgMCUAnyPortClear(
 		plist++;
 		ptlist++;
 	}
-	
+
 	// Step 3. 发送
 	struct glink_base  base_hdr;
 	int ret;
 
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 	glink_Build(&base_hdr, cmdID, len);
@@ -1940,8 +1958,8 @@ static int32_t tms_AnalyseCfgMCUAnyPortClear(struct tms_context *pcontext, int8_
 
 	// Step 1.分配内存并各指针指向相应内存
 
-	pcfg_hdr = (struct tms_cfg_mcu_u_any_osw*)(pdata + GLINK_OFFSET_DATA);
-	plist   = (struct tms_cfg_mcu_any_port_clear_val*)(pdata + GLINK_OFFSET_DATA + sizeof(struct tms_cfg_mcu_u_any_osw));
+	pcfg_hdr = (struct tms_cfg_mcu_u_any_osw *)(pdata + GLINK_OFFSET_DATA);
+	plist   = (struct tms_cfg_mcu_any_port_clear_val *)(pdata + GLINK_OFFSET_DATA + sizeof(struct tms_cfg_mcu_u_any_osw));
 
 
 	// Step 2.各字段复制
@@ -1950,10 +1968,10 @@ static int32_t tms_AnalyseCfgMCUAnyPortClear(struct tms_context *pcontext, int8_
 	pcfg_hdr->any_type  = htonl(pcfg_hdr->any_type);
 	pcfg_hdr->count     = htonl(pcfg_hdr->count);
 
-	printf("val:f%2.2d/s%2.2d/t%2.2d\n", 
-				pcfg_hdr->any_frame, 
-				pcfg_hdr->any_slot, 
-				pcfg_hdr->any_type);
+	printf("val:f%2.2d/s%2.2d/t%2.2d\n",
+	       pcfg_hdr->any_frame,
+	       pcfg_hdr->any_slot,
+	       pcfg_hdr->any_type);
 	// todo :防止循环count次溢出ptlist
 	printf("count %d\n", pcfg_hdr->count);
 	ptlist = plist;
@@ -1969,7 +1987,7 @@ static int32_t tms_AnalyseCfgMCUAnyPortClear(struct tms_context *pcontext, int8_
 
 /**
  * @brief	ID_CFG_MCU_OSW_PORT_CLEAR 0x80000008   网管发送清除OSW模块各光端口关联光缆信息到MCU\n
- 			
+
  * @param[in]	fd 套接字文件描述符
  * @param[in]	paddr glink帧源地址和目的地址，如果填NULL则采用默认的
  				TMS_DEFAULT_LOCAL_ADDR和TMS_DEFAULT_RMOTE_ADDR填充，两个宏的意义通过
@@ -1982,28 +2000,28 @@ static int32_t tms_AnalyseCfgMCUAnyPortClear(struct tms_context *pcontext, int8_
  * @retval	0 发送失败，该链接失效，立即断开
  * @see	tms_CfgMCUAnyPortClear
  */
- // 作废
+// 作废
 int32_t tms_CfgMCUOPMPortClear(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t frame, 
-		int32_t any_slot, 
-		int32_t	count, 
-		struct tms_cfg_mcu_any_port_clear_val *list)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t any_slot,
+    int32_t	count,
+    struct tms_cfg_mcu_any_port_clear_val *list)
 {
 	printf("unuse\nunuse\nunuse\nunuse\nunuse\nunuse\nunuse\nunuse\nunuse\n");
-	return tms_CfgMCUAnyPortClear(fd, paddr, frame, any_slot, DEV_OLP, ID_CFG_MCU_OSW_PORT_CLEAR, count, list);	
+	return tms_CfgMCUAnyPortClear(fd, paddr, frame, any_slot, DEV_OLP, ID_CFG_MCU_OSW_PORT_CLEAR, count, list);
 }
 // 用这个代替上面的
 int32_t tms_CfgMCUOSWPortClear(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t frame, 
-		int32_t any_slot, 
-		int32_t	count, 
-		struct tms_cfg_mcu_any_port_clear_val *list)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t any_slot,
+    int32_t	count,
+    struct tms_cfg_mcu_any_port_clear_val *list)
 {
-	return tms_CfgMCUAnyPortClear(fd, paddr, frame, any_slot, DEV_OSW, ID_CFG_MCU_OSW_PORT_CLEAR, count, list);	
+	return tms_CfgMCUAnyPortClear(fd, paddr, frame, any_slot, DEV_OSW, ID_CFG_MCU_OSW_PORT_CLEAR, count, list);
 }
 
 static int32_t tms_AnalyseCfgMCUOPMPortClear(struct tms_context *pcontext, int8_t *pdata, int32_t len)
@@ -2011,7 +2029,7 @@ static int32_t tms_AnalyseCfgMCUOPMPortClear(struct tms_context *pcontext, int8_
 	tms_AnalyseCfgMCUAnyPortClear(pcontext, pdata, len);
 
 
-	
+
 	return 0;
 }
 /**
@@ -2029,21 +2047,21 @@ static int32_t tms_AnalyseCfgMCUOPMPortClear(struct tms_context *pcontext, int8_
  * @see	tms_CfgMCUAnyPortClear
  */
 int32_t tms_CfgMCUOLPPortClear(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t frame, 
-		int32_t any_slot, 
-		int32_t	count, 
-		struct tms_cfg_mcu_any_port_clear_val *list)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t any_slot,
+    int32_t	count,
+    struct tms_cfg_mcu_any_port_clear_val *list)
 {
-	return tms_CfgMCUAnyPortClear(fd, paddr, frame, any_slot, DEV_OLP, ID_CFG_MCU_OLP_PORT_CLEAR, count, list);	
+	return tms_CfgMCUAnyPortClear(fd, paddr, frame, any_slot, DEV_OLP, ID_CFG_MCU_OLP_PORT_CLEAR, count, list);
 }
 
 
 static int32_t tms_AnalyseCfgMCUOLPPortClear(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
 	tms_AnalyseCfgMCUAnyPortClear(pcontext, pdata, len);
-	
+
 	return 0;
 }
 /**
@@ -2061,12 +2079,12 @@ static int32_t tms_AnalyseCfgMCUOLPPortClear(struct tms_context *pcontext, int8_
  * @see	tms_CfgMCUAnyPortClear
  */
 int32_t tms_CfgMCUUniteOPMOSWClear(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t any_frame, 
-		int32_t any_slot, 
-		int32_t	count, 
-		struct tms_cfg_mcu_any_port_clear_val *list)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t any_frame,
+    int32_t any_slot,
+    int32_t	count,
+    struct tms_cfg_mcu_any_port_clear_val *list)
 {
 	return tms_CfgMCUAnyPortClear(fd, paddr, any_frame, any_slot, DEV_OPM, ID_CFG_MCU_U_OPM_OSW_CLEAR, count, list);
 }
@@ -2076,7 +2094,7 @@ static int32_t tms_AnalyseCfgMCUUniteOPMOSWClear(struct tms_context *pcontext, i
 {
 	tms_AnalyseCfgMCUAnyPortClear(pcontext, pdata, len);
 
-	
+
 	return 0;
 }
 
@@ -2095,12 +2113,12 @@ static int32_t tms_AnalyseCfgMCUUniteOPMOSWClear(struct tms_context *pcontext, i
  * @see	tms_CfgMCUAnyPortClear
  */
 int32_t tms_CfgMCUUniteOLPOSWClear(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t frame, 
-		int32_t slot, 
-		int32_t	count, 
-		struct tms_cfg_mcu_any_port_clear_val *list)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t	count,
+    struct tms_cfg_mcu_any_port_clear_val *list)
 {
 	return tms_CfgMCUAnyPortClear(fd, paddr, frame, slot, DEV_OLP, ID_CFG_MCU_U_OLP_OSW_CLEAR, count, list);
 }
@@ -2119,48 +2137,48 @@ static int32_t tms_AnalyseCfgMCUUniteOLPOSWClear(struct tms_context *pcontext, i
 */
 
 static void tms_OTDRConv_tms_retotdr_test_param(
-	struct tms_retotdr_test_param *pout, 
-	struct tms_retotdr_test_param *pin)
+    struct tms_retotdr_test_param *pout,
+    struct tms_retotdr_test_param *pin)
 {
 	register uint32_t *p32s, *p32d;
 	// register uint16_t *p16s, *p16d;
 	// register int loop;
 
-	p32d = (uint32_t*)pout;
-	p32s = (uint32_t*)pin;
-	for (register uint32_t i = 0;i < sizeof (struct tms_retotdr_test_param) / sizeof(int32_t); i++) {
+	p32d = (uint32_t *)pout;
+	p32s = (uint32_t *)pin;
+	for (register uint32_t i = 0; i < sizeof (struct tms_retotdr_test_param) / sizeof(int32_t); i++) {
 		*p32d = htonl(*p32s);
 		p32d++;
 		p32s++;
 	}
 
-	
+
 
 }
 
 static void tms_OTDRConv_tms_retotdr_data_hdr(
-	struct tms_retotdr_data_hdr *pout, 
-	struct tms_retotdr_data_hdr *pin)
+    struct tms_retotdr_data_hdr *pout,
+    struct tms_retotdr_data_hdr *pin)
 {
 	memcpy(pout->dpid, pin->dpid, 12);
-	
+
 	pout->count = htonl(pin->count);
 }
 
 static void tms_OTDRConv_tms_retotdr_data_val(
-	struct tms_retotdr_data_val *pout, 
-	struct tms_retotdr_data_val *pin, 
-	struct tms_retotdr_data_hdr *pdata_hdr)
+    struct tms_retotdr_data_val *pout,
+    struct tms_retotdr_data_val *pin,
+    struct tms_retotdr_data_hdr *pdata_hdr)
 {
 	register uint16_t *p16s, *p16d;
 	register int loop;
-	
+
 	// Part B.2
 	// loop = pdata_hdr->count >> 1;
 	loop = pdata_hdr->count ;
-	p16d = (uint16_t*)pout;
-	p16s = (uint16_t*)pin;
-	for (register int i = 0;i < loop; i++) {
+	p16d = (uint16_t *)pout;
+	p16s = (uint16_t *)pin;
+	for (register int i = 0; i < loop; i++) {
 		*p16d = htons(*p16s);
 		p16d++;
 		p16s++;
@@ -2169,8 +2187,8 @@ static void tms_OTDRConv_tms_retotdr_data_val(
 }
 
 static void tms_OTDRConv_tms_retotdr_event_hdr(
-	struct tms_retotdr_event_hdr *pout, 
-	struct tms_retotdr_event_hdr *pin)
+    struct tms_retotdr_event_hdr *pout,
+    struct tms_retotdr_event_hdr *pin)
 {
 	// pin->count = pin->count & 0x3ff;				// 限定loop在0~1024以内
 
@@ -2179,41 +2197,47 @@ static void tms_OTDRConv_tms_retotdr_event_hdr(
 }
 
 static void tms_OTDRConv_tms_retotdr_event_val(
-	struct tms_retotdr_event_val *pout, 
-	struct tms_retotdr_event_val *pin, 
-	struct tms_retotdr_event_hdr *pevent_hdr)
+    struct tms_retotdr_event_val *pout,
+    struct tms_retotdr_event_val *pin,
+    struct tms_retotdr_event_hdr *pevent_hdr)
 {
 	register int32_t *p32s, *p32d;
 	register int loop;
 
-	
-	
+
+
 	loop = pevent_hdr->count;
 	loop = loop * sizeof (struct tms_retotdr_event_val) >> 2;	// 计算有多少个4Byte数据
 	// printf("loop %d\n", loop);
-	p32d = (int32_t*)pout;
-	p32s = (int32_t*)pin;
-	for (register int i = 0;i < loop; i++) {
+	p32d = (int32_t *)pout;
+	p32s = (int32_t *)pin;
+	for (register int i = 0; i < loop; i++) {
 		*p32d = htonl(*p32s);
 		p32d++;
 		p32s++;
 	}
 }
 static void tms_OTDRConv_tms_retotdr_chain(
-	struct tms_retotdr_chain *pout, 
-	struct tms_retotdr_chain *pin)
+    struct tms_retotdr_chain *pout,
+    struct tms_retotdr_chain *pin)
 {
 	register int32_t *p32s, *p32d;
 	// register int loop;
 
-	p32d = (int32_t*)&pout->range;
-	p32s = (int32_t*)&pin->range;
+	p32d = (int32_t *)&pout->range;
+	p32s = (int32_t *)&pin->range;
 	memcpy(&pout->inf[0], &pin->inf[0], 20);
 	printf("in inf %s\n", pin->inf);
 	printf("out inf %s\n", pout->inf);
-	*p32d = htonl(*p32s);p32d++;p32s++;
-	*p32d = htonl(*p32s);p32d++;p32s++;
-	*p32d = htonl(*p32s);p32d++;p32s++;
+	*p32d = htonl(*p32s);
+	p32d++;
+	p32s++;
+	*p32d = htonl(*p32s);
+	p32d++;
+	p32s++;
+	*p32d = htonl(*p32s);
+	p32d++;
+	p32s++;
 }
 
 
@@ -2222,25 +2246,25 @@ static void tms_OTDRConv_tms_retotdr_chain(
  			count + struct A + struct A + ... + struct A
  * @param	null
  * @retval	null
- * @remarks	
- * @see	
+ * @remarks
+ * @see
  */
 
 static void tms_Conv_Nx4Byte(
-	uint32_t *pout, 
-	uint32_t *pin, 
-	int32_t count)
+    uint32_t *pout,
+    uint32_t *pin,
+    int32_t count)
 {
 	register int32_t *p32s, *p32d;
 	register int loop;
 
-	
+
 
 	loop = count >> 2;	// 计算有多少个4Byte数据
 	// printf("loop %d\n", loop);
-	p32d = (int32_t*)pout;
-	p32s = (int32_t*)pin;
-	for (register int i = 0;i < loop; i++) {
+	p32d = (int32_t *)pout;
+	p32s = (int32_t *)pin;
+	for (register int i = 0; i < loop; i++) {
 		*p32d = htonl(*p32s);
 		p32d++;
 		p32s++;
@@ -2264,19 +2288,19 @@ static void tms_Conv_Nx4Byte(
  * @param[in]	count struct tms_cfg_opm_ref_val 或struct tms_cfg_olp_ref_val 数组个数
  * @param[in]	list 指向一个 struct tms_cfg_opm_ref_val 或struct tms_cfg_olp_ref_val 一维数组
  * @retval	null
- * @remarks	
+ * @remarks
  * @see	tms_CfgOPMRefLevel @see tms_CfgOLPRefLevel
  */
 
 int32_t tms_CfgAnyRefLevel(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t any_frame, 
-		int32_t any_slot, 
-		int32_t any_type, 
-		int32_t cmdID, 
-		int32_t count, 
-		void    *list)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t any_frame,
+    int32_t any_slot,
+    int32_t any_type,
+    int32_t cmdID,
+    int32_t count,
+    void    *list)
 {
 	uint8_t *pmem;
 	struct tms_cfg_any_power_ref *pcfg_hdr;
@@ -2287,21 +2311,21 @@ int32_t tms_CfgAnyRefLevel(
 
 	// Step 1.分配内存并各指针指向相应内存
 	if (any_type == DEV_OPM) {
-		len = sizeof(struct tms_cfg_any_power_ref) + count * sizeof(struct tms_cfg_opm_ref_val);	
+		len = sizeof(struct tms_cfg_any_power_ref) + count * sizeof(struct tms_cfg_opm_ref_val);
 		printf("len = %d\n", len);
 	}
 	else {// DEV_OLP
-		len = sizeof(struct tms_cfg_any_power_ref) + count * sizeof(struct tms_cfg_olp_ref_val);		
+		len = sizeof(struct tms_cfg_any_power_ref) + count * sizeof(struct tms_cfg_olp_ref_val);
 	}
 
 
-	pmem = (uint8_t*)malloc(len);
+	pmem = (uint8_t *)malloc(len);
 	if (pmem == NULL) {
 		return -1;
 	}
-	pcfg_hdr    = (struct tms_cfg_any_power_ref*)(pmem);
-	popm_list   = (struct tms_cfg_opm_ref_val*)(pmem + sizeof(struct tms_cfg_any_power_ref));
-	polp_list   = (struct tms_cfg_olp_ref_val*)(pmem + sizeof(struct tms_cfg_any_power_ref));
+	pcfg_hdr    = (struct tms_cfg_any_power_ref *)(pmem);
+	popm_list   = (struct tms_cfg_opm_ref_val *)(pmem + sizeof(struct tms_cfg_any_power_ref));
+	polp_list   = (struct tms_cfg_olp_ref_val *)(pmem + sizeof(struct tms_cfg_any_power_ref));
 
 	// Step 2.各字段复制
 	pcfg_hdr->frame = htonl(any_frame);
@@ -2313,9 +2337,9 @@ int32_t tms_CfgAnyRefLevel(
 
 	// todo :防止循环count次溢出ptlist
 	if (any_type == DEV_OPM) {
-		ptopm_list = (struct tms_cfg_opm_ref_val*)list;
+		ptopm_list = (struct tms_cfg_opm_ref_val *)list;
 		tms_Print_tms_cfg_opm_ref_val(ptopm_list, count);
-		ptopm_list = (struct tms_cfg_opm_ref_val*)list;
+		ptopm_list = (struct tms_cfg_opm_ref_val *)list;
 		for (int i = 0; i < count; i++) {
 			popm_list->port      = htonl(ptopm_list->port);
 			popm_list->isminitor = htonl(ptopm_list->isminitor);
@@ -2326,12 +2350,12 @@ int32_t tms_CfgAnyRefLevel(
 			popm_list->leve2     = htonl(ptopm_list->leve2);
 			popm_list++;
 			ptopm_list++;
-		}	
+		}
 	}
 	else {// DEV_OLP
-		ptolp_list = (struct tms_cfg_olp_ref_val*)list;
+		ptolp_list = (struct tms_cfg_olp_ref_val *)list;
 		tms_Print_tms_cfg_olp_ref_val(ptolp_list, count);
-		ptolp_list = (struct tms_cfg_olp_ref_val*)list;
+		ptolp_list = (struct tms_cfg_olp_ref_val *)list;
 		for (int i = 0; i < count; i++) {
 			polp_list->port      = htonl(ptolp_list->port);
 			polp_list->isminitor = htonl(ptolp_list->isminitor);
@@ -2342,17 +2366,17 @@ int32_t tms_CfgAnyRefLevel(
 			polp_list->leve2     = htonl(ptolp_list->leve2);
 			polp_list++;
 			ptolp_list++;
-		}	
+		}
 	}
-	
-	
+
+
 	// Step 3. 发送
 	struct glink_base  base_hdr;
 	int ret;
 
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 	glink_Build(&base_hdr, cmdID, len);
@@ -2372,9 +2396,9 @@ static int32_t tms_AnalyseCfgAnyRefLevel(struct tms_context *pcontext, int8_t *p
 
 	// Step 1.分配内存并各指针指向相应内存
 
-	pcfg_hdr    = (struct tms_cfg_any_power_ref*)(pdata + GLINK_OFFSET_DATA);
-	popm_list   = (struct tms_cfg_opm_ref_val*)(pdata + GLINK_OFFSET_DATA + sizeof(struct tms_cfg_any_power_ref));
-	polp_list   = (struct tms_cfg_olp_ref_val*)(pdata + GLINK_OFFSET_DATA + sizeof(struct tms_cfg_any_power_ref));
+	pcfg_hdr    = (struct tms_cfg_any_power_ref *)(pdata + GLINK_OFFSET_DATA);
+	popm_list   = (struct tms_cfg_opm_ref_val *)(pdata + GLINK_OFFSET_DATA + sizeof(struct tms_cfg_any_power_ref));
+	polp_list   = (struct tms_cfg_olp_ref_val *)(pdata + GLINK_OFFSET_DATA + sizeof(struct tms_cfg_any_power_ref));
 
 	// Step 2.各字段复制
 	pcfg_hdr->frame = htonl(pcfg_hdr->frame);
@@ -2386,9 +2410,9 @@ static int32_t tms_AnalyseCfgAnyRefLevel(struct tms_context *pcontext, int8_t *p
 
 	// todo :防止循环count次溢出ptlist
 	if (any_type == DEV_OPM) {
-		ptopm_list = (struct tms_cfg_opm_ref_val*)popm_list;
+		ptopm_list = (struct tms_cfg_opm_ref_val *)popm_list;
 		for (int i = 0; i < pcfg_hdr->count; i++) {
-			
+
 
 			ptopm_list->port      = htonl(ptopm_list->port);
 			ptopm_list->isminitor = htonl(ptopm_list->isminitor);
@@ -2397,21 +2421,21 @@ static int32_t tms_AnalyseCfgAnyRefLevel(struct tms_context *pcontext, int8_t *p
 			ptopm_list->leve0     = htonl(ptopm_list->leve0);
 			ptopm_list->leve1     = htonl(ptopm_list->leve1);
 			ptopm_list->leve2     = htonl(ptopm_list->leve2);
-			printf("index:%d\n",i);
-			printf("\tport:%d\n",ptopm_list->port);
-			printf("\tisminitor:%d\n",ptopm_list->isminitor);
-			printf("\twave:%d\n",ptopm_list->wave);
-			printf("\tref_power:%d\n",ptopm_list->ref_power);
-			printf("\tleve0:%d\n",ptopm_list->leve0);
-			printf("\tleve1:%d\n",ptopm_list->leve1);
-			printf("\tleve2:%d\n\n",ptopm_list->leve2);
+			printf("index:%d\n", i);
+			printf("\tport:%d\n", ptopm_list->port);
+			printf("\tisminitor:%d\n", ptopm_list->isminitor);
+			printf("\twave:%d\n", ptopm_list->wave);
+			printf("\tref_power:%d\n", ptopm_list->ref_power);
+			printf("\tleve0:%d\n", ptopm_list->leve0);
+			printf("\tleve1:%d\n", ptopm_list->leve1);
+			printf("\tleve2:%d\n\n", ptopm_list->leve2);
 			ptopm_list++;
-		}	
+		}
 	}
 	else {// DEV_OLP
-		ptolp_list = (struct tms_cfg_olp_ref_val*)polp_list;
+		ptolp_list = (struct tms_cfg_olp_ref_val *)polp_list;
 		for (int i = 0; i < pcfg_hdr->count; i++) {
-			
+
 			ptolp_list->port      = htonl(ptolp_list->port);
 			ptolp_list->isminitor = htonl(ptolp_list->isminitor);
 			ptolp_list->wave      = htonl(ptolp_list->wave);
@@ -2419,38 +2443,38 @@ static int32_t tms_AnalyseCfgAnyRefLevel(struct tms_context *pcontext, int8_t *p
 			ptolp_list->leve0     = htonl(ptolp_list->leve0);
 			ptolp_list->leve1     = htonl(ptolp_list->leve1);
 			ptolp_list->leve2     = htonl(ptolp_list->leve2);
-			printf("index:%d\n",i);
-			printf("\tref_power:%d\n",ptolp_list->ref_power);
-			printf("\tleve0:%d\n",ptolp_list->leve0);
-			printf("\tleve1:%d\n",ptolp_list->leve1);
-			printf("\tleve2:%d\n\n",ptolp_list->leve2);
+			printf("index:%d\n", i);
+			printf("\tref_power:%d\n", ptolp_list->ref_power);
+			printf("\tleve0:%d\n", ptolp_list->leve0);
+			printf("\tleve1:%d\n", ptolp_list->leve1);
+			printf("\tleve2:%d\n\n", ptolp_list->leve2);
 			ptolp_list++;
-		}	
+		}
 	}
 
 	return 0;
 }
- /**
- * @brief	ID_CFG_OPM_REF_LEVEL 0x80000015	网管发送OPM模块各光端口关联光缆的参考光功率及告警门限
- * @param[in]	fd 套接字文件描述符
- * @param[in]	paddr glink帧源地址和目的地址，如果填NULL则采用默认的
- 				TMS_DEFAULT_LOCAL_ADDR和TMS_DEFAULT_RMOTE_ADDR填充，两个宏的意义通过
- 				修改tmsxx.h设定
- * @param[in]	any_frame 指定机框号(0 ~ MAX_FRAME)
- * @param[in]	any_slot 指定槽位号(0 ~ MAX_SLOT)
- * @param[in]	count struct tms_cfg_opm_ref_val  数组个数
- * @param[in]	list 指向一个 struct tms_cfg_opm_ref_val  一维数组
- * @retval	null
- * @remarks	
- * @see	tms_CfgAnyRefLevel 
- */
+/**
+* @brief	ID_CFG_OPM_REF_LEVEL 0x80000015	网管发送OPM模块各光端口关联光缆的参考光功率及告警门限
+* @param[in]	fd 套接字文件描述符
+* @param[in]	paddr glink帧源地址和目的地址，如果填NULL则采用默认的
+				TMS_DEFAULT_LOCAL_ADDR和TMS_DEFAULT_RMOTE_ADDR填充，两个宏的意义通过
+				修改tmsxx.h设定
+* @param[in]	any_frame 指定机框号(0 ~ MAX_FRAME)
+* @param[in]	any_slot 指定槽位号(0 ~ MAX_SLOT)
+* @param[in]	count struct tms_cfg_opm_ref_val  数组个数
+* @param[in]	list 指向一个 struct tms_cfg_opm_ref_val  一维数组
+* @retval	null
+* @remarks
+* @see	tms_CfgAnyRefLevel
+*/
 int32_t tms_CfgOPMRefLevel(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t frame, 
-		int32_t slot, 
-		int32_t count, 
-		struct tms_cfg_opm_ref_val *list)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t count,
+    struct tms_cfg_opm_ref_val *list)
 {
 	return tms_CfgAnyRefLevel(fd, paddr, frame, slot, DEV_OPM, ID_CFG_OPM_REF_LEVEL, count, list);
 }
@@ -2476,17 +2500,17 @@ static int32_t tms_AnalyseCfgOPMRefLevel(struct tms_context *pcontext, int8_t *p
  * @param[in]	count struct tms_cfg_olp_ref_val  数组个数
  * @param[in]	list 指向一个 struct tms_cfg_olp_ref_val  一维数组
  * @retval	null
- * @remarks	
- * @see	tms_CfgAnyRefLevel 
+ * @remarks
+ * @see	tms_CfgAnyRefLevel
  */
 
 int32_t tms_CfgOLPRefLevel(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t frame, 
-		int32_t slot, 
-		int32_t count, 
-		struct tms_cfg_olp_ref_val *list)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t count,
+    struct tms_cfg_olp_ref_val *list)
 {
 	// return tms_CfgAnyRefLevel(fd, paddr, frame, slot, DEV_OLP, ID_CFG_OLP_REF_LEVEL, count, list);
 	// TMSxxV1.2 OPM与OLP使用相同的协议 ID 号 ID_CFG_OPM_REF_LEVEL
@@ -2499,24 +2523,24 @@ static int32_t tms_AnalyseCfgOLPRefLevel(struct tms_context *pcontext, int8_t *p
 	tms_AnalyseCfgAnyRefLevel(pcontext, pdata, len, DEV_OLP);
 	return 0;
 }
- /**
- * @brief	ID_GET_OPM_OP 0x80000016 网管查询OPM模块各光端口当前功率
- * @param[in]	fd 套接字文件描述符
- * @param[in]	paddr glink帧源地址和目的地址，如果填NULL则采用默认的
- 				TMS_DEFAULT_LOCAL_ADDR和TMS_DEFAULT_RMOTE_ADDR填充，两个宏的意义通过
- 				修改tmsxx.h设定
- * @param[in]	frame 指定机框号(0 ~ MAX_FRAME)
- * @param[in]	slot 指定槽位号(0 ~ MAX_SLOT)
- * @retval	>0 发送成功
- * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
- * @see	tms_MCUtoDevice
- */
+/**
+* @brief	ID_GET_OPM_OP 0x80000016 网管查询OPM模块各光端口当前功率
+* @param[in]	fd 套接字文件描述符
+* @param[in]	paddr glink帧源地址和目的地址，如果填NULL则采用默认的
+				TMS_DEFAULT_LOCAL_ADDR和TMS_DEFAULT_RMOTE_ADDR填充，两个宏的意义通过
+				修改tmsxx.h设定
+* @param[in]	frame 指定机框号(0 ~ MAX_FRAME)
+* @param[in]	slot 指定槽位号(0 ~ MAX_SLOT)
+* @retval	>0 发送成功
+* @retval	0 发送失败，该链接失效，立即断开
+* @remarks
+* @see	tms_MCUtoDevice
+*/
 int32_t tms_GetOPMOP(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t frame,  
-		int32_t slot)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot)
 {
 	return tms_MCUtoDevice(fd, paddr,  frame,  slot, DEV_OPM, 0, ID_GET_OPM_OP, sizeof(struct tms_dev_type));
 }
@@ -2525,14 +2549,14 @@ int32_t tms_GetOPMOP(
 static int32_t tms_AnalyseGetOPMOP(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
 	struct tms_dev_slot *pval;
-	pval = (struct tms_dev_slot*)(pdata + GLINK_OFFSET_DATA);
+	pval = (struct tms_dev_slot *)(pdata + GLINK_OFFSET_DATA);
 	pval->frame = htonl(pval->frame);
 	pval->slot = htonl(pval->slot);
 
 	printf("tms_AnalyseGetOPMOP\n");
 	printf("val:f%d/s%x\n", pval->frame, pval->slot);
 	// fun()
-	
+
 	return 0;
 }
 
@@ -2547,14 +2571,14 @@ static int32_t tms_AnalyseGetOPMOP(struct tms_context *pcontext, int8_t *pdata, 
  * @param[in]	slot 指定槽位号(0 ~ MAX_SLOT)
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
+ * @remarks
  * @see	tms_MCUtoDevice
  */
 int32_t tms_GetOLPOP(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t frame, 
-		int32_t slot)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot)
 {
 	// return tms_MCUtoDevice(fd, paddr, frame, slot, DEV_OLP, 0, ID_GET_OLP_OP, sizeof(struct tms_dev_type));
 	// TMSxxV1.2 OPM与OLP使用相同的协议 ID 号 ID_GET_OPM_OP
@@ -2584,34 +2608,34 @@ int32_t tms_GetOLPOP(
  * @param[in]	list 指向一个 struct tms_any_op_val  一维数组
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
+ * @remarks
  * @see	tms_RetOPMOP @see tms_RetOLPOP
  */
 int32_t tms_RetAnyOP(
-		int fd, 
-		struct glink_addr *paddr, 
+    int fd,
+    struct glink_addr *paddr,
 
-		int32_t any_frame, 
-		int32_t any_slot, 
-		int32_t any_type, 
-		int32_t cmdID, 
-		int32_t count, 
-		struct tms_any_op_val *list)
+    int32_t any_frame,
+    int32_t any_slot,
+    int32_t any_type,
+    int32_t cmdID,
+    int32_t count,
+    struct tms_any_op_val *list)
 {
 	uint8_t *pmem;
 	struct tms_any_op      *phdr;
 	struct tms_any_op_val  *plist, *ptlist;
 	int len;
 
-	// Step 1.分配内存并各指针指向相应内存                  
+	// Step 1.分配内存并各指针指向相应内存
 	len = sizeof(struct tms_any_op) + count * sizeof(struct tms_any_op_val);
 
-	pmem = (uint8_t*)malloc(len);
+	pmem = (uint8_t *)malloc(len);
 	if (pmem == NULL) {
 		return -1;
 	}
-	phdr  = (struct tms_any_op*)(pmem);
-	plist = (struct tms_any_op_val*)(pmem + sizeof(struct tms_any_op));
+	phdr  = (struct tms_any_op *)(pmem);
+	plist = (struct tms_any_op_val *)(pmem + sizeof(struct tms_any_op));
 
 	// Step 2.各字段复制
 	phdr->frame = htonl(any_frame);
@@ -2627,14 +2651,14 @@ int32_t tms_RetAnyOP(
 		plist++;
 		ptlist++;
 	}
-	
+
 	// Step 3. 发送
 	struct glink_base  base_hdr;
 	int ret;
 
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 	glink_Build(&base_hdr, cmdID, len);
@@ -2649,8 +2673,8 @@ static int32_t tms_AnalyseRetAnyOP(struct tms_context *pcontext, int8_t *pdata, 
 	struct tms_any_op      *phdr;
 	struct tms_any_op_val  *plist, *ptlist;
 
-	phdr  = (struct tms_any_op*)(pdata + GLINK_OFFSET_DATA );
-	plist = (struct tms_any_op_val*)(pdata +GLINK_OFFSET_DATA+ sizeof(struct tms_any_op));
+	phdr  = (struct tms_any_op *)(pdata + GLINK_OFFSET_DATA );
+	plist = (struct tms_any_op_val *)(pdata + GLINK_OFFSET_DATA + sizeof(struct tms_any_op));
 
 	phdr->frame = htonl(phdr->frame);
 	phdr->slot  = htonl(phdr->slot);
@@ -2663,7 +2687,7 @@ static int32_t tms_AnalyseRetAnyOP(struct tms_context *pcontext, int8_t *pdata, 
 		ptlist->power = htonl(ptlist->power);
 		ptlist++;
 	}
-	
+
 	printf("tms_AnalyseRetOPMOP\n");
 	printf("val:f%d/s%x/t%d\n", phdr->frame, phdr->slot, phdr->type);
 	ptlist = plist;
@@ -2674,11 +2698,11 @@ static int32_t tms_AnalyseRetAnyOP(struct tms_context *pcontext, int8_t *pdata, 
 	// fun()
 
 
-	// 
+	//
 	if (pcontext->ptcb->pf_OnRetAnyOP) {
 		pcontext->ptcb->pf_OnRetAnyOP(pcontext, phdr, plist);
 	}
-	
+
 	return 0;
 }
 /**
@@ -2693,16 +2717,16 @@ static int32_t tms_AnalyseRetAnyOP(struct tms_context *pcontext, int8_t *pdata, 
  * @param[in]	list 指向一个 struct tms_any_op_val  一维数组
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
+ * @remarks
  * @see	tms_RetOPMOP @see tms_RetOLPOP
  */
 int32_t tms_RetOPMOP(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t frame, 
-		int32_t slot, 
-		int32_t count, 
-		struct tms_any_op_val *list)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t count,
+    struct tms_any_op_val *list)
 {
 	return tms_RetAnyOP(fd, 	paddr, frame, slot, DEV_OPM, ID_RET_OPM_OP, count, list);
 }
@@ -2724,16 +2748,16 @@ static int32_t tms_AnalyseRetOPMOP(struct tms_context *pcontext, int8_t *pdata, 
  * @param[in]	list 指向一个 struct tms_any_op_val  一维数组
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
+ * @remarks
  * @see	tms_RetOPMOP @see tms_RetOLPOP
  */
 int32_t tms_RetOLPOP(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t frame, 
-		int32_t slot, 
-		int32_t count, 
-		struct tms_any_op_val *list)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t count,
+    struct tms_any_op_val *list)
 {
 	return tms_RetAnyOP(fd, paddr, frame, slot, DEV_OLP, ID_RET_OLP_OP, count, list);
 }
@@ -2759,19 +2783,19 @@ static int32_t tms_AnalyseRetOLPOP(struct tms_context *pcontext, int8_t *pdata, 
  * @param	pref_date
  */
 int32_t tms_CfgOTDRRef(
-		int fd, 
-		struct glink_addr *paddr, 
-		struct tms_otdr_ref_hdr       *pref_hdr, 		
-		struct tms_retotdr_test_param *ptest_param, 
+    int fd,
+    struct glink_addr *paddr,
+    struct tms_otdr_ref_hdr       *pref_hdr,
+    struct tms_retotdr_test_param *ptest_param,
 
-		struct tms_retotdr_data_hdr   *pdata_hdr, 
-		struct tms_retotdr_data_val   *pdata_val, 
+    struct tms_retotdr_data_hdr   *pdata_hdr,
+    struct tms_retotdr_data_val   *pdata_val,
 
-		struct tms_retotdr_event_hdr  *pevent_hdr, 
-		struct tms_retotdr_event_val  *pevent_val, 
+    struct tms_retotdr_event_hdr  *pevent_hdr,
+    struct tms_retotdr_event_val  *pevent_val,
 
-		struct tms_retotdr_chain      *pchain, 
-		struct tms_cfg_otdr_ref_val   *pref_date)
+    struct tms_retotdr_chain      *pchain,
+    struct tms_cfg_otdr_ref_val   *pref_date)
 {
 
 	struct tms_otdr_ref_hdr   ref_hdr;
@@ -2786,7 +2810,7 @@ int32_t tms_CfgOTDRRef(
 	// register int16_t *p16s, *p16d;
 	// register int loop;
 
-	
+
 
 	// Part A.1
 	ref_hdr.osw_frame  = htonl(pref_hdr->osw_frame);
@@ -2798,12 +2822,12 @@ int32_t tms_CfgOTDRRef(
 
 
 	printf("frame %d osw %d type %d port %d  otdr port %d\n",
-		pref_hdr->osw_frame  ,
-		pref_hdr->osw_slot   ,
-		pref_hdr->osw_type   ,
-		pref_hdr->osw_port   ,
-		pref_hdr->otdr_port  );
-	
+	       pref_hdr->osw_frame  ,
+	       pref_hdr->osw_slot   ,
+	       pref_hdr->osw_type   ,
+	       pref_hdr->osw_port   ,
+	       pref_hdr->otdr_port  );
+
 	tms_OTDRConv_tms_retotdr_test_param(&test_param, ptest_param);
 
 
@@ -2833,31 +2857,31 @@ int32_t tms_CfgOTDRRef(
 	struct glink_base  base_hdr;
 	// int ret;
 	int len;
-	len = 	sizeof(struct tms_otdr_ref_hdr  ) + 
-			sizeof(struct tms_retotdr_test_param) +
-			sizeof(struct tms_retotdr_data_hdr  ) +
-			sizeof(struct tms_retotdr_data_val  ) * pdata_hdr->count +
-			sizeof(struct tms_retotdr_event_hdr ) +
-			sizeof(struct tms_retotdr_event_val ) * pevent_hdr->count +
-			sizeof(struct tms_retotdr_chain) + 
-			sizeof(struct tms_cfg_otdr_ref_val);
-	
+	len = 	sizeof(struct tms_otdr_ref_hdr  ) +
+	        sizeof(struct tms_retotdr_test_param) +
+	        sizeof(struct tms_retotdr_data_hdr  ) +
+	        sizeof(struct tms_retotdr_data_val  ) * pdata_hdr->count +
+	        sizeof(struct tms_retotdr_event_hdr ) +
+	        sizeof(struct tms_retotdr_event_val ) * pevent_hdr->count +
+	        sizeof(struct tms_retotdr_chain) +
+	        sizeof(struct tms_cfg_otdr_ref_val);
+
 
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 	glink_Build(&base_hdr, ID_CFG_OTDR_REF, len);
-	glink_SendHead(fd, &base_hdr);	
-	glink_SendSerial(fd, (uint8_t*)&ref_hdr,    sizeof(struct tms_otdr_ref_hdr));
-	glink_SendSerial(fd, (uint8_t*)&test_param, sizeof(struct tms_retotdr_test_param));
-	glink_SendSerial(fd, (uint8_t*)&data_hdr,   sizeof(struct tms_retotdr_data_hdr));
-	glink_SendSerial(fd, (uint8_t*)&data_val,   sizeof(struct tms_retotdr_data_val) * pdata_hdr->count);
-	glink_SendSerial(fd, (uint8_t*)&event_hdr,  sizeof(struct tms_retotdr_event_hdr));
-	glink_SendSerial(fd, (uint8_t*)&event_val,  sizeof(struct tms_retotdr_event_val) * pevent_hdr->count);
-	glink_SendSerial(fd, (uint8_t*)&chain,      sizeof(struct tms_retotdr_chain));
-	glink_SendSerial(fd, (uint8_t*)&ref_date,   sizeof(struct tms_cfg_otdr_ref_val));
+	glink_SendHead(fd, &base_hdr);
+	glink_SendSerial(fd, (uint8_t *)&ref_hdr,    sizeof(struct tms_otdr_ref_hdr));
+	glink_SendSerial(fd, (uint8_t *)&test_param, sizeof(struct tms_retotdr_test_param));
+	glink_SendSerial(fd, (uint8_t *)&data_hdr,   sizeof(struct tms_retotdr_data_hdr));
+	glink_SendSerial(fd, (uint8_t *)&data_val,   sizeof(struct tms_retotdr_data_val) * pdata_hdr->count);
+	glink_SendSerial(fd, (uint8_t *)&event_hdr,  sizeof(struct tms_retotdr_event_hdr));
+	glink_SendSerial(fd, (uint8_t *)&event_val,  sizeof(struct tms_retotdr_event_val) * pevent_hdr->count);
+	glink_SendSerial(fd, (uint8_t *)&chain,      sizeof(struct tms_retotdr_chain));
+	glink_SendSerial(fd, (uint8_t *)&ref_date,   sizeof(struct tms_cfg_otdr_ref_val));
 	glink_SendTail(fd);
 	return 0;
 }
@@ -2876,47 +2900,47 @@ static int32_t tms_AnalyseCfgOTDRRef(struct tms_context *pcontext, int8_t *pdata
 	// register uint32_t *p32s, *p32d;
 	// register uint16_t *p16s, *p16d;
 	// register int loop;
-	
 
-	if ((uint32_t)(len - GLINK_OFFSET_DATA) < sizeof(struct tms_otdr_ref_hdr ) + 
-			sizeof(struct tms_retotdr_test_param) +
-			sizeof(struct tms_retotdr_data_hdr  ) +
-			sizeof(struct tms_retotdr_data_val  ) +
-			sizeof(struct tms_retotdr_event_hdr ) +
-			sizeof(struct tms_retotdr_event_val )+
-			sizeof(struct tms_retotdr_chain) ) {
+
+	if ((uint32_t)(len - GLINK_OFFSET_DATA) < sizeof(struct tms_otdr_ref_hdr ) +
+	    sizeof(struct tms_retotdr_test_param) +
+	    sizeof(struct tms_retotdr_data_hdr  ) +
+	    sizeof(struct tms_retotdr_data_val  ) +
+	    sizeof(struct tms_retotdr_event_hdr ) +
+	    sizeof(struct tms_retotdr_event_val ) +
+	    sizeof(struct tms_retotdr_chain) ) {
 		return -1;
 	}
 
 
-	pref_hdr   = (struct tms_otdr_ref_hdr   *)(pdata + GLINK_OFFSET_DATA );
-	ptest_param = (struct tms_retotdr_test_param *)(((char*)pref_hdr)   + sizeof(struct tms_otdr_ref_hdr));
-	pdata_hdr   = (struct tms_retotdr_data_hdr   *)(((char*)ptest_param) + sizeof(struct tms_retotdr_test_param));
+	pref_hdr   = (struct tms_otdr_ref_hdr *)(pdata + GLINK_OFFSET_DATA );
+	ptest_param = (struct tms_retotdr_test_param *)(((char *)pref_hdr)   + sizeof(struct tms_otdr_ref_hdr));
+	pdata_hdr   = (struct tms_retotdr_data_hdr *)(((char *)ptest_param) + sizeof(struct tms_retotdr_test_param));
 	// 指针合法性检测，防止指针超过pdata
 	if ( !CHECK_PTR(
-			pdata_hdr, 
-			struct tms_retotdr_data_hdr, 
-			struct tms_retotdr_data_val, 
-			htonl(pdata_hdr->count), 
-			pdata + len)) {
-		printf("Err: %s():%d\n",__FUNCTION__,__LINE__);
+	         pdata_hdr,
+	         struct tms_retotdr_data_hdr,
+	         struct tms_retotdr_data_val,
+	         htonl(pdata_hdr->count),
+	         pdata + len)) {
+		printf("Err: %s():%d\n", __FUNCTION__, __LINE__);
 		return -1;
 	}
-	pdata_val   = (struct tms_retotdr_data_val   *)(((char*)pdata_hdr) + sizeof(struct tms_retotdr_data_hdr));
-	pevent_hdr  = (struct tms_retotdr_event_hdr  *)(((char*)pdata_val) + sizeof(struct tms_retotdr_data_val) * htonl(pdata_hdr->count));
+	pdata_val   = (struct tms_retotdr_data_val *)(((char *)pdata_hdr) + sizeof(struct tms_retotdr_data_hdr));
+	pevent_hdr  = (struct tms_retotdr_event_hdr *)(((char *)pdata_val) + sizeof(struct tms_retotdr_data_val) * htonl(pdata_hdr->count));
 	// 指针合法性检测，防止指针超过pdata
 	if ( !CHECK_PTR(
-			pevent_hdr, 
-			struct tms_retotdr_event_hdr, 
-			struct tms_retotdr_event_val, 
-			htonl(pevent_hdr->count), 
-			pdata + len)) {
-		printf("Err: %s():%d\n",__FUNCTION__,__LINE__);
+	         pevent_hdr,
+	         struct tms_retotdr_event_hdr,
+	         struct tms_retotdr_event_val,
+	         htonl(pevent_hdr->count),
+	         pdata + len)) {
+		printf("Err: %s():%d\n", __FUNCTION__, __LINE__);
 		return -1;
 	}
-	pevent_val  = (struct tms_retotdr_event_val  *)(((char*)pevent_hdr) + sizeof(struct tms_retotdr_event_hdr));
-	pchain      = (struct tms_retotdr_chain      *)(((char*)pevent_val) + sizeof(struct tms_retotdr_event_val) * htonl(pevent_hdr->count));
-	pref_data   = (struct tms_cfg_otdr_ref_val   *)(((char*)pchain) + sizeof(struct tms_retotdr_chain));
+	pevent_val  = (struct tms_retotdr_event_val *)(((char *)pevent_hdr) + sizeof(struct tms_retotdr_event_hdr));
+	pchain      = (struct tms_retotdr_chain *)(((char *)pevent_val) + sizeof(struct tms_retotdr_event_val) * htonl(pevent_hdr->count));
+	pref_data   = (struct tms_cfg_otdr_ref_val *)(((char *)pchain) + sizeof(struct tms_retotdr_chain));
 
 	// Part A.1
 	pref_hdr->osw_frame  = htonl(pref_hdr->osw_frame);
@@ -2927,13 +2951,13 @@ static int32_t tms_AnalyseCfgOTDRRef(struct tms_context *pcontext, int8_t *pdata
 	pref_hdr->otdr_port  = htonl(pref_hdr->otdr_port);
 
 	printf("frame %d osw %d type %d port %d  otdr port %d\n",
-		pref_hdr->osw_frame  ,
-		pref_hdr->osw_slot   ,
-		pref_hdr->osw_type   ,
-		pref_hdr->osw_port   ,
-		pref_hdr->otdr_port  );
+	       pref_hdr->osw_frame  ,
+	       pref_hdr->osw_slot   ,
+	       pref_hdr->osw_type   ,
+	       pref_hdr->osw_port   ,
+	       pref_hdr->otdr_port  );
 
-	
+
 	// Part A.2
 	tms_OTDRConv_tms_retotdr_test_param(ptest_param, ptest_param);
 	// Part B.1
@@ -2945,36 +2969,36 @@ static int32_t tms_AnalyseCfgOTDRRef(struct tms_context *pcontext, int8_t *pdata
 	tms_OTDRConv_tms_retotdr_event_val(pevent_val, pevent_val, pevent_hdr);
 	tms_OTDRConv_tms_retotdr_chain(pchain, pchain);
 
-	
+
 
 	pref_data->leve0 = htonl(pref_data->leve0);
 	pref_data->leve1 = htonl(pref_data->leve1);
 	pref_data->leve2 = htonl(pref_data->leve2);
-	
+
 
 	if (pcontext->ptcb->pf_OnCfgOTDRRef) {
 		pcontext->ptcb->pf_OnCfgOTDRRef(
-				pcontext, 
-				ptest_param, 
-				pdata_hdr,  pdata_val, 
-				pevent_hdr, pevent_val, 
-				pchain, 
-				pref_data);
+		    pcontext,
+		    ptest_param,
+		    pdata_hdr,  pdata_val,
+		    pevent_hdr, pevent_val,
+		    pchain,
+		    pref_data);
 	}
-	
+
 	return 0;
 }
 
 
 
 int32_t tms_CfgMCUOSWCycle_any(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t frame, 
-		int32_t slot, 
-		int32_t count, 
-		struct tms_cfg_mcu_osw_cycle_val *oswCycleList,
-		int cmdid)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t count,
+    struct tms_cfg_mcu_osw_cycle_val *oswCycleList,
+    int cmdid)
 {
 	uint8_t *pmem;
 	struct tms_cfg_mcu_osw_cycle      *pcfg_hdr;
@@ -2983,12 +3007,12 @@ int32_t tms_CfgMCUOSWCycle_any(
 
 	// Step 1.分配内存并各指针指向相应内存
 	len = sizeof(struct tms_cfg_mcu_osw_cycle) + count * sizeof(struct tms_cfg_mcu_osw_cycle_val);
-	pmem = (uint8_t*)malloc(len);
+	pmem = (uint8_t *)malloc(len);
 	if (pmem == NULL) {
 		return -1;
 	}
-	pcfg_hdr = (struct tms_cfg_mcu_osw_cycle*)(pmem);
-	plist    = (struct tms_cfg_mcu_osw_cycle_val*)(pmem + sizeof(struct tms_cfg_mcu_osw_cycle));
+	pcfg_hdr = (struct tms_cfg_mcu_osw_cycle *)(pmem);
+	plist    = (struct tms_cfg_mcu_osw_cycle_val *)(pmem + sizeof(struct tms_cfg_mcu_osw_cycle));
 
 	// Step 2.各字段复制
 	pcfg_hdr->frame = htonl(frame);
@@ -3003,12 +3027,12 @@ int32_t tms_CfgMCUOSWCycle_any(
 		plist->port     = htonl(ptlist->port);
 		plist->iscyc    = htonl(ptlist->iscyc);
 		plist->interval = htonl(ptlist->interval);
-		printf("port %d iscyc %d interval %d\n", 
-			ptlist->port,ptlist->iscyc,ptlist->interval);
+		printf("port %d iscyc %d interval %d\n",
+		       ptlist->port, ptlist->iscyc, ptlist->interval);
 		plist++;
 		ptlist++;
 	}
-	
+
 	// Step 3. 发送
 	struct glink_base  base_hdr;
 	int ret;
@@ -3016,7 +3040,7 @@ int32_t tms_CfgMCUOSWCycle_any(
 
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 	glink_Build(&base_hdr, cmdid, len);
@@ -3033,18 +3057,18 @@ int32_t tms_AnalyseCfgMCUOSWCycle_any(struct tms_context *pcontext, int8_t *pdat
 	struct tms_cfg_mcu_osw_cycle_val  *plist, *ptlist;
 
 	// Step 1.分配内存并各指针指向相应内存
-	
-	pcfg_hdr = (struct tms_cfg_mcu_osw_cycle*)(pdata + GLINK_OFFSET_DATA );
+
+	pcfg_hdr = (struct tms_cfg_mcu_osw_cycle *)(pdata + GLINK_OFFSET_DATA );
 	if ( !CHECK_PTR(
-			pcfg_hdr, 
-			struct tms_cfg_mcu_osw_cycle, 
-			struct tms_cfg_mcu_osw_cycle_val, 
-			htonl(pcfg_hdr->count), 
-			pdata + len)) {
-		printf("Err: %s():%d\n",__FUNCTION__,__LINE__);
+	         pcfg_hdr,
+	         struct tms_cfg_mcu_osw_cycle,
+	         struct tms_cfg_mcu_osw_cycle_val,
+	         htonl(pcfg_hdr->count),
+	         pdata + len)) {
+		printf("Err: %s():%d\n", __FUNCTION__, __LINE__);
 		return -1;
 	}
-	plist    = (struct tms_cfg_mcu_osw_cycle_val*)(pdata + GLINK_OFFSET_DATA + sizeof(struct tms_cfg_mcu_osw_cycle));
+	plist    = (struct tms_cfg_mcu_osw_cycle_val *)(pdata + GLINK_OFFSET_DATA + sizeof(struct tms_cfg_mcu_osw_cycle));
 
 	// Step 2.各字段复制
 	pcfg_hdr->frame = htonl(pcfg_hdr->frame);
@@ -3062,7 +3086,7 @@ int32_t tms_AnalyseCfgMCUOSWCycle_any(struct tms_context *pcontext, int8_t *pdat
 
 		ptlist++;
 	}
-	
+
 	return 0;
 }
 /**
@@ -3077,16 +3101,16 @@ int32_t tms_AnalyseCfgMCUOSWCycle_any(struct tms_context *pcontext, int8_t *pdat
  * @param[in]	oswCycleList 指向一个 struct tms_cfg_mcu_osw_cycle_val  一维数组
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
- * @see	
+ * @remarks
+ * @see
  */
 int32_t tms_CfgMCUOSWCycle(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t frame, 
-		int32_t slot, 
-		int32_t count, 
-		struct tms_cfg_mcu_osw_cycle_val *oswCycleList)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t count,
+    struct tms_cfg_mcu_osw_cycle_val *oswCycleList)
 {
 	return tms_CfgMCUOSWCycle_any(fd, paddr, frame, slot, count, oswCycleList, ID_CFG_MCU_OSW_CYCLE);
 }
@@ -3108,28 +3132,28 @@ int32_t tms_AnalyseCfgMCUOSWCycle(struct tms_context *pcontext, int8_t *pdata, i
  				修改tmsxx.h设定
  * @param[in]	frame 指定机框号(0 ~ MAX_FRAME)
  * @param[in]	slot 指定槽位号(0 ~ MAX_SLOT)
- * @param[in]	port 
- * @param[in]	val 指向一个 struct tms_getotdr_test_param 
+ * @param[in]	port
+ * @param[in]	val 指向一个 struct tms_getotdr_test_param
  * @param[in]	cmdID
  				ID_GET_OTDR_TEST		网管对OTDR点名测试，等效于tms_GetOTDRTest\n
  				ID_GET_OTDR_TEST_CYC	网管对OTDR周期性测试，等效于tms_GetOTDRTestCycle\n
  * @retval	null
- * @remarks	
- * @see	tms_GetOTDRTest 
+ * @remarks
+ * @see	tms_GetOTDRTest
  * @see tms_GetOTDRTestCycle
  */
 
 
 int32_t tms_AnyGetOTDRTest(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t frame, 
-		int32_t slot, 
-		int32_t type, 
-		int32_t port, 
-		int32_t otdr_port,
-		struct tms_getotdr_test_param *val, 
-		int32_t cmdID)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t type,
+    int32_t port,
+    int32_t otdr_port,
+    struct tms_getotdr_test_param *val,
+    int32_t cmdID)
 {
 	uint8_t *pmem;
 	struct tms_getotdr_test_hdr    *phdr;
@@ -3137,8 +3161,8 @@ int32_t tms_AnyGetOTDRTest(
 	uint8_t buf[ sizeof(struct tms_getotdr_test_hdr) + sizeof(struct tms_getotdr_test_param)];
 
 	// Step 1.分配内存并各指针指向相应内存
-	phdr  = (struct tms_getotdr_test_hdr*)buf;
-	potdr = (struct tms_getotdr_test_param*)(buf + sizeof(struct tms_getotdr_test_hdr));
+	phdr  = (struct tms_getotdr_test_hdr *)buf;
+	potdr = (struct tms_getotdr_test_param *)(buf + sizeof(struct tms_getotdr_test_hdr));
 
 	// Step 2.各字段复制
 	phdr->frame    = htonl(frame);
@@ -3146,22 +3170,22 @@ int32_t tms_AnyGetOTDRTest(
 	phdr->type     = htonl(type);
 	phdr->port     = htonl(port);
 	phdr->reserve0 = htonl(otdr_port);
-	
 
 
-	
+
+
 	tms_OTDRConv_tms_retotdr_test_param(
-		(struct tms_retotdr_test_param*)potdr, 
-		(struct tms_retotdr_test_param*)val);
+	    (struct tms_retotdr_test_param *)potdr,
+	    (struct tms_retotdr_test_param *)val);
 
 	// Step 3. 发送
 	struct glink_base  base_hdr;
 	// int ret;
 
-	pmem = (uint8_t*)buf;
+	pmem = (uint8_t *)buf;
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 	glink_Build(&base_hdr, cmdID, sizeof(buf));
@@ -3172,19 +3196,19 @@ int32_t tms_AnyGetOTDRTest(
 //0x80000023
 static int32_t tms_AnalyseAnyGetOTDRTest(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
-//	if (pcontext->ptcb->pf_OnSpAnyGetOTDRTest) {
-//		pcontext->ptcb->pf_OnSpAnyGetOTDRTest(pcontext, pdata, len);
-//	}
+	//	if (pcontext->ptcb->pf_OnSpAnyGetOTDRTest) {
+	//		pcontext->ptcb->pf_OnSpAnyGetOTDRTest(pcontext, pdata, len);
+	//	}
 
 
-	uint8_t *pval  = (uint8_t*)(pdata + GLINK_OFFSET_DATA);
+	uint8_t *pval  = (uint8_t *)(pdata + GLINK_OFFSET_DATA);
 	struct tms_getotdr_test_hdr    *phdr;
 	struct tms_getotdr_test_param *potdr;
 
 
 	// Step 1.分配内存并各指针指向相应内存
-	phdr  = (struct tms_getotdr_test_hdr*)pval;
-	potdr = (struct tms_getotdr_test_param*)(pval + sizeof(struct tms_getotdr_test_hdr));
+	phdr  = (struct tms_getotdr_test_hdr *)pval;
+	potdr = (struct tms_getotdr_test_param *)(pval + sizeof(struct tms_getotdr_test_hdr));
 
 	// Step 2.各字段复制
 	phdr->frame    = htonl(phdr->frame);
@@ -3196,8 +3220,8 @@ static int32_t tms_AnalyseAnyGetOTDRTest(struct tms_context *pcontext, int8_t *p
 
 
 	tms_OTDRConv_tms_retotdr_test_param(
-			(struct tms_retotdr_test_param*)potdr, 
-			(struct tms_retotdr_test_param*)potdr);
+	    (struct tms_retotdr_test_param *)potdr,
+	    (struct tms_retotdr_test_param *)potdr);
 
 	return 0;
 }
@@ -3210,8 +3234,8 @@ static int32_t tms_AnalyseAnyGetOTDRTest(struct tms_context *pcontext, int8_t *p
  				修改tmsxx.h设定
  * @param[in]	frame 指定机框号(0 ~ MAX_FRAME)
  * @param[in]	slot 指定槽位号(0 ~ MAX_SLOT)
- * @param[in]	port 
- * @param[in]	val 指向一个 struct tms_getotdr_test_param 
+ * @param[in]	port
+ * @param[in]	val 指向一个 struct tms_getotdr_test_param
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
  * @remarks	<h2><center>文金朝注意 </center></h2>\n
@@ -3222,16 +3246,16 @@ static int32_t tms_AnalyseAnyGetOTDRTest(struct tms_context *pcontext, int8_t *p
  * @see	tms_RetOTDRTest
  */
 int32_t tms_GetOTDRTest(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t frame, 
-		int32_t slot, 
-		int32_t type, 
-		int32_t port, 
-		int32_t otdr_port,
-		struct tms_getotdr_test_param *val)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t type,
+    int32_t port,
+    int32_t otdr_port,
+    struct tms_getotdr_test_param *val)
 {
-	tms_AnyGetOTDRTest(fd, paddr, frame, slot, type, port, otdr_port,val, ID_GET_OTDR_TEST);
+	tms_AnyGetOTDRTest(fd, paddr, frame, slot, type, port, otdr_port, val, ID_GET_OTDR_TEST);
 	return 0;
 }
 static int32_t tms_AnalyseGetOTDRTest(struct tms_context *pcontext, int8_t *pdata, int32_t len)
@@ -3248,8 +3272,8 @@ static int32_t tms_AnalyseGetOTDRTest(struct tms_context *pcontext, int8_t *pdat
  				修改tmsxx.h设定
  * @param[in]	frame 指定机框号(0 ~ MAX_FRAME)
  * @param[in]	slot 指定槽位号(0 ~ MAX_SLOT)
- * @param[in]	port 
- * @param[in]	val 指向一个 struct tms_getotdr_test_param 
+ * @param[in]	port
+ * @param[in]	val 指向一个 struct tms_getotdr_test_param
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
  * @remarks	<h2><center>文金朝注意 </center></h2>\n
@@ -3260,14 +3284,14 @@ static int32_t tms_AnalyseGetOTDRTest(struct tms_context *pcontext, int8_t *pdat
  * @see	tms_RetOTDRTest
  */
 int32_t tms_GetOTDRTestCycle(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t frame, 
-		int32_t slot, 
-		int32_t type, 
-		int32_t port,
-		int32_t otdr_port, 
-		struct tms_getotdr_test_param *val)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t type,
+    int32_t port,
+    int32_t otdr_port,
+    struct tms_getotdr_test_param *val)
 {
 	tms_AnyGetOTDRTest(fd, paddr, frame, slot, type, port, otdr_port, val, ID_GET_OTDR_TEST_CYC);
 	return 0;
@@ -3287,7 +3311,8 @@ void tms_Print_tms_cfg_sms_val(struct tms_cfg_sms_val *pval, int count)
 		"thur",
 		"fri",
 		"sat",
-		"sun"};
+		"sun"
+	};
 	char type[5][10] = {
 		"line",
 		"power",
@@ -3310,63 +3335,63 @@ void tms_Print_tms_cfg_sms_val(struct tms_cfg_sms_val *pval, int count)
 
 	printf("date   phone     type    level\n");
 	for (int i = 0; i < count; i++) {
-		if ((uint32_t)pval[i].time > 7 || 
-			(uint32_t)pval[i].type > 5) {
+		if ((uint32_t)pval[i].time > 7 ||
+		    (uint32_t)pval[i].type > 5) {
 			printf("invaild param\n");
 			break;
 		}
-		printf("%s  %s   %s    ", daty[pval[i].time-1],
-							pval[i].phone,
-							type[pval[i].type-1]);
+		printf("%s  %s   %s    ", daty[pval[i].time - 1],
+		       pval[i].phone,
+		       type[pval[i].type - 1]);
 
-		
+
 		if ( (pval[i].type == SMSAT_LINE || pval[i].type == SMSAT_POWERDOWN) &&
-			(uint32_t)pval[i].level < 6) {
+		     (uint32_t)pval[i].level < 6) {
 
-			printf("%s", level[pval[i].level-1]);
+			printf("%s", level[pval[i].level - 1]);
 		}
 		else if ((pval[i].type == SMSAT_HW || pval[i].type == SMSAT_COMMM) &&
-			(uint32_t)pval[i].level < 1) {
-			printf("%s", lv_occor[pval[i].level-1]);
+		         (uint32_t)pval[i].level < 1) {
+			printf("%s", lv_occor[pval[i].level - 1]);
 		}
-		else if ((pval[i].type == SMSAT_OLP) && 
-			(uint32_t)pval[i].level < 4) {
-			printf("%s", lv_olp[pval[i].level-1]);
+		else if ((pval[i].type == SMSAT_OLP) &&
+		         (uint32_t)pval[i].level < 4) {
+			printf("%s", lv_olp[pval[i].level - 1]);
 		}
 		printf("\n");
 	}
 
 }
-void tms_Print_tms_cfg_opm_ref_val(struct tms_cfg_opm_ref_val *pref_hdr,int count)
+void tms_Print_tms_cfg_opm_ref_val(struct tms_cfg_opm_ref_val *pref_hdr, int count)
 {
 	printf("OPM ref\n");
 	printf("    port  ism  wave  r_power   lv0    lv1  lv2\n");
 	for (int i = 0; i < count; i++) {
 		// pref_hdr->leve0 = 123;
 		printf("%6.1d%5d  %6d%8.1f %6.1f%6.1f%6.1f\n",
-			pref_hdr->port,
-			pref_hdr->isminitor,
-			pref_hdr->wave,
-			pref_hdr->ref_power / 10.0,
-			pref_hdr->leve0 / 10.0,
-			pref_hdr->leve1 / 10.0,
-			pref_hdr->leve2 / 10.0);
+		       pref_hdr->port,
+		       pref_hdr->isminitor,
+		       pref_hdr->wave,
+		       pref_hdr->ref_power / 10.0,
+		       pref_hdr->leve0 / 10.0,
+		       pref_hdr->leve1 / 10.0,
+		       pref_hdr->leve2 / 10.0);
 		pref_hdr++;
 	}
 }
-void tms_Print_tms_cfg_olp_ref_val(struct tms_cfg_olp_ref_val *pref_hdr,int count)
+void tms_Print_tms_cfg_olp_ref_val(struct tms_cfg_olp_ref_val *pref_hdr, int count)
 {
 	printf("OLP ref\n");
 	printf("    port  ism  wave  r_power   lv0    lv1  lv2\n");
 	for (int i = 0; i < count; i++) {
 		printf("%6.1d%5d  %6d%8.1f %6.1f%6.1f%6.1f\n",
-			pref_hdr->port,
-			pref_hdr->isminitor,
-			pref_hdr->wave,
-			pref_hdr->ref_power / 10.0,
-			pref_hdr->leve0 / 10.0,
-			pref_hdr->leve1 / 10.0,
-			pref_hdr->leve2 / 10.0);
+		       pref_hdr->port,
+		       pref_hdr->isminitor,
+		       pref_hdr->wave,
+		       pref_hdr->ref_power / 10.0,
+		       pref_hdr->leve0 / 10.0,
+		       pref_hdr->leve1 / 10.0,
+		       pref_hdr->leve2 / 10.0);
 		pref_hdr++;
 	}
 }
@@ -3374,37 +3399,37 @@ void tms_Print_tms_cfg_olp_ref_val(struct tms_cfg_olp_ref_val *pref_hdr,int coun
 void tms_Print_tms_otdr_ref_hdr(struct tms_otdr_ref_hdr *pref_hdr)
 {
 	printf("osw : f%2.2d/s%2.2d/t%2.2d/p%2.2d\notdr: f%2.2d\n",
-		pref_hdr->osw_frame, pref_hdr->osw_slot, pref_hdr->osw_type, pref_hdr->osw_port,
-		pref_hdr->otdr_port);
+	       pref_hdr->osw_frame, pref_hdr->osw_slot, pref_hdr->osw_type, pref_hdr->osw_port,
+	       pref_hdr->otdr_port);
 }
 void tms_Print_tms_getotdr_test_hdr(struct tms_getotdr_test_hdr *ptest_hdr)
 {
 	printf("f%2.2d/s%2.2d/t%2.2d/p%2.2d\n",
-				ptest_hdr->frame,
-				ptest_hdr->slot,
-				ptest_hdr->type,
-				ptest_hdr->port);
+	       ptest_hdr->frame,
+	       ptest_hdr->slot,
+	       ptest_hdr->type,
+	       ptest_hdr->port);
 }
 void tms_Print_tms_retotdr_test_hdr(struct tms_retotdr_test_hdr *ptest_hdr)
 {
-    printf("time: %s\nosw : f%2.2d/s%2.2d/t%2.2d/p%2.2d\notdr: f%2.2d/s%2.2d/t%2.2d/p%2.2d\n",
-				ptest_hdr->time, 
-				ptest_hdr->osw_frame, 
-				ptest_hdr->osw_slot, 
-				ptest_hdr->osw_type, 
-				ptest_hdr->osw_port, 
-				
-				ptest_hdr->otdr_frame, 
-				ptest_hdr->otdr_slot, 
-				ptest_hdr->otdr_type, 
-				ptest_hdr->otdr_port
-				);
+	printf("time: %s\nosw : f%2.2d/s%2.2d/t%2.2d/p%2.2d\notdr: f%2.2d/s%2.2d/t%2.2d/p%2.2d\n",
+	       ptest_hdr->time,
+	       ptest_hdr->osw_frame,
+	       ptest_hdr->osw_slot,
+	       ptest_hdr->osw_type,
+	       ptest_hdr->osw_port,
+
+	       ptest_hdr->otdr_frame,
+	       ptest_hdr->otdr_slot,
+	       ptest_hdr->otdr_type,
+	       ptest_hdr->otdr_port
+	      );
 }
 void tms_Print_tms_retotdr_test_param(struct tms_retotdr_test_param *ptest_param)
 {
 	printf("OTDR Param: ");
 	if (ptest_param->rang > 1000) {
-		printf("%2.2fKm/", (float)ptest_param->rang/1000);
+		printf("%2.2fKm/", (float)ptest_param->rang / 1000);
 	}
 	else {
 		printf("%fM/", (float)ptest_param->rang);
@@ -3412,17 +3437,17 @@ void tms_Print_tms_retotdr_test_param(struct tms_retotdr_test_param *ptest_param
 
 	if (ptest_param->pw < 1000) {
 		printf("%2.2fns/%ds/", (float)(ptest_param->pw), ptest_param->time);
-	} 
+	}
 	else if (ptest_param->pw < 1000000) {
-		printf("%2.2fus/%ds/", (float)ptest_param->pw/1000, ptest_param->time);
+		printf("%2.2fus/%ds/", (float)ptest_param->pw / 1000, ptest_param->time);
 	}
 	else {
-		printf("%2.2fms/%ds/", (float)ptest_param->pw/1000000, ptest_param->time);	
+		printf("%2.2fms/%ds/", (float)ptest_param->pw / 1000000, ptest_param->time);
 	}
 
-	printf("   %2.2fdB/Km /%2.2fdB/%2.2fdB/%dMHz\n", 
-		ptest_param->gi, ptest_param->end_threshold, ptest_param->none_reflect_threshold, 
-		ptest_param->sample/1000000);
+	printf("   %2.2fdB/Km /%2.2fdB/%2.2fdB/%dMHz\n",
+	       ptest_param->gi, ptest_param->end_threshold, ptest_param->none_reflect_threshold,
+	       ptest_param->sample / 1000000);
 }
 
 void tms_Print_tms_retotdr_event(struct tms_retotdr_event_hdr *pevent_hdr, struct tms_retotdr_event_val *pevent_val)
@@ -3432,25 +3457,25 @@ void tms_Print_tms_retotdr_event(struct tms_retotdr_event_hdr *pevent_hdr, struc
 	// printf("len = %d-----\n", strlen((char*)pevent_hdr->eventid));
 	// PrintfMemory((uint8_t*)pevent_hdr->eventid, 16);
 	fecho("EventID: %s\n------------------------------------------------------------------------\n",
-				pevent_hdr->eventid);
+	      pevent_hdr->eventid);
 
 	// printf("EventID: %s\n",pevent_hdr->eventid);
 	// printf("\n------------------------------------------------------------------------\n");
-	fecho("%s\t%s\t%8.12s\t%8.12s\t%8.12s\t%8.12s\n", 
-		"dist", "type", "att", "lost", "ref", "link");
+	fecho("%s\t%s\t%8.12s\t%8.12s\t%8.12s\t%8.12s\n",
+	      "dist", "type", "att", "lost", "ref", "link");
 	fecho("------------------------------------------------------------------------\n");
-	// p32d = (uint32_t*)pevent_val;	
-	
+	// p32d = (uint32_t*)pevent_val;
+
 	struct tms_retotdr_event_val  *ptevent_val;
 	ptevent_val = pevent_val;
-	for (register int i = 0;i < pevent_hdr->count; i++) {
-		fecho("%d\t%d\t%8.2f\t%8.2f\t%8.2f\t%8.2f\n", 
-				ptevent_val->distance, 
-				ptevent_val->event_type, 
-				ptevent_val->att, 
-				ptevent_val->loss, 
-				ptevent_val->reflect, 
-				ptevent_val->link_loss);
+	for (register int i = 0; i < pevent_hdr->count; i++) {
+		fecho("%d\t%d\t%8.2f\t%8.2f\t%8.2f\t%8.2f\n",
+		      ptevent_val->distance,
+		      ptevent_val->event_type,
+		      ptevent_val->att,
+		      ptevent_val->loss,
+		      ptevent_val->reflect,
+		      ptevent_val->link_loss);
 
 		ptevent_val++;
 	}
@@ -3462,10 +3487,10 @@ void tms_Print_tms_retotdr_event(struct tms_retotdr_event_hdr *pevent_hdr, struc
 void tms_Print_tms_retotdr_chain(struct tms_retotdr_chain *pchain)
 {
 	printf("Chain inf %s\n", pchain->inf);
-	printf("Chain: rang %0.4f\tloss %0.4f\tatt %0.4f\n", 
-		pchain->range, 
-		pchain->loss, 
-		pchain->att);
+	printf("Chain: rang %0.4f\tloss %0.4f\tatt %0.4f\n",
+	       pchain->range,
+	       pchain->loss,
+	       pchain->att);
 }
 
 void tms_Print_tms_cfg_otdr_ref_val(struct tms_cfg_otdr_ref_val *pref_data)
@@ -3473,32 +3498,32 @@ void tms_Print_tms_cfg_otdr_ref_val(struct tms_cfg_otdr_ref_val *pref_data)
 	printf("Ref lv0 %d lv1 %d lv2 %d\n", pref_data->leve0, pref_data->leve1, pref_data->leve2);
 }
 void tms_SaveOTDRData(
-			struct tms_retotdr_test_hdr   *ptest_hdr, 
-			struct tms_retotdr_test_param *ptest_param, 
-			struct tms_retotdr_data_hdr   *pdata_hdr, 
-			struct tms_retotdr_data_val   *pdata_val, 
-			struct tms_retotdr_event_hdr  *pevent_hdr, 
-			struct tms_retotdr_event_val  *pevent_val, 
-			struct tms_retotdr_chain      *pchain, 
-			char *path, 
-			int32_t flag)
+    struct tms_retotdr_test_hdr   *ptest_hdr,
+    struct tms_retotdr_test_param *ptest_param,
+    struct tms_retotdr_data_hdr   *pdata_hdr,
+    struct tms_retotdr_data_val   *pdata_val,
+    struct tms_retotdr_event_hdr  *pevent_hdr,
+    struct tms_retotdr_event_val  *pevent_val,
+    struct tms_retotdr_chain      *pchain,
+    char *path,
+    int32_t flag)
 {
 	// register uint32_t *p32s, *p32d;
 	register uint16_t *p16s, *p16d;
 	register int loop;
 
 	loop = pdata_hdr->count;
-	p16d = (uint16_t*)pdata_val;
-	p16s = (uint16_t*)pdata_val;
-	
-	
+	p16d = (uint16_t *)pdata_val;
+	p16s = (uint16_t *)pdata_val;
+
+
 	FILE *fp;
 	float tmp;
-	fp = fopen((char*)path, "w");
+	fp = fopen((char *)path, "w");
 
 
-	for (register int i = 0;i < loop; i++) {
-		tmp = (float)*p16d / 1000.0;
+	for (register int i = 0; i < loop; i++) {
+		tmp = (float) * p16d / 1000.0;
 		fprintf(fp, "%f\n", tmp);
 		p16d++;
 		p16s++;
@@ -3508,29 +3533,29 @@ void tms_SaveOTDRData(
 
 
 int32_t tms_SaveOTDRBin(
-			struct tms_retotdr_test_hdr   *ptest_hdr, 
-			struct tms_retotdr_test_param *ptest_param, 
-			struct tms_retotdr_data_hdr   *pdata_hdr, 
-			struct tms_retotdr_data_val   *pdata_val, 
-			struct tms_retotdr_event_hdr  *pevent_hdr, 
-			struct tms_retotdr_event_val  *pevent_val, 
-			struct tms_retotdr_chain      *pchain, 
-			char *path)
+    struct tms_retotdr_test_hdr   *ptest_hdr,
+    struct tms_retotdr_test_param *ptest_param,
+    struct tms_retotdr_data_hdr   *pdata_hdr,
+    struct tms_retotdr_data_val   *pdata_val,
+    struct tms_retotdr_event_hdr  *pevent_hdr,
+    struct tms_retotdr_event_val  *pevent_val,
+    struct tms_retotdr_chain      *pchain,
+    char *path)
 {
 	FILE *fp;
 	// float tmp;
 	// char *pbyte;
 
 	if (NULL == ptest_hdr ||
-		NULL == ptest_param ||
-		NULL == pdata_hdr ||
-		NULL == pdata_val ||
-		NULL == pevent_hdr ||
-		NULL == pevent_val ||
-		NULL == pchain) { 
-			return -1;
+	    NULL == ptest_param ||
+	    NULL == pdata_hdr ||
+	    NULL == pdata_val ||
+	    NULL == pevent_hdr ||
+	    NULL == pevent_val ||
+	    NULL == pchain) {
+		return -1;
 	}
-	fp = fopen((char*)path, "wb");
+	fp = fopen((char *)path, "wb");
 	// fwrite("abcdefg",1,7,fp);
 
 	fwrite(ptest_hdr, 1, sizeof(struct tms_retotdr_test_hdr), fp);
@@ -3546,15 +3571,15 @@ int32_t tms_SaveOTDRBin(
 }
 
 int32_t tms_OpenOTDRBin(
-			char **pbuf,
-			// struct tms_retotdr_test_hdr   **ptest_hdr, 
-			// struct tms_retotdr_test_param **ptest_param, 
-			// struct tms_retotdr_data_hdr   **pdata_hdr, 
-			// struct tms_retotdr_data_val   **pdata_val, 
-			// struct tms_retotdr_event_hdr  **pevent_hdr, 
-			// struct tms_retotdr_event_val  **pevent_val, 
-			// struct tms_retotdr_chain      **pchain, 
-			char *path)
+    char **pbuf,
+    // struct tms_retotdr_test_hdr   **ptest_hdr,
+    // struct tms_retotdr_test_param **ptest_param,
+    // struct tms_retotdr_data_hdr   **pdata_hdr,
+    // struct tms_retotdr_data_val   **pdata_val,
+    // struct tms_retotdr_event_hdr  **pevent_hdr,
+    // struct tms_retotdr_event_val  **pevent_val,
+    // struct tms_retotdr_chain      **pchain,
+    char *path)
 {
 	FILE *fp;
 	// float tmp;
@@ -3562,16 +3587,16 @@ int32_t tms_OpenOTDRBin(
 	int len;
 
 
-	fp = fopen((char*)path, "rb");
+	fp = fopen((char *)path, "rb");
 	if (NULL == fp) {
-		printf("open file %s fail\n",path);
+		printf("open file %s fail\n", path);
 		return -1;
 	}
 	fseek(fp, 0, SEEK_END);
 	len = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
 
-	*pbuf = (char*)malloc(len);
+	*pbuf = (char *)malloc(len);
 	if (NULL == pbuf) {
 		return -1;
 	}
@@ -3598,29 +3623,29 @@ int32_t tms_OpenOTDRBin(
  * @param	pevent_val
  * @param	cmdID 可以为
  			ID_RET_OTDR_TEST	MCU返回OTDR测量曲线，等效于 tms_RetOTDRTest \n
- 			ID_RET_OTDR_TEST_CYC MCU返回OTDR周期性测量曲线，等效于 tms_RetOTDRTestCycle  
- 			
+ 			ID_RET_OTDR_TEST_CYC MCU返回OTDR周期性测量曲线，等效于 tms_RetOTDRTestCycle
+
 
  * @retval	null
- * @remarks	
+ * @remarks
  * @see	tms_RetOTDRTest
  * @see	tms_RetOTDRTestCycle
  */
 
 int32_t tms_AnyRetOTDRTest(
-		int fd, 
-		struct glink_addr *paddr, 
-		struct tms_retotdr_test_hdr   *ptest_hdr, 		
-		struct tms_retotdr_test_param *ptest_param, 
+    int fd,
+    struct glink_addr *paddr,
+    struct tms_retotdr_test_hdr   *ptest_hdr,
+    struct tms_retotdr_test_param *ptest_param,
 
-		struct tms_retotdr_data_hdr   *pdata_hdr, 
-		struct tms_retotdr_data_val   *pdata_val, 
+    struct tms_retotdr_data_hdr   *pdata_hdr,
+    struct tms_retotdr_data_val   *pdata_val,
 
-		struct tms_retotdr_event_hdr  *pevent_hdr, 
-		struct tms_retotdr_event_val  *pevent_val, 
+    struct tms_retotdr_event_hdr  *pevent_hdr,
+    struct tms_retotdr_event_val  *pevent_val,
 
-		struct tms_retotdr_chain      *pchain, 
-		int32_t cmdID)
+    struct tms_retotdr_chain      *pchain,
+    int32_t cmdID)
 {
 
 	struct tms_retotdr_test_hdr   test_hdr;
@@ -3634,14 +3659,14 @@ int32_t tms_AnyRetOTDRTest(
 	// register int16_t *p16s, *p16d;
 	// register int loop;
 
-	
+
 	// 打印信息
 	printf("------------------------------------------------------------------------\n");
 	tms_Print_tms_retotdr_test_hdr(ptest_hdr);
 	tms_Print_tms_retotdr_test_param(ptest_param);
 	printf("------------------------------------------------------------------------\n");
 
-	
+
 	// Part A.1
 	test_hdr.osw_frame  = htonl(ptest_hdr->osw_frame);
 	test_hdr.osw_slot   = htonl(ptest_hdr->osw_slot);
@@ -3677,14 +3702,14 @@ int32_t tms_AnyRetOTDRTest(
 	struct glink_base  base_hdr;
 	// int ret;
 	int len;
-	len = 	sizeof(struct tms_retotdr_test_hdr  ) + 
-			sizeof(struct tms_retotdr_test_param) +
-			sizeof(struct tms_retotdr_data_hdr  ) +
-			sizeof(struct tms_retotdr_data_val  ) * pdata_hdr->count +
-			sizeof(struct tms_retotdr_event_hdr ) +
-			sizeof(struct tms_retotdr_event_val ) * pevent_hdr->count +
-			sizeof(struct tms_retotdr_chain);
-	
+	len = 	sizeof(struct tms_retotdr_test_hdr  ) +
+	        sizeof(struct tms_retotdr_test_param) +
+	        sizeof(struct tms_retotdr_data_hdr  ) +
+	        sizeof(struct tms_retotdr_data_val  ) * pdata_hdr->count +
+	        sizeof(struct tms_retotdr_event_hdr ) +
+	        sizeof(struct tms_retotdr_event_val ) * pevent_hdr->count +
+	        sizeof(struct tms_retotdr_chain);
+
 	if(paddr == NULL) {
 		base_hdr.src = TMS_DEFAULT_LOCAL_ADDR;
 		base_hdr.dst = TMS_DEFAULT_RMOTE_ADDR;
@@ -3696,14 +3721,14 @@ int32_t tms_AnyRetOTDRTest(
 	}
 
 	glink_Build(&base_hdr, cmdID, len);
-	glink_SendHead(fd, &base_hdr);	
-	glink_SendSerial(fd, (uint8_t*)&test_hdr,   sizeof(struct tms_retotdr_test_hdr));
-	glink_SendSerial(fd, (uint8_t*)&test_param, sizeof(struct tms_retotdr_test_param));
-	glink_SendSerial(fd, (uint8_t*)&data_hdr,   sizeof(struct tms_retotdr_data_hdr));
-	glink_SendSerial(fd, (uint8_t*)&data_val,   sizeof(struct tms_retotdr_data_val) * pdata_hdr->count);
-	glink_SendSerial(fd, (uint8_t*)&event_hdr,  sizeof(struct tms_retotdr_event_hdr));
-	glink_SendSerial(fd, (uint8_t*)&event_val,  sizeof(struct tms_retotdr_event_val) * pevent_hdr->count);
-	glink_SendSerial(fd, (uint8_t*)&chain,      sizeof(struct tms_retotdr_chain));
+	glink_SendHead(fd, &base_hdr);
+	glink_SendSerial(fd, (uint8_t *)&test_hdr,   sizeof(struct tms_retotdr_test_hdr));
+	glink_SendSerial(fd, (uint8_t *)&test_param, sizeof(struct tms_retotdr_test_param));
+	glink_SendSerial(fd, (uint8_t *)&data_hdr,   sizeof(struct tms_retotdr_data_hdr));
+	glink_SendSerial(fd, (uint8_t *)&data_val,   sizeof(struct tms_retotdr_data_val) * pdata_hdr->count);
+	glink_SendSerial(fd, (uint8_t *)&event_hdr,  sizeof(struct tms_retotdr_event_hdr));
+	glink_SendSerial(fd, (uint8_t *)&event_val,  sizeof(struct tms_retotdr_event_val) * pevent_hdr->count);
+	glink_SendSerial(fd, (uint8_t *)&chain,      sizeof(struct tms_retotdr_chain));
 	glink_SendTail(fd);
 
 	return 0;
@@ -3721,50 +3746,50 @@ static int32_t tms_AnalyseAnyRetOTDRTest(struct tms_context *pcontext, int8_t *p
 	struct tms_retotdr_event_val  *pevent_val;
 	struct tms_retotdr_chain      *pchain;
 
-	
 
-	if ((uint32_t)(len - GLINK_OFFSET_DATA) < sizeof(struct tms_retotdr_test_hdr ) + 
-			sizeof(struct tms_retotdr_test_param) +
-			sizeof(struct tms_retotdr_data_hdr  ) +
-			sizeof(struct tms_retotdr_data_val  ) +
-			sizeof(struct tms_retotdr_event_hdr ) +
-			sizeof(struct tms_retotdr_event_val )+
-			sizeof(struct tms_retotdr_chain) ) {
+
+	if ((uint32_t)(len - GLINK_OFFSET_DATA) < sizeof(struct tms_retotdr_test_hdr ) +
+	    sizeof(struct tms_retotdr_test_param) +
+	    sizeof(struct tms_retotdr_data_hdr  ) +
+	    sizeof(struct tms_retotdr_data_val  ) +
+	    sizeof(struct tms_retotdr_event_hdr ) +
+	    sizeof(struct tms_retotdr_event_val ) +
+	    sizeof(struct tms_retotdr_chain) ) {
 		return -1;
 	}
 
 
-	ptest_hdr   = (struct tms_retotdr_test_hdr   *)(pdata + GLINK_OFFSET_DATA );
-	ptest_param = (struct tms_retotdr_test_param *)(((char*)ptest_hdr)   + sizeof(struct tms_retotdr_test_hdr));
-	pdata_hdr   = (struct tms_retotdr_data_hdr   *)(((char*)ptest_param) + sizeof(struct tms_retotdr_test_param));
+	ptest_hdr   = (struct tms_retotdr_test_hdr *)(pdata + GLINK_OFFSET_DATA );
+	ptest_param = (struct tms_retotdr_test_param *)(((char *)ptest_hdr)   + sizeof(struct tms_retotdr_test_hdr));
+	pdata_hdr   = (struct tms_retotdr_data_hdr *)(((char *)ptest_param) + sizeof(struct tms_retotdr_test_param));
 	// 指针合法性检测，防止指针超过pdata
 	if ( !CHECK_PTR(
-			pdata_hdr, 
-			struct tms_retotdr_data_hdr, 
-			struct tms_retotdr_data_val, 
-			htonl(pdata_hdr->count), 
-			pdata + len)) {
-		printf("Err: %s():%d\n",__FUNCTION__,__LINE__);
+	         pdata_hdr,
+	         struct tms_retotdr_data_hdr,
+	         struct tms_retotdr_data_val,
+	         htonl(pdata_hdr->count),
+	         pdata + len)) {
+		printf("Err: %s():%d\n", __FUNCTION__, __LINE__);
 		return -1;
 	}
-	pdata_val   = (struct tms_retotdr_data_val   *)(((char*)pdata_hdr) + sizeof(struct tms_retotdr_data_hdr));
-	pevent_hdr  = (struct tms_retotdr_event_hdr  *)(((char*)pdata_val) + sizeof(struct tms_retotdr_data_val) * htonl(pdata_hdr->count));
+	pdata_val   = (struct tms_retotdr_data_val *)(((char *)pdata_hdr) + sizeof(struct tms_retotdr_data_hdr));
+	pevent_hdr  = (struct tms_retotdr_event_hdr *)(((char *)pdata_val) + sizeof(struct tms_retotdr_data_val) * htonl(pdata_hdr->count));
 	// 指针合法性检测，防止指针超过pdata
 	if ( !CHECK_PTR(
-			pevent_hdr, 
-			struct tms_retotdr_event_hdr, 
-			struct tms_retotdr_event_val, 
-			htonl(pevent_hdr->count), 
-			pdata + len)) {
-		printf("Err: %s():%d\n",__FUNCTION__,__LINE__);
+	         pevent_hdr,
+	         struct tms_retotdr_event_hdr,
+	         struct tms_retotdr_event_val,
+	         htonl(pevent_hdr->count),
+	         pdata + len)) {
+		printf("Err: %s():%d\n", __FUNCTION__, __LINE__);
 		return -1;
 	}
-	pevent_val  = (struct tms_retotdr_event_val  *)(((char*)pevent_hdr) + sizeof(struct tms_retotdr_event_hdr));
-	pchain      = (struct tms_retotdr_chain      *)(((char*)pevent_val) + sizeof(struct tms_retotdr_event_val) * htonl(pevent_hdr->count));
+	pevent_val  = (struct tms_retotdr_event_val *)(((char *)pevent_hdr) + sizeof(struct tms_retotdr_event_hdr));
+	pchain      = (struct tms_retotdr_chain *)(((char *)pevent_val) + sizeof(struct tms_retotdr_event_val) * htonl(pevent_hdr->count));
 
-	
-	PrintfMemory((uint8_t*)ptest_hdr, sizeof(struct tms_retotdr_test_hdr));
-	
+
+	PrintfMemory((uint8_t *)ptest_hdr, sizeof(struct tms_retotdr_test_hdr));
+
 	// Part A.1
 	ptest_hdr->osw_frame  = htonl(ptest_hdr->osw_frame);
 	ptest_hdr->osw_slot   = htonl(ptest_hdr->osw_slot);
@@ -3789,7 +3814,7 @@ static int32_t tms_AnalyseAnyRetOTDRTest(struct tms_context *pcontext, int8_t *p
 
 	// MCU 帮OTDR填写测试时间
 	if ( '\0' == ptest_hdr->time[0] ) {
-	 //    time_t now;
+		//    time_t now;
 
 		// struct tm *timenow;
 		// time(&now);
@@ -3800,23 +3825,23 @@ static int32_t tms_AnalyseAnyRetOTDRTest(struct tms_context *pcontext, int8_t *p
 		// 	timenow->tm_hour , timenow->tm_min , timenow->tm_sec);
 
 		time_t now;
-		struct tm* ptr ;
+		struct tm *ptr ;
 		//    char szBuffer[64];
-		const char* pFormat = "%Y-%m-%d %H:%M:%S";
+		const char *pFormat = "%Y-%m-%d %H:%M:%S";
 		now = time(NULL);
 		ptr = localtime(&now);
-		strftime( (char*)ptest_hdr->time, (size_t)20, pFormat, ptr);
+		strftime( (char *)ptest_hdr->time, (size_t)20, pFormat, ptr);
 	}
-    
+
 
 
 	if (pcontext->ptcb->pf_OnRetOTDRTest) {
 		pcontext->ptcb->pf_OnRetOTDRTest(
-				pcontext, 
-				ptest_hdr,  ptest_param, 
-				pdata_hdr,  pdata_val, 
-				pevent_hdr, pevent_val, 
-				pchain);
+		    pcontext,
+		    ptest_hdr,  ptest_param,
+		    pdata_hdr,  pdata_val,
+		    pevent_hdr, pevent_val,
+		    pchain);
 	}
 	return 0;
 }
@@ -3848,21 +3873,21 @@ struct tms_retotdr_chain    *pchain
  tms_retotdr_data_val\n tms_retotdr_event_hdr\n tms_retotdr_event_val\n tms_retotdr_chain\n
  */
 int32_t tms_RetOTDRTest(
-		int fd, 
-		struct glink_addr *paddr, 
-		struct tms_retotdr_test_hdr   *ptest_hdr, 		
-		struct tms_retotdr_test_param *ptest_param, 
+    int fd,
+    struct glink_addr *paddr,
+    struct tms_retotdr_test_hdr   *ptest_hdr,
+    struct tms_retotdr_test_param *ptest_param,
 
-		struct tms_retotdr_data_hdr   *pdata_hdr, 
-		struct tms_retotdr_data_val   *pdata_val, 
+    struct tms_retotdr_data_hdr   *pdata_hdr,
+    struct tms_retotdr_data_val   *pdata_val,
 
-		struct tms_retotdr_event_hdr  *pevent_hdr, 
-		struct tms_retotdr_event_val  *pevent_val, 
+    struct tms_retotdr_event_hdr  *pevent_hdr,
+    struct tms_retotdr_event_val  *pevent_val,
 
-		struct tms_retotdr_chain      *pchain)
+    struct tms_retotdr_chain      *pchain)
 {
-	return tms_AnyRetOTDRTest(fd, paddr, ptest_hdr, ptest_param, 
-		pdata_hdr, pdata_val, pevent_hdr, pevent_val, pchain, ID_RET_OTDR_TEST);
+	return tms_AnyRetOTDRTest(fd, paddr, ptest_hdr, ptest_param,
+	                          pdata_hdr, pdata_val, pevent_hdr, pevent_val, pchain, ID_RET_OTDR_TEST);
 }
 
 static int32_t tms_AnalyseRetOTDRTest(struct tms_context *pcontext, int8_t *pdata, int32_t len)
@@ -3897,21 +3922,21 @@ struct tms_retotdr_chain    *pchain
  tms_retotdr_data_val\n tms_retotdr_event_hdr\n tms_retotdr_event_val\n tms_retotdr_chain\n
  */
 int32_t tms_RetOTDRTestCycle(
-		int fd, 
-		struct glink_addr *paddr, 
-		struct tms_retotdr_test_hdr   *ptest_hdr, 		
-		struct tms_retotdr_test_param *ptest_param, 
+    int fd,
+    struct glink_addr *paddr,
+    struct tms_retotdr_test_hdr   *ptest_hdr,
+    struct tms_retotdr_test_param *ptest_param,
 
-		struct tms_retotdr_data_hdr   *pdata_hdr, 
-		struct tms_retotdr_data_val   *pdata_val, 
+    struct tms_retotdr_data_hdr   *pdata_hdr,
+    struct tms_retotdr_data_val   *pdata_val,
 
-		struct tms_retotdr_event_hdr  *pevent_hdr, 
-		struct tms_retotdr_event_val  *pevent_val, 
+    struct tms_retotdr_event_hdr  *pevent_hdr,
+    struct tms_retotdr_event_val  *pevent_val,
 
-		struct tms_retotdr_chain      *pchain)
+    struct tms_retotdr_chain      *pchain)
 {
-	return tms_AnyRetOTDRTest(fd, paddr, ptest_hdr, ptest_param, 
-		pdata_hdr, pdata_val, pevent_hdr, pevent_val, pchain, ID_RET_OTDR_TEST_CYC);
+	return tms_AnyRetOTDRTest(fd, paddr, ptest_hdr, ptest_param,
+	                          pdata_hdr, pdata_val, pevent_hdr, pevent_val, pchain, ID_RET_OTDR_TEST_CYC);
 }
 
 static int32_t tms_AnalyseRetOTDRTestCycle(struct tms_context *pcontext, int8_t *pdata, int32_t len)
@@ -3920,35 +3945,35 @@ static int32_t tms_AnalyseRetOTDRTestCycle(struct tms_context *pcontext, int8_t 
 	return 0;
 }
 
- /**
- * @brief	ID_CFG_OLP_MODE 0x80000025 网管对OLP模块的工作模式和返回时间设定
- * @param[in]	fd 套接字文件描述符
- * @param[in]	paddr glink帧源地址和目的地址，如果填NULL则采用默认的
- 				TMS_DEFAULT_LOCAL_ADDR和TMS_DEFAULT_RMOTE_ADDR填充，两个宏的意义通过
- 				修改tmsxx.h设定
- * @param[in]	frame 指定机框号(0 ~ MAX_FRAME)
- * @param[in]	slot 指定槽位号(0 ~ MAX_SLOT)
- * @param[in]	mode 切换模式，可以是下面的值\n
- 				OLP_SWITCH_MODE_UNBACK 0 保护不返回\n
- 				OLP_SWITCH_MODE_BACK 1 表示保护返回
- * @param[in]	backtime 返回时间，单位分钟
- * @param[in]	protect 切换模式，可以是下面的值\n
- 				1 表示保护线路为主路\n
- 				2 表示保护线路为备路
- * @retval	>0 发送成功
- * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
- * @see	
- */
+/**
+* @brief	ID_CFG_OLP_MODE 0x80000025 网管对OLP模块的工作模式和返回时间设定
+* @param[in]	fd 套接字文件描述符
+* @param[in]	paddr glink帧源地址和目的地址，如果填NULL则采用默认的
+				TMS_DEFAULT_LOCAL_ADDR和TMS_DEFAULT_RMOTE_ADDR填充，两个宏的意义通过
+				修改tmsxx.h设定
+* @param[in]	frame 指定机框号(0 ~ MAX_FRAME)
+* @param[in]	slot 指定槽位号(0 ~ MAX_SLOT)
+* @param[in]	mode 切换模式，可以是下面的值\n
+				OLP_SWITCH_MODE_UNBACK 0 保护不返回\n
+				OLP_SWITCH_MODE_BACK 1 表示保护返回
+* @param[in]	backtime 返回时间，单位分钟
+* @param[in]	protect 切换模式，可以是下面的值\n
+				1 表示保护线路为主路\n
+				2 表示保护线路为备路
+* @retval	>0 发送成功
+* @retval	0 发送失败，该链接失效，立即断开
+* @remarks
+* @see
+*/
 int32_t tms_CfgOLPMode(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t frame, 
-		int32_t slot, 
-		int32_t mode, 
-		int32_t backtime, 
-		int32_t protect,
-		int32_t sw_gate)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t mode,
+    int32_t backtime,
+    int32_t protect,
+    int32_t sw_gate)
 {
 	uint8_t *pmem;
 	struct tms_cfg_olp_mode olpmode;
@@ -3968,10 +3993,10 @@ int32_t tms_CfgOLPMode(
 
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
-	pmem = (uint8_t*)&olpmode;
+	pmem = (uint8_t *)&olpmode;
 	glink_Build(&base_hdr, ID_CFG_OLP_MODE, sizeof(struct tms_cfg_olp_mode));
 	ret = glink_Send(fd, &base_hdr, pmem, sizeof(struct tms_cfg_olp_mode));
 	return ret;
@@ -3996,18 +4021,18 @@ int32_t tms_AnalyseCfgOSWMode(struct tms_context *pcontext, int8_t *pdata, int32
 
  * @param	null
  * @retval	null
- * @remarks	
- * @see	
+ * @remarks
+ * @see
  */
 int32_t tms_MCU_OLPSwitch(
-	int     fd, 
-	struct glink_addr *paddr, 
-	int32_t frame, 
-	int32_t slot, 
-	int32_t sw_port)
+    int     fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t sw_port)
 {
 	// 设备类型内部自己完成
-	return tms_MCUtoDevice(fd, paddr, frame, slot, DEV_OLP, sw_port, ID_CMD_OLP_SWITCH, sizeof(struct tms_dev_port));	
+	return tms_MCUtoDevice(fd, paddr, frame, slot, DEV_OLP, sw_port, ID_CMD_OLP_SWITCH, sizeof(struct tms_dev_port));
 }
 
 int32_t tms_MCU_AnalyseOLPSwitch(struct tms_context *pcontext, int8_t *pdata, int32_t len)
@@ -4032,16 +4057,16 @@ int32_t tms_MCU_AnalyseOLPSwitch(struct tms_context *pcontext, int8_t *pdata, in
 		OLP_SWITCH_ACTION_SLAVE        1	切换到备光路
  * @param	null
  * @retval	null
- * @remarks	
- * @see	
+ * @remarks
+ * @see
  */
 int32_t tms_ReportOLPAction(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t frame, 
-		int32_t slot, 
-		int32_t sw_type, 
-		int32_t sw_port)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t sw_type,
+    int32_t sw_port)
 {
 	uint8_t *pmem;
 	struct tms_report_olp_action olpaction;
@@ -4057,7 +4082,7 @@ int32_t tms_ReportOLPAction(
 	struct glink_base  base_hdr;
 	int ret;
 
-	pmem = (uint8_t*)&olpaction;
+	pmem = (uint8_t *)&olpaction;
 	tms_FillGlinkFrame(&base_hdr, paddr);
 
 	glink_Build(&base_hdr, ID_REPORT_OLP_ACTION, sizeof(struct tms_report_olp_action));
@@ -4067,7 +4092,7 @@ int32_t tms_ReportOLPAction(
 	}
 	if (0 == fd) {
 		fd = tms_SelectFdByAddr(&base_hdr.dst);
-	}	
+	}
 	ret = glink_Send(fd, &base_hdr, pmem, sizeof(struct tms_report_olp_action));
 	return ret;
 }
@@ -4076,7 +4101,7 @@ int32_t tms_ReportOLPAction(
 int32_t tms_AnalyseReportOLPAction(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
 	struct tms_report_olp_action *pval;
-	pval  = (struct tms_report_olp_action*)(pdata + GLINK_OFFSET_DATA);
+	pval  = (struct tms_report_olp_action *)(pdata + GLINK_OFFSET_DATA);
 
 	// Step 2.各字段复制
 	pval->frame    = htonl(pval->frame);
@@ -4085,33 +4110,33 @@ int32_t tms_AnalyseReportOLPAction(struct tms_context *pcontext, int8_t *pdata, 
 	pval->sw_type  = htonl(pval->sw_type);
 	pval->sw_port  = htonl(pval->sw_port);
 	printf("tms_AnalyseReportOLPAction()\n");
-	printf("val:f%d/s%d/t%d\n", pval->frame,pval->slot, pval->type);
-	printf("\tsw_type: %d sw_port: %d\n",pval->sw_type, pval->sw_port);
+	printf("val:f%d/s%d/t%d\n", pval->frame, pval->slot, pval->type);
+	printf("\tsw_type: %d sw_port: %d\n", pval->sw_type, pval->sw_port);
 
 	return 0;
 }
- /**
- * @brief	ID_ALARM_OPM 0x80000028 MCU上报某槽位总的光功率告警
- * @param[in]	fd 套接字文件描述符
- * @param[in]	paddr glink帧源地址和目的地址，如果填NULL则采用默认的
- 				TMS_DEFAULT_LOCAL_ADDR和TMS_DEFAULT_RMOTE_ADDR填充，两个宏的意义通过
- 				修改tmsxx.h设定
- * @param[in]	frame 指定机框号(0 ~ MAX_FRAME)
- * @param[in]	slot 指定槽位号(0 ~ MAX_SLOT)
- * @param[in]	count struct tms_alarm_opm_val  数组个数
- * @param[in]	list 指向一个 struct tms_alarm_opm_val  一维数组
- * @retval	>0 发送成功
- * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
- * @see	
- */
+/**
+* @brief	ID_ALARM_OPM 0x80000028 MCU上报某槽位总的光功率告警
+* @param[in]	fd 套接字文件描述符
+* @param[in]	paddr glink帧源地址和目的地址，如果填NULL则采用默认的
+				TMS_DEFAULT_LOCAL_ADDR和TMS_DEFAULT_RMOTE_ADDR填充，两个宏的意义通过
+				修改tmsxx.h设定
+* @param[in]	frame 指定机框号(0 ~ MAX_FRAME)
+* @param[in]	slot 指定槽位号(0 ~ MAX_SLOT)
+* @param[in]	count struct tms_alarm_opm_val  数组个数
+* @param[in]	list 指向一个 struct tms_alarm_opm_val  一维数组
+* @retval	>0 发送成功
+* @retval	0 发送失败，该链接失效，立即断开
+* @remarks
+* @see
+*/
 int32_t tms_AlarmOPM(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t frame, 
-		int32_t slot, 
-		int32_t count, 
-		struct tms_alarm_opm_val *list)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t count,
+    struct tms_alarm_opm_val *list)
 {
 	uint8_t *pmem;
 	struct tms_alarm_opm      *phdr;
@@ -4121,12 +4146,12 @@ int32_t tms_AlarmOPM(
 	// Step 1.分配内存并各指针指向相应内存
 	len = sizeof(struct tms_alarm_opm) + count * sizeof(struct tms_alarm_opm_val);
 
-	pmem = (uint8_t*)malloc(len);
+	pmem = (uint8_t *)malloc(len);
 	if (pmem == NULL) {
 		return -1;
 	}
-	phdr  = (struct tms_alarm_opm*)(pmem);
-	plist = (struct tms_alarm_opm_val*)(pmem + sizeof(struct tms_alarm_opm));
+	phdr  = (struct tms_alarm_opm *)(pmem);
+	plist = (struct tms_alarm_opm_val *)(pmem + sizeof(struct tms_alarm_opm));
 
 	// Step 2.各字段复制
 	// phdr->alarm_type  = htonl(alarm_type);
@@ -4145,7 +4170,7 @@ int32_t tms_AlarmOPM(
 		plist++;
 		ptlist++;
 	}
-	
+
 	// Step 3. 发送
 	struct glink_base  base_hdr;
 	int ret;
@@ -4159,9 +4184,10 @@ int32_t tms_AlarmOPM(
 	}
 	if (0 == fd) {
 		fd = tms_SelectFdByAddr(&base_hdr.dst);
-	}	
+	}
 	ret = glink_Send(fd, &base_hdr, pmem, len);
-_Free:;
+_Free:
+	;
 	free(pmem);
 	return ret;
 }
@@ -4179,18 +4205,18 @@ _Free:;
  * @param[in]	list 指向一个 struct tms_alarm_opm_val  一维数组
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
- * @see	
+ * @remarks
+ * @see
  */
 int32_t tms_AlarmOPMChange(
-		int     fd, 
-		struct glink_addr *paddr, 
-		int32_t frame, 
-		int32_t slot, 
-		// int     alarm_type, 
-		int 	alarm_cnt, 
-		int32_t count, 
-		struct  tms_alarm_opm_val *list)
+    int     fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    // int     alarm_type,
+    int 	alarm_cnt,
+    int32_t count,
+    struct  tms_alarm_opm_val *list)
 {
 	uint8_t *pmem;
 	struct tms_alarm_opm_change      *phdr;
@@ -4200,12 +4226,12 @@ int32_t tms_AlarmOPMChange(
 	// Step 1.分配内存并各指针指向相应内存
 	len = sizeof(struct tms_alarm_opm_change) + count * sizeof(struct tms_alarm_opm_val);
 
-	pmem = (uint8_t*)malloc(len);
+	pmem = (uint8_t *)malloc(len);
 	if (pmem == NULL) {
 		return -1;
 	}
-	phdr  = (struct tms_alarm_opm_change*)(pmem);
-	plist = (struct tms_alarm_opm_val*)(pmem + sizeof(struct tms_alarm_opm_change));
+	phdr  = (struct tms_alarm_opm_change *)(pmem);
+	plist = (struct tms_alarm_opm_val *)(pmem + sizeof(struct tms_alarm_opm_change));
 
 	// Step 2.各字段复制
 	// phdr->alarm_type  = htonl(alarm_type);
@@ -4213,8 +4239,8 @@ int32_t tms_AlarmOPMChange(
 	phdr->frame       = htonl(frame);
 	phdr->slot        = htonl(slot);
 	phdr->alarm_cnt   = htonl(alarm_cnt);
-	phdr->count       = htonl(count+12);
-	printf("count :%d\n",phdr->count);
+	phdr->count       = htonl(count + 12);
+	printf("count :%d\n", phdr->count);
 
 	// todo :防止循环count次溢出ptlist
 	ptlist = list;
@@ -4242,7 +4268,7 @@ int32_t tms_AlarmOPMChange(
 	}
 	if (0 == fd) {
 		fd = tms_SelectFdByAddr(&base_hdr.dst);
-	}	
+	}
 	ret = glink_Send(fd, &base_hdr, pmem, len);
 
 	free(pmem);
@@ -4268,25 +4294,25 @@ int32_t tms_AlarmOPMChange(
  * @param	pchain  曲线链路信息
  * @param	pchain  曲线链路信息
  * @param	cmdID 命令ID，这里固定填死 ID_ALARM_LINE
- * @remarks	
- * @see	
+ * @remarks
+ * @see
  */
 
 int32_t tms_AlarmLine(
-		int     fd, 
-		struct glink_addr *paddr,
-		struct tms_alarm_line_hdr     *palarm,
-		struct tms_retotdr_test_hdr   *ptest_hdr, 		
-		struct tms_retotdr_test_param *ptest_param, 
+    int     fd,
+    struct glink_addr *paddr,
+    struct tms_alarm_line_hdr     *palarm,
+    struct tms_retotdr_test_hdr   *ptest_hdr,
+    struct tms_retotdr_test_param *ptest_param,
 
-		struct tms_retotdr_data_hdr   *pdata_hdr, 
-		struct tms_retotdr_data_val   *pdata_val, 
+    struct tms_retotdr_data_hdr   *pdata_hdr,
+    struct tms_retotdr_data_val   *pdata_val,
 
-		struct tms_retotdr_event_hdr  *pevent_hdr, 
-		struct tms_retotdr_event_val  *pevent_val, 
+    struct tms_retotdr_event_hdr  *pevent_hdr,
+    struct tms_retotdr_event_val  *pevent_val,
 
-		struct tms_retotdr_chain      *pchain,
-		int32_t cmdID)
+    struct tms_retotdr_chain      *pchain,
+    int32_t cmdID)
 {
 	struct tms_alarm_line_hdr     alarm;
 	struct tms_retotdr_test_hdr   test_hdr;
@@ -4300,14 +4326,14 @@ int32_t tms_AlarmLine(
 	// register int16_t *p16s, *p16d;
 	// register int loop;
 
-	
+
 	// 打印信息
 	printf("------------------------------------------------------------------------\n");
 	tms_Print_tms_retotdr_test_hdr(ptest_hdr);
 	tms_Print_tms_retotdr_test_param(ptest_param);
 	printf("------------------------------------------------------------------------\n");
 
-	
+
 	alarm.alarm_type = htonl(palarm->alarm_type);
 	alarm.alarm_level = htonl(palarm->alarm_level);
 	alarm.frame = htonl(palarm->frame);
@@ -4352,43 +4378,43 @@ int32_t tms_AlarmLine(
 	// int ret;
 	int len;
 	len = 	sizeof(struct tms_alarm_line_hdr)     +
-			sizeof(struct tms_retotdr_test_hdr  ) + 
-			sizeof(struct tms_retotdr_test_param) +
-			sizeof(struct tms_retotdr_data_hdr  ) +
-			sizeof(struct tms_retotdr_data_val  ) * pdata_hdr->count +
-			sizeof(struct tms_retotdr_event_hdr ) +
-			sizeof(struct tms_retotdr_event_val ) * pevent_hdr->count +
-			sizeof(struct tms_retotdr_chain);
-	
+	        sizeof(struct tms_retotdr_test_hdr  ) +
+	        sizeof(struct tms_retotdr_test_param) +
+	        sizeof(struct tms_retotdr_data_hdr  ) +
+	        sizeof(struct tms_retotdr_data_val  ) * pdata_hdr->count +
+	        sizeof(struct tms_retotdr_event_hdr ) +
+	        sizeof(struct tms_retotdr_event_val ) * pevent_hdr->count +
+	        sizeof(struct tms_retotdr_chain);
+
 
 
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	glink_Build(&base_hdr, cmdID, len);
 	if (paddr != NULL && paddr->dst == GLINK_MASK_MADDR) {
 		return tms_SendAllManagerDot(&base_hdr,
-					8,
-					NULL,
-					(uint8_t*)&alarm,      sizeof(struct tms_alarm_line_hdr),
-					(uint8_t*)&test_hdr,   sizeof(struct tms_retotdr_test_hdr),
-					(uint8_t*)&test_param, sizeof(struct tms_retotdr_test_param),
-					(uint8_t*)&data_hdr,   sizeof(struct tms_retotdr_data_hdr),
-					(uint8_t*)&data_val,   sizeof(struct tms_retotdr_data_val) * pdata_hdr->count,
-					(uint8_t*)&event_hdr,  sizeof(struct tms_retotdr_event_hdr),
-					(uint8_t*)&event_val,  sizeof(struct tms_retotdr_event_val) * pevent_hdr->count,
-					(uint8_t*)&chain,      sizeof(struct tms_retotdr_chain));
+		                             8,
+		                             NULL,
+		                             (uint8_t *)&alarm,      sizeof(struct tms_alarm_line_hdr),
+		                             (uint8_t *)&test_hdr,   sizeof(struct tms_retotdr_test_hdr),
+		                             (uint8_t *)&test_param, sizeof(struct tms_retotdr_test_param),
+		                             (uint8_t *)&data_hdr,   sizeof(struct tms_retotdr_data_hdr),
+		                             (uint8_t *)&data_val,   sizeof(struct tms_retotdr_data_val) * pdata_hdr->count,
+		                             (uint8_t *)&event_hdr,  sizeof(struct tms_retotdr_event_hdr),
+		                             (uint8_t *)&event_val,  sizeof(struct tms_retotdr_event_val) * pevent_hdr->count,
+		                             (uint8_t *)&chain,      sizeof(struct tms_retotdr_chain));
 	}
 	if (0 == fd) {
 		fd = tms_SelectFdByAddr(&base_hdr.dst);
 	}
-	glink_SendHead(fd, &base_hdr);	
-	glink_SendSerial(fd, (uint8_t*)&alarm,      sizeof(struct tms_alarm_line_hdr));
-	glink_SendSerial(fd, (uint8_t*)&test_hdr,   sizeof(struct tms_retotdr_test_hdr));
-	glink_SendSerial(fd, (uint8_t*)&test_param, sizeof(struct tms_retotdr_test_param));
-	glink_SendSerial(fd, (uint8_t*)&data_hdr,   sizeof(struct tms_retotdr_data_hdr));
-	glink_SendSerial(fd, (uint8_t*)&data_val,   sizeof(struct tms_retotdr_data_val) * pdata_hdr->count);
-	glink_SendSerial(fd, (uint8_t*)&event_hdr,  sizeof(struct tms_retotdr_event_hdr));
-	glink_SendSerial(fd, (uint8_t*)&event_val,  sizeof(struct tms_retotdr_event_val) * pevent_hdr->count);
-	glink_SendSerial(fd, (uint8_t*)&chain,      sizeof(struct tms_retotdr_chain));
+	glink_SendHead(fd, &base_hdr);
+	glink_SendSerial(fd, (uint8_t *)&alarm,      sizeof(struct tms_alarm_line_hdr));
+	glink_SendSerial(fd, (uint8_t *)&test_hdr,   sizeof(struct tms_retotdr_test_hdr));
+	glink_SendSerial(fd, (uint8_t *)&test_param, sizeof(struct tms_retotdr_test_param));
+	glink_SendSerial(fd, (uint8_t *)&data_hdr,   sizeof(struct tms_retotdr_data_hdr));
+	glink_SendSerial(fd, (uint8_t *)&data_val,   sizeof(struct tms_retotdr_data_val) * pdata_hdr->count);
+	glink_SendSerial(fd, (uint8_t *)&event_hdr,  sizeof(struct tms_retotdr_event_hdr));
+	glink_SendSerial(fd, (uint8_t *)&event_val,  sizeof(struct tms_retotdr_event_val) * pevent_hdr->count);
+	glink_SendSerial(fd, (uint8_t *)&chain,      sizeof(struct tms_retotdr_chain));
 	glink_SendTail(fd);
 
 	return 0;
@@ -4407,50 +4433,50 @@ static int32_t tms_AnalyseAlarmLine(struct tms_context *pcontext, int8_t *pdata,
 	struct tms_retotdr_chain      *pchain;
 
 	if ((uint32_t)(len - GLINK_OFFSET_DATA) < sizeof(struct tms_alarm_line_hdr) +
-			sizeof(struct tms_retotdr_test_hdr ) + 
-			sizeof(struct tms_retotdr_test_param) +
-			sizeof(struct tms_retotdr_data_hdr  ) +
-			sizeof(struct tms_retotdr_data_val  ) +
-			sizeof(struct tms_retotdr_event_hdr ) +
-			sizeof(struct tms_retotdr_event_val )+
-			sizeof(struct tms_retotdr_chain) ) {
+	    sizeof(struct tms_retotdr_test_hdr ) +
+	    sizeof(struct tms_retotdr_test_param) +
+	    sizeof(struct tms_retotdr_data_hdr  ) +
+	    sizeof(struct tms_retotdr_data_val  ) +
+	    sizeof(struct tms_retotdr_event_hdr ) +
+	    sizeof(struct tms_retotdr_event_val ) +
+	    sizeof(struct tms_retotdr_chain) ) {
 		return -1;
 	}
 
-	palarm      = (struct tms_alarm_line_hdr   *)(pdata + GLINK_OFFSET_DATA );
-	printf("%d %d %d\n", 
-		htonl(palarm->frame),
-		htonl(palarm->slot),
-		htonl(palarm->port));
-	ptest_hdr   = (struct tms_retotdr_test_hdr   *)(((char*)palarm)      + sizeof(struct tms_alarm_line_hdr) );
-	ptest_param = (struct tms_retotdr_test_param *)(((char*)ptest_hdr)   + sizeof(struct tms_retotdr_test_hdr));
-	pdata_hdr   = (struct tms_retotdr_data_hdr   *)(((char*)ptest_param) + sizeof(struct tms_retotdr_test_param));
+	palarm      = (struct tms_alarm_line_hdr *)(pdata + GLINK_OFFSET_DATA );
+	printf("%d %d %d\n",
+	       htonl(palarm->frame),
+	       htonl(palarm->slot),
+	       htonl(palarm->port));
+	ptest_hdr   = (struct tms_retotdr_test_hdr *)(((char *)palarm)      + sizeof(struct tms_alarm_line_hdr) );
+	ptest_param = (struct tms_retotdr_test_param *)(((char *)ptest_hdr)   + sizeof(struct tms_retotdr_test_hdr));
+	pdata_hdr   = (struct tms_retotdr_data_hdr *)(((char *)ptest_param) + sizeof(struct tms_retotdr_test_param));
 	// 指针合法性检测，防止指针超过pdata
 	if ( !CHECK_PTR(
-			pdata_hdr, 
-			struct tms_retotdr_data_hdr, 
-			struct tms_retotdr_data_val, 
-			htonl(pdata_hdr->count), 
-			pdata + len)) {
-		printf("Err: %s():%d\n",__FUNCTION__,__LINE__);
+	         pdata_hdr,
+	         struct tms_retotdr_data_hdr,
+	         struct tms_retotdr_data_val,
+	         htonl(pdata_hdr->count),
+	         pdata + len)) {
+		printf("Err: %s():%d\n", __FUNCTION__, __LINE__);
 		return -1;
 	}
-	pdata_val   = (struct tms_retotdr_data_val   *)(((char*)pdata_hdr) + sizeof(struct tms_retotdr_data_hdr));
-	pevent_hdr  = (struct tms_retotdr_event_hdr  *)(((char*)pdata_val) + sizeof(struct tms_retotdr_data_val) * htonl(pdata_hdr->count));
+	pdata_val   = (struct tms_retotdr_data_val *)(((char *)pdata_hdr) + sizeof(struct tms_retotdr_data_hdr));
+	pevent_hdr  = (struct tms_retotdr_event_hdr *)(((char *)pdata_val) + sizeof(struct tms_retotdr_data_val) * htonl(pdata_hdr->count));
 	// 指针合法性检测，防止指针超过pdata
 	if ( !CHECK_PTR(
-			pevent_hdr, 
-			struct tms_retotdr_event_hdr, 
-			struct tms_retotdr_event_val, 
-			htonl(pevent_hdr->count), 
-			pdata + len)) {
-		printf("Err: %s():%d\n",__FUNCTION__,__LINE__);
+	         pevent_hdr,
+	         struct tms_retotdr_event_hdr,
+	         struct tms_retotdr_event_val,
+	         htonl(pevent_hdr->count),
+	         pdata + len)) {
+		printf("Err: %s():%d\n", __FUNCTION__, __LINE__);
 		return -1;
 	}
-	pevent_val  = (struct tms_retotdr_event_val  *)(((char*)pevent_hdr) + sizeof(struct tms_retotdr_event_hdr));
-	pchain      = (struct tms_retotdr_chain      *)(((char*)pevent_val) + sizeof(struct tms_retotdr_event_val) * htonl(pevent_hdr->count));
+	pevent_val  = (struct tms_retotdr_event_val *)(((char *)pevent_hdr) + sizeof(struct tms_retotdr_event_hdr));
+	pchain      = (struct tms_retotdr_chain *)(((char *)pevent_val) + sizeof(struct tms_retotdr_event_val) * htonl(pevent_hdr->count));
 
-	
+
 	// Part x 告警数据头
 	palarm->alarm_type 	   = htonl(palarm->alarm_type);
 	palarm->alarm_level    = htonl(palarm->alarm_level);
@@ -4484,13 +4510,13 @@ static int32_t tms_AnalyseAlarmLine(struct tms_context *pcontext, int8_t *pdata,
 	tms_Print_tms_alarm_line_hdr(palarm);
 	if (pcontext->ptcb->pf_OnRetOTDRTest) {
 		pcontext->ptcb->pf_OnRetOTDRTest(
-				pcontext, 
-				ptest_hdr,  ptest_param, 
-				pdata_hdr,  pdata_val, 
-				pevent_hdr, pevent_val, 
-				pchain);
+		    pcontext,
+		    ptest_hdr,  ptest_param,
+		    pdata_hdr,  pdata_val,
+		    pevent_hdr, pevent_val,
+		    pchain);
 	}
-	
+
 	return 0;
 }
 /**
@@ -4503,72 +4529,72 @@ static int32_t tms_AnalyseAlarmLine(struct tms_context *pcontext, int8_t *pdata,
  * @param[in]	list 指向一个 struct tms_alarm_hw_val  一维数组
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
- * @see	
+ * @remarks
+ * @see
  */
 int32_t tms_AlarmHW(
-        int     fd,
-        struct glink_addr *paddr,
-        int32_t count,
-        struct  tms_alarm_hw_val *list)
+    int     fd,
+    struct glink_addr *paddr,
+    int32_t count,
+    struct  tms_alarm_hw_val *list)
 {
-    uint8_t *pmem;
-    struct tms_alarm_hw *pcfg_hdr;
-    struct tms_alarm_hw_val         *plist, *ptlist;
-    int len;
-    // uint16_t *preason;
+	uint8_t *pmem;
+	struct tms_alarm_hw *pcfg_hdr;
+	struct tms_alarm_hw_val         *plist, *ptlist;
+	int len;
+	// uint16_t *preason;
 
-    // printf("count = %d\n", count);
-    // Step 1.分配内存并各指针指向相应内存
-    len = sizeof(struct tms_alarm_hw) + count * sizeof(struct tms_alarm_hw_val);
+	// printf("count = %d\n", count);
+	// Step 1.分配内存并各指针指向相应内存
+	len = sizeof(struct tms_alarm_hw) + count * sizeof(struct tms_alarm_hw_val);
 
-    // printf("count = %d\n", count);
-    pmem = (uint8_t*)malloc(len);
-    if (pmem == NULL) {
-        return -1;
-    }
-    // printf("count = %d\n", count);
-    pcfg_hdr = (struct tms_alarm_hw*)(pmem);
-    // printf("count = %d\n", count);
-    plist    = (struct tms_alarm_hw_val*)(pmem + sizeof(struct tms_alarm_hw));
+	// printf("count = %d\n", count);
+	pmem = (uint8_t *)malloc(len);
+	if (pmem == NULL) {
+		return -1;
+	}
+	// printf("count = %d\n", count);
+	pcfg_hdr = (struct tms_alarm_hw *)(pmem);
+	// printf("count = %d\n", count);
+	plist    = (struct tms_alarm_hw_val *)(pmem + sizeof(struct tms_alarm_hw));
 
-    // printf("count = %d\n", count);
-    // Step 2.各字段复制
-    pcfg_hdr->alarm_type = htonl(3);// 硬件告警固定写3
-    pcfg_hdr->count = htonl(count);
+	// printf("count = %d\n", count);
+	// Step 2.各字段复制
+	pcfg_hdr->alarm_type = htonl(3);// 硬件告警固定写3
+	pcfg_hdr->count = htonl(count);
 
-    // printf("count = %d\n", count);
-    // todo :防止循环count次溢出ptlist
-    ptlist = list;
-    for (int i = 0; i < count; i++) {
-        plist->level  = htonl(ptlist->level);
-        plist->frame  = htonl(ptlist->frame);
-        plist->slot   = htonl(ptlist->slot);
-        plist->reason = htonl(ptlist->reason);
+	// printf("count = %d\n", count);
+	// todo :防止循环count次溢出ptlist
+	ptlist = list;
+	for (int i = 0; i < count; i++) {
+		plist->level  = htonl(ptlist->level);
+		plist->frame  = htonl(ptlist->frame);
+		plist->slot   = htonl(ptlist->slot);
+		plist->reason = htonl(ptlist->reason);
 
 #if 0
-        // 将short按照网络字节发送，你妈B
-        memcpy(plist->reason, ptlist->reason, 128);
-        preason  = (uint16_t*)plist->reason;
-        // PrintfMemory((uint8_t*)preason, 128);
-        for (int k = 0;k < 128/2;k++) {
-            *preason = htons(*preason);
-            preason++;
-        }
-        preason  = (uint16_t*)ptlist->reason;
-        // PrintfMemory((uint8_t*)preason, 128);
+		// 将short按照网络字节发送，你妈B
+		memcpy(plist->reason, ptlist->reason, 128);
+		preason  = (uint16_t *)plist->reason;
+		// PrintfMemory((uint8_t*)preason, 128);
+		for (int k = 0; k < 128 / 2; k++) {
+			*preason = htons(*preason);
+			preason++;
+		}
+		preason  = (uint16_t *)ptlist->reason;
+		// PrintfMemory((uint8_t*)preason, 128);
 #endif
 
 
-        memcpy(plist->time,   ptlist->time,   20);
+		memcpy(plist->time,   ptlist->time,   20);
 
-        plist++;
-        ptlist++;
-    }
+		plist++;
+		ptlist++;
+	}
 
-    // Step 3. 发送
-    struct glink_base  base_hdr;
-    int ret;
+	// Step 3. 发送
+	struct glink_base  base_hdr;
+	int ret;
 
 	glink_Build(&base_hdr, ID_ALARM_HW, len);
 	if (paddr != NULL && paddr->dst == GLINK_MASK_MADDR) {
@@ -4577,62 +4603,63 @@ int32_t tms_AlarmHW(
 	}
 	if (0 == fd) {
 		fd = tms_SelectFdByAddr(&base_hdr.dst);
-	}	
+	}
 	ret = glink_Send(fd, &base_hdr, pmem, len);
-_Free:;
+_Free:
+	;
 	free(pmem);
-    return ret;
+	return ret;
 }
 
 // ID_ALARM_HW 0x80000031 MCU返回硬件告警
 static int32_t tms_AnalyseAlarmHW(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
-    struct tms_alarm_hw 		*pcfg_hdr;
-    struct tms_alarm_hw_val  *plist, *ptlist;
-    // uint16_t *preason;
+	struct tms_alarm_hw 		*pcfg_hdr;
+	struct tms_alarm_hw_val  *plist, *ptlist;
+	// uint16_t *preason;
 
 
-    pcfg_hdr = (struct tms_alarm_hw*)(pdata + GLINK_OFFSET_DATA);
-    plist    = (struct tms_alarm_hw_val*)  (pdata + GLINK_OFFSET_DATA + sizeof(struct tms_alarm_hw));
-    PrintfMemory((uint8_t *)plist, sizeof(struct tms_alarm_hw_val));
+	pcfg_hdr = (struct tms_alarm_hw *)(pdata + GLINK_OFFSET_DATA);
+	plist    = (struct tms_alarm_hw_val *)  (pdata + GLINK_OFFSET_DATA + sizeof(struct tms_alarm_hw));
+	PrintfMemory((uint8_t *)plist, sizeof(struct tms_alarm_hw_val));
 
-    pcfg_hdr->alarm_type  = htonl(pcfg_hdr->alarm_type);
-    pcfg_hdr->count = htonl(pcfg_hdr->count);
+	pcfg_hdr->alarm_type  = htonl(pcfg_hdr->alarm_type);
+	pcfg_hdr->count = htonl(pcfg_hdr->count);
 
-    // TODO：防止count溢出
-    ptlist = plist;
-    for (int i = 0; i < pcfg_hdr->count; i++) {
-        ptlist->level      = htonl(ptlist->level);
-        ptlist->frame      = htonl(ptlist->frame);
-        ptlist->slot       = htonl(ptlist->slot);
-        ptlist->reason     = htonl(ptlist->reason);
-        ptlist++;
+	// TODO：防止count溢出
+	ptlist = plist;
+	for (int i = 0; i < pcfg_hdr->count; i++) {
+		ptlist->level      = htonl(ptlist->level);
+		ptlist->frame      = htonl(ptlist->frame);
+		ptlist->slot       = htonl(ptlist->slot);
+		ptlist->reason     = htonl(ptlist->reason);
+		ptlist++;
 
 #if 0
-        preason  = (uint16_t*)plist->reason;
-        for (int k = 0;k < 128/2;k++) {
-            *preason = htons(*preason);
-            preason++;
-        }
+		preason  = (uint16_t *)plist->reason;
+		for (int k = 0; k < 128 / 2; k++) {
+			*preason = htons(*preason);
+			preason++;
+		}
 #endif
-    }
+	}
 
-    printf("tms_AnalyseAlarmHW\n");
-    ptlist = plist;
-    for (int i = 0; i < pcfg_hdr->count; i++) {
-        printf("\tlevel %d frame %d slot %d reason %s time %s\n",
-            ptlist->level      ,
-            ptlist->frame ,
-            ptlist->slot      ,
-            (char*)ptlist->reason ,
-            (char*)ptlist->time );
-        ptlist++;
-    }
-    printf("\t\tcount %d\n", pcfg_hdr->count);
+	printf("tms_AnalyseAlarmHW\n");
+	ptlist = plist;
+	for (int i = 0; i < pcfg_hdr->count; i++) {
+		printf("\tlevel %d frame %d slot %d reason %s time %s\n",
+		       ptlist->level      ,
+		       ptlist->frame ,
+		       ptlist->slot      ,
+		       (char *)ptlist->reason ,
+		       (char *)ptlist->time );
+		ptlist++;
+	}
+	printf("\t\tcount %d\n", pcfg_hdr->count);
 
-    // fun()
+	// fun()
 
-    return 0;
+	return 0;
 }
 /**
  * @brief	ID_RET_OTDR_CYC 0x80000032 MCU返回OTDR周期性测试曲线
@@ -4654,23 +4681,23 @@ struct tms_retotdr_chain    *pchain
  * @remarks	原来该命令头有周期测试曲线数目，允许一次发送多条曲线，现实现只允许发送一条\n
  			理由是，节省接收方的内存开销，一条曲线约36000字节，过长的字节不利于小内存的接收方处理
  			帧结构内容与tms_RetOTDRTest差不多，只是在数据包前加入数子1，表示曲线数。
-	 
+
  * @see	tms_GetOTDRTest\nTMS_PTR_OTDRTest\ntms_retotdr_test_hdr\ntms_retotdr_test_param\ntms_retotdr_data_hdr\n
  tms_retotdr_data_val\n tms_retotdr_event_hdr\n tms_retotdr_event_val\n tms_retotdr_chain\n
  */
 int32_t tms_RetOTDRCycle(
-		int    fd, 
-		struct glink_addr *paddr, 
-		struct tms_retotdr_test_hdr   *ptest_hdr, 		
-		struct tms_retotdr_test_param *ptest_param, 
+    int    fd,
+    struct glink_addr *paddr,
+    struct tms_retotdr_test_hdr   *ptest_hdr,
+    struct tms_retotdr_test_param *ptest_param,
 
-		struct tms_retotdr_data_hdr   *pdata_hdr, 
-		struct tms_retotdr_data_val   *pdata_val, 
+    struct tms_retotdr_data_hdr   *pdata_hdr,
+    struct tms_retotdr_data_val   *pdata_val,
 
-		struct tms_retotdr_event_hdr  *pevent_hdr, 
-		struct tms_retotdr_event_val  *pevent_val, 
+    struct tms_retotdr_event_hdr  *pevent_hdr,
+    struct tms_retotdr_event_val  *pevent_val,
 
-		struct tms_retotdr_chain      *pchain)
+    struct tms_retotdr_chain      *pchain)
 {
 #if 0
 	int32_t linecount;
@@ -4721,31 +4748,31 @@ int32_t tms_RetOTDRCycle(
 	struct glink_base  base_hdr;
 	int ret;
 	int len;
-	len = 	sizeof(int32_t) + 
-			sizeof(struct tms_retotdr_test_hdr  ) + 
-			sizeof(struct tms_retotdr_test_param) +
-			sizeof(struct tms_retotdr_data_hdr  ) +
-			sizeof(struct tms_retotdr_data_val  ) * pdata_hdr->count +
-			sizeof(struct tms_retotdr_event_hdr ) +
-			sizeof(struct tms_retotdr_event_val ) * pevent_hdr->count +
-			sizeof(struct tms_retotdr_chain);
-	
+	len = 	sizeof(int32_t) +
+	        sizeof(struct tms_retotdr_test_hdr  ) +
+	        sizeof(struct tms_retotdr_test_param) +
+	        sizeof(struct tms_retotdr_data_hdr  ) +
+	        sizeof(struct tms_retotdr_data_val  ) * pdata_hdr->count +
+	        sizeof(struct tms_retotdr_event_hdr ) +
+	        sizeof(struct tms_retotdr_event_val ) * pevent_hdr->count +
+	        sizeof(struct tms_retotdr_chain);
+
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 
 	glink_Build(&base_hdr, ID_RET_OTDR_CYC, len);
-	glink_SendHead(fd, &base_hdr);	
-	glink_SendSerial(fd, (uint8_t*)&linecount,   sizeof(int32_t));
-	glink_SendSerial(fd, (uint8_t*)&test_hdr,   sizeof(struct tms_retotdr_test_hdr));
-	glink_SendSerial(fd, (uint8_t*)&test_param, sizeof(struct tms_retotdr_test_param));
-	glink_SendSerial(fd, (uint8_t*)&data_hdr,   sizeof(struct tms_retotdr_data_hdr));
-	glink_SendSerial(fd, (uint8_t*)&data_val,   sizeof(struct tms_retotdr_data_val) * pdata_hdr->count);
-	glink_SendSerial(fd, (uint8_t*)&event_hdr,  sizeof(struct tms_retotdr_event_hdr));
-	glink_SendSerial(fd, (uint8_t*)&event_val,  sizeof(struct tms_retotdr_event_val) * pevent_hdr->count);
-	glink_SendSerial(fd, (uint8_t*)&chain,      sizeof(struct tms_retotdr_chain));
+	glink_SendHead(fd, &base_hdr);
+	glink_SendSerial(fd, (uint8_t *)&linecount,   sizeof(int32_t));
+	glink_SendSerial(fd, (uint8_t *)&test_hdr,   sizeof(struct tms_retotdr_test_hdr));
+	glink_SendSerial(fd, (uint8_t *)&test_param, sizeof(struct tms_retotdr_test_param));
+	glink_SendSerial(fd, (uint8_t *)&data_hdr,   sizeof(struct tms_retotdr_data_hdr));
+	glink_SendSerial(fd, (uint8_t *)&data_val,   sizeof(struct tms_retotdr_data_val) * pdata_hdr->count);
+	glink_SendSerial(fd, (uint8_t *)&event_hdr,  sizeof(struct tms_retotdr_event_hdr));
+	glink_SendSerial(fd, (uint8_t *)&event_val,  sizeof(struct tms_retotdr_event_val) * pevent_hdr->count);
+	glink_SendSerial(fd, (uint8_t *)&chain,      sizeof(struct tms_retotdr_chain));
 	glink_SendTail(fd);
 #endif
 
@@ -4767,44 +4794,44 @@ static int32_t tms_AnalyseRetOTDRCycle(struct tms_context *pcontext, int8_t *pda
 	register uint32_t *p32s, *p32d;
 	register uint16_t *p16s, *p16d;
 	register int loop;
-	
+
 
 	if ((uint32_t)(len - GLINK_OFFSET_DATA) < sizeof(int32_t) +
-			sizeof(struct tms_retotdr_test_hdr ) + 
-			sizeof(struct tms_retotdr_test_param) +
-			sizeof(struct tms_retotdr_data_hdr  ) +
-			sizeof(struct tms_retotdr_data_val  ) +
-			sizeof(struct tms_retotdr_event_hdr ) +
-			sizeof(struct tms_retotdr_event_val )+
-			sizeof(struct tms_retotdr_chain) ) {
+	    sizeof(struct tms_retotdr_test_hdr ) +
+	    sizeof(struct tms_retotdr_test_param) +
+	    sizeof(struct tms_retotdr_data_hdr  ) +
+	    sizeof(struct tms_retotdr_data_val  ) +
+	    sizeof(struct tms_retotdr_event_hdr ) +
+	    sizeof(struct tms_retotdr_event_val ) +
+	    sizeof(struct tms_retotdr_chain) ) {
 		return -1;
 	}
 
-	ptest_hdr   = (struct tms_retotdr_test_hdr   *)(pdata + GLINK_OFFSET_DATA + sizeof(int32_t));
-	ptest_param = (struct tms_retotdr_test_param *)(((char*)ptest_hdr)   + sizeof(struct tms_retotdr_test_hdr));
-	pdata_hdr   = (struct tms_retotdr_data_hdr   *)(((char*)ptest_param) + sizeof(struct tms_retotdr_test_param));
+	ptest_hdr   = (struct tms_retotdr_test_hdr *)(pdata + GLINK_OFFSET_DATA + sizeof(int32_t));
+	ptest_param = (struct tms_retotdr_test_param *)(((char *)ptest_hdr)   + sizeof(struct tms_retotdr_test_hdr));
+	pdata_hdr   = (struct tms_retotdr_data_hdr *)(((char *)ptest_param) + sizeof(struct tms_retotdr_test_param));
 	// 指针合法性检测，防止指针超过pdata
 	if ( !CHECK_PTR(
-			pdata_hdr, 
-			struct tms_retotdr_data_hdr, 
-			struct tms_retotdr_data_val, 
-			htonl(pdata_hdr->count), 
-			pdata + len)) {
+	         pdata_hdr,
+	         struct tms_retotdr_data_hdr,
+	         struct tms_retotdr_data_val,
+	         htonl(pdata_hdr->count),
+	         pdata + len)) {
 		return -1;
 	}
-	pdata_val   = (struct tms_retotdr_data_val   *)(((char*)pdata_hdr) + sizeof(struct tms_retotdr_data_hdr));
-	pevent_hdr  = (struct tms_retotdr_event_hdr  *)(((char*)pdata_val) + sizeof(struct tms_retotdr_data_val) * htonl(pdata_hdr->count));
+	pdata_val   = (struct tms_retotdr_data_val *)(((char *)pdata_hdr) + sizeof(struct tms_retotdr_data_hdr));
+	pevent_hdr  = (struct tms_retotdr_event_hdr *)(((char *)pdata_val) + sizeof(struct tms_retotdr_data_val) * htonl(pdata_hdr->count));
 	// 指针合法性检测，防止指针超过pdata
 	if ( !CHECK_PTR(
-			pevent_hdr, 
-			struct tms_retotdr_event_hdr, 
-			struct tms_retotdr_event_val, 
-			htonl(pevent_hdr->count), 
-			pdata + len)) {
+	         pevent_hdr,
+	         struct tms_retotdr_event_hdr,
+	         struct tms_retotdr_event_val,
+	         htonl(pevent_hdr->count),
+	         pdata + len)) {
 		return -1;
 	}
-	pevent_val  = (struct tms_retotdr_event_val  *)(((char*)pevent_hdr) + sizeof(struct tms_retotdr_event_hdr));
-	pchain      = (struct tms_retotdr_chain      *)(((char*)pevent_val) + sizeof(struct tms_retotdr_event_val) * htonl(pevent_hdr->count));
+	pevent_val  = (struct tms_retotdr_event_val *)(((char *)pevent_hdr) + sizeof(struct tms_retotdr_event_hdr));
+	pchain      = (struct tms_retotdr_chain *)(((char *)pevent_val) + sizeof(struct tms_retotdr_event_val) * htonl(pevent_hdr->count));
 
 	// Part A.1
 	ptest_hdr->osw_frame  = htonl(ptest_hdr->osw_frame);
@@ -4830,11 +4857,11 @@ static int32_t tms_AnalyseRetOTDRCycle(struct tms_context *pcontext, int8_t *pda
 
 	if (pcontext->ptcb->pf_OnRetOTDRTest) {
 		pcontext->ptcb->pf_OnRetOTDRTest(
-				pcontext, 
-				ptest_hdr,  ptest_param, 
-				pdata_hdr,  pdata_val, 
-				pevent_hdr, pevent_val, 
-				pchain);
+		    pcontext,
+		    ptest_hdr,  ptest_param,
+		    pdata_hdr,  pdata_val,
+		    pevent_hdr, pevent_val,
+		    pchain);
 	}
 
 #endif
@@ -4863,24 +4890,24 @@ struct tms_retotdr_chain    *pchain
  * @remarks	原来该命令头有周期测试曲线数目，允许一次发送多条曲线，现实现只允许发送一条\n
  			理由是，节省接收方的内存开销，一条曲线约36000字节，过长的字节不利于小内存的接收方处理
  			帧结构内容与tms_RetOTDRTest差不多，只是在数据包前加入数子1，表示曲线数。
-	 
+
  * @see	tms_GetOTDRTest\nTMS_PTR_OTDRTest\ntms_retotdr_test_hdr\ntms_retotdr_test_param\ntms_retotdr_data_hdr\n
  tms_retotdr_data_val\n tms_retotdr_event_hdr\n tms_retotdr_event_val\n tms_retotdr_chain\n
  */
 int32_t tms_RetOTDRCycle_V2(
-		int    fd, 
-		struct glink_addr *paddr, 
-		struct tms_alarm_line_hdr     *palarm,
-		struct tms_retotdr_test_hdr   *ptest_hdr, 		
-		struct tms_retotdr_test_param *ptest_param, 
+    int    fd,
+    struct glink_addr *paddr,
+    struct tms_alarm_line_hdr     *palarm,
+    struct tms_retotdr_test_hdr   *ptest_hdr,
+    struct tms_retotdr_test_param *ptest_param,
 
-		struct tms_retotdr_data_hdr   *pdata_hdr, 
-		struct tms_retotdr_data_val   *pdata_val, 
+    struct tms_retotdr_data_hdr   *pdata_hdr,
+    struct tms_retotdr_data_val   *pdata_val,
 
-		struct tms_retotdr_event_hdr  *pevent_hdr, 
-		struct tms_retotdr_event_val  *pevent_val, 
+    struct tms_retotdr_event_hdr  *pevent_hdr,
+    struct tms_retotdr_event_val  *pevent_val,
 
-		struct tms_retotdr_chain      *pchain)
+    struct tms_retotdr_chain      *pchain)
 {
 	int32_t linecount;
 	struct tms_alarm_line_hdr     alarm;
@@ -4943,33 +4970,33 @@ int32_t tms_RetOTDRCycle_V2(
 	struct glink_base  base_hdr;
 	// int ret;
 	int len;
-	len = 	sizeof(int32_t) + 
-			sizeof(struct tms_alarm_line_hdr) + 
-			sizeof(struct tms_retotdr_test_hdr  ) + 
-			sizeof(struct tms_retotdr_test_param) +
-			sizeof(struct tms_retotdr_data_hdr  ) +
-			sizeof(struct tms_retotdr_data_val  ) * pdata_hdr->count +
-			sizeof(struct tms_retotdr_event_hdr ) +
-			sizeof(struct tms_retotdr_event_val ) * pevent_hdr->count +
-			sizeof(struct tms_retotdr_chain);
-	
+	len = 	sizeof(int32_t) +
+	        sizeof(struct tms_alarm_line_hdr) +
+	        sizeof(struct tms_retotdr_test_hdr  ) +
+	        sizeof(struct tms_retotdr_test_param) +
+	        sizeof(struct tms_retotdr_data_hdr  ) +
+	        sizeof(struct tms_retotdr_data_val  ) * pdata_hdr->count +
+	        sizeof(struct tms_retotdr_event_hdr ) +
+	        sizeof(struct tms_retotdr_event_val ) * pevent_hdr->count +
+	        sizeof(struct tms_retotdr_chain);
+
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 
 	glink_Build(&base_hdr, ID_RET_OTDR_CYC, len);
-	glink_SendHead(fd, &base_hdr);	
-	glink_SendSerial(fd, (uint8_t*)&linecount,  sizeof(int32_t));
-	glink_SendSerial(fd, (uint8_t*)&alarm,   	sizeof(struct tms_alarm_line_hdr));
-	glink_SendSerial(fd, (uint8_t*)&test_hdr,   sizeof(struct tms_retotdr_test_hdr));
-	glink_SendSerial(fd, (uint8_t*)&test_param, sizeof(struct tms_retotdr_test_param));
-	glink_SendSerial(fd, (uint8_t*)&data_hdr,   sizeof(struct tms_retotdr_data_hdr));
-	glink_SendSerial(fd, (uint8_t*)&data_val,   sizeof(struct tms_retotdr_data_val) * pdata_hdr->count);
-	glink_SendSerial(fd, (uint8_t*)&event_hdr,  sizeof(struct tms_retotdr_event_hdr));
-	glink_SendSerial(fd, (uint8_t*)&event_val,  sizeof(struct tms_retotdr_event_val) * pevent_hdr->count);
-	glink_SendSerial(fd, (uint8_t*)&chain,      sizeof(struct tms_retotdr_chain));
+	glink_SendHead(fd, &base_hdr);
+	glink_SendSerial(fd, (uint8_t *)&linecount,  sizeof(int32_t));
+	glink_SendSerial(fd, (uint8_t *)&alarm,   	sizeof(struct tms_alarm_line_hdr));
+	glink_SendSerial(fd, (uint8_t *)&test_hdr,   sizeof(struct tms_retotdr_test_hdr));
+	glink_SendSerial(fd, (uint8_t *)&test_param, sizeof(struct tms_retotdr_test_param));
+	glink_SendSerial(fd, (uint8_t *)&data_hdr,   sizeof(struct tms_retotdr_data_hdr));
+	glink_SendSerial(fd, (uint8_t *)&data_val,   sizeof(struct tms_retotdr_data_val) * pdata_hdr->count);
+	glink_SendSerial(fd, (uint8_t *)&event_hdr,  sizeof(struct tms_retotdr_event_hdr));
+	glink_SendSerial(fd, (uint8_t *)&event_val,  sizeof(struct tms_retotdr_event_val) * pevent_hdr->count);
+	glink_SendSerial(fd, (uint8_t *)&chain,      sizeof(struct tms_retotdr_chain));
 	glink_SendTail(fd);
 
 	return 0;
@@ -4988,49 +5015,49 @@ static int32_t tms_AnalyseRetOTDRCycle_V2(struct tms_context *pcontext, int8_t *
 	// register uint32_t *p32s, *p32d;
 	// register uint16_t *p16s, *p16d;
 	// register int loop;
-	
+
 
 	if ((uint32_t)(len - GLINK_OFFSET_DATA) < sizeof(int32_t) +
-			sizeof(struct tms_alarm_line_hdr) + 
-			sizeof(struct tms_retotdr_test_hdr ) + 
-			sizeof(struct tms_retotdr_test_param) +
-			sizeof(struct tms_retotdr_data_hdr  ) +
-			sizeof(struct tms_retotdr_data_val  ) +
-			sizeof(struct tms_retotdr_event_hdr ) +
-			sizeof(struct tms_retotdr_event_val )+
-			sizeof(struct tms_retotdr_chain) ) {
+	    sizeof(struct tms_alarm_line_hdr) +
+	    sizeof(struct tms_retotdr_test_hdr ) +
+	    sizeof(struct tms_retotdr_test_param) +
+	    sizeof(struct tms_retotdr_data_hdr  ) +
+	    sizeof(struct tms_retotdr_data_val  ) +
+	    sizeof(struct tms_retotdr_event_hdr ) +
+	    sizeof(struct tms_retotdr_event_val ) +
+	    sizeof(struct tms_retotdr_chain) ) {
 		return -1;
 	}
-	palarm      = (struct tms_alarm_line_hdr   *)(pdata + GLINK_OFFSET_DATA );
-	ptest_hdr   = (struct tms_retotdr_test_hdr   *)(((char*)palarm)      + sizeof(struct tms_alarm_line_hdr) );
+	palarm      = (struct tms_alarm_line_hdr *)(pdata + GLINK_OFFSET_DATA );
+	ptest_hdr   = (struct tms_retotdr_test_hdr *)(((char *)palarm)      + sizeof(struct tms_alarm_line_hdr) );
 
-	ptest_hdr   = (struct tms_retotdr_test_hdr   *)(pdata + GLINK_OFFSET_DATA + sizeof(int32_t));
-	ptest_param = (struct tms_retotdr_test_param *)(((char*)ptest_hdr)   + sizeof(struct tms_retotdr_test_hdr));
-	pdata_hdr   = (struct tms_retotdr_data_hdr   *)(((char*)ptest_param) + sizeof(struct tms_retotdr_test_param));
+	ptest_hdr   = (struct tms_retotdr_test_hdr *)(pdata + GLINK_OFFSET_DATA + sizeof(int32_t));
+	ptest_param = (struct tms_retotdr_test_param *)(((char *)ptest_hdr)   + sizeof(struct tms_retotdr_test_hdr));
+	pdata_hdr   = (struct tms_retotdr_data_hdr *)(((char *)ptest_param) + sizeof(struct tms_retotdr_test_param));
 	// 指针合法性检测，防止指针超过pdata
 	if ( !CHECK_PTR(
-			pdata_hdr, 
-			struct tms_retotdr_data_hdr, 
-			struct tms_retotdr_data_val, 
-			htonl(pdata_hdr->count), 
-			pdata + len)) {
-		printf("Err: %s():%d\n",__FUNCTION__,__LINE__);
+	         pdata_hdr,
+	         struct tms_retotdr_data_hdr,
+	         struct tms_retotdr_data_val,
+	         htonl(pdata_hdr->count),
+	         pdata + len)) {
+		printf("Err: %s():%d\n", __FUNCTION__, __LINE__);
 		return -1;
 	}
-	pdata_val   = (struct tms_retotdr_data_val   *)(((char*)pdata_hdr) + sizeof(struct tms_retotdr_data_hdr));
-	pevent_hdr  = (struct tms_retotdr_event_hdr  *)(((char*)pdata_val) + sizeof(struct tms_retotdr_data_val) * htonl(pdata_hdr->count));
+	pdata_val   = (struct tms_retotdr_data_val *)(((char *)pdata_hdr) + sizeof(struct tms_retotdr_data_hdr));
+	pevent_hdr  = (struct tms_retotdr_event_hdr *)(((char *)pdata_val) + sizeof(struct tms_retotdr_data_val) * htonl(pdata_hdr->count));
 	// 指针合法性检测，防止指针超过pdata
 	if ( !CHECK_PTR(
-			pevent_hdr, 
-			struct tms_retotdr_event_hdr, 
-			struct tms_retotdr_event_val, 
-			htonl(pevent_hdr->count), 
-			pdata + len)) {
-		printf("Err: %s():%d\n",__FUNCTION__,__LINE__);
+	         pevent_hdr,
+	         struct tms_retotdr_event_hdr,
+	         struct tms_retotdr_event_val,
+	         htonl(pevent_hdr->count),
+	         pdata + len)) {
+		printf("Err: %s():%d\n", __FUNCTION__, __LINE__);
 		return -1;
 	}
-	pevent_val  = (struct tms_retotdr_event_val  *)(((char*)pevent_hdr) + sizeof(struct tms_retotdr_event_hdr));
-	pchain      = (struct tms_retotdr_chain      *)(((char*)pevent_val) + sizeof(struct tms_retotdr_event_val) * htonl(pevent_hdr->count));
+	pevent_val  = (struct tms_retotdr_event_val *)(((char *)pevent_hdr) + sizeof(struct tms_retotdr_event_hdr));
+	pchain      = (struct tms_retotdr_chain *)(((char *)pevent_val) + sizeof(struct tms_retotdr_event_val) * htonl(pevent_hdr->count));
 
 	palarm->alarm_type 		= htonl(palarm->alarm_type);
 	palarm->alarm_level 	= htonl(palarm->alarm_level);
@@ -5064,11 +5091,11 @@ static int32_t tms_AnalyseRetOTDRCycle_V2(struct tms_context *pcontext, int8_t *
 
 	if (pcontext->ptcb->pf_OnRetOTDRTest) {
 		pcontext->ptcb->pf_OnRetOTDRTest(
-				pcontext, 
-				ptest_hdr,  ptest_param, 
-				pdata_hdr,  pdata_val, 
-				pevent_hdr, pevent_val, 
-				pchain);
+		    pcontext,
+		    ptest_hdr,  ptest_param,
+		    pdata_hdr,  pdata_val,
+		    pevent_hdr, pevent_val,
+		    pchain);
 	}
 
 
@@ -5090,15 +5117,15 @@ static int32_t tms_AnalyseRetOTDRCycle_V2(struct tms_context *pcontext, int8_t *
  * @param[in]	text 短信内容，由于有中文字符，使用Unicode编码
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
- * @see	
+ * @remarks
+ * @see
  */
 int32_t tms_SendSMS(
-		int fd, 
-		struct glink_addr *paddr, 
-		char (*phone)[16], 
-		int32_t count, 
-		wchar_t *text)
+    int fd,
+    struct glink_addr *paddr,
+    char (*phone)[16],
+    int32_t count,
+    wchar_t *text)
 {
 	uint8_t *pmem;
 	uint32_t len;
@@ -5113,13 +5140,13 @@ int32_t tms_SendSMS(
 	}
 
 	len  = sizeof(char) * 16 + count + count * 2;
-	pmem = (uint8_t*)malloc(len);
+	pmem = (uint8_t *)malloc(len);
 	if (pmem == NULL) {
 		return -1;
 	}
-	pphone = (uint8_t*)  pmem;
-	pcount = (uint32_t*)(pmem + sizeof(char) * 16);
-	ptext  = (uint16_t*)  (pmem + sizeof(char) * 16 + sizeof(uint32_t));
+	pphone = (uint8_t *)  pmem;
+	pcount = (uint32_t *)(pmem + sizeof(char) * 16);
+	ptext  = (uint16_t *)  (pmem + sizeof(char) * 16 + sizeof(uint32_t));
 
 
 	// Step 2.各字段复制
@@ -5129,7 +5156,7 @@ int32_t tms_SendSMS(
 	pttext = ptext;
 	for (int i = 0; i < count; i++) {
 		// *(pttext+i) = htons(*text);
-		*(pttext+i) = (*text);
+		*(pttext + i) = (*text);
 		ptext++;
 		text++;
 	}
@@ -5139,7 +5166,7 @@ int32_t tms_SendSMS(
 	int ret;
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 	glink_Build(&base_hdr, ID_CMD_SMS_TEXT, len);
@@ -5156,30 +5183,30 @@ int32_t tms_AnalyseSendSMS(struct tms_context *pcontext, int8_t *pdata, int32_t 
 	if (pcontext->ptcb->pf_OnSpSendSMS) {
 		pcontext->ptcb->pf_OnSpSendSMS(pcontext, pdata, len);
 	}
-	
+
 	return 0;
 }
 
- /**
- * @brief	ID_CMD_SMS_ERROR 0x80000034 RTU返回短信操作返回码
- * @param[in]	fd 套接字文件描述符
- * @param[in]	paddr glink帧源地址和目的地址，如果填NULL则采用默认的
- 				TMS_DEFAULT_LOCAL_ADDR和TMS_DEFAULT_RMOTE_ADDR填充，两个宏的意义通过
- 				修改tmsxx.h设定
- * @param[in]	phone 手机号码16字节+861234567890123
- * @param[in]	state 短信发送状态码\0
- 				0 发送成功
- 				1 发送失败
- * @retval	>0 发送成功
- * @retval	0 发送失败，该链接失效，tms_RetSMSState立即断开
- * @remarks	
- * @see	
- */
+/**
+* @brief	ID_CMD_SMS_ERROR 0x80000034 RTU返回短信操作返回码
+* @param[in]	fd 套接字文件描述符
+* @param[in]	paddr glink帧源地址和目的地址，如果填NULL则采用默认的
+				TMS_DEFAULT_LOCAL_ADDR和TMS_DEFAULT_RMOTE_ADDR填充，两个宏的意义通过
+				修改tmsxx.h设定
+* @param[in]	phone 手机号码16字节+861234567890123
+* @param[in]	state 短信发送状态码\0
+				0 发送成功
+				1 发送失败
+* @retval	>0 发送成功
+* @retval	0 发送失败，该链接失效，tms_RetSMSState立即断开
+* @remarks
+* @see
+*/
 int32_t tms_RetSMSError(
-		int fd, 
-		struct glink_addr *paddr, 
-		char phone[16], 
-		uint32_t state)
+    int fd,
+    struct glink_addr *paddr,
+    char phone[16],
+    uint32_t state)
 {
 	uint8_t *pmem;
 	struct tms_sms_state smsstate;
@@ -5192,10 +5219,10 @@ int32_t tms_RetSMSError(
 	struct glink_base  base_hdr;
 	int ret;
 
-	pmem = (uint8_t*)&smsstate;
+	pmem = (uint8_t *)&smsstate;
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 	glink_Build(&base_hdr, ID_CMD_SMS_ERROR, sizeof(struct tms_sms_state));
@@ -5210,10 +5237,10 @@ int32_t tms_AnalyseRetSMSError(struct tms_context *pcontext, int8_t *pdata, int3
 	// todo 需要测试
 
 	struct tms_sms_state *pval;
-	pval  = (struct tms_sms_state*)(pdata + GLINK_OFFSET_DATA);
+	pval  = (struct tms_sms_state *)(pdata + GLINK_OFFSET_DATA);
 	pval->state = htonl(pval->state);
 
-	
+
 	return 0;
 }
 
@@ -5231,11 +5258,11 @@ int32_t tms_AnalyseRetSMSError(struct tms_context *pcontext, int8_t *pdata, int3
  * @see	tms_RetVersion
  */
 int32_t tms_GetVersion(
-		int fd, 	
-		struct glink_addr *paddr, 
-		int32_t frame, 
-		int32_t slot, 
-		int32_t type)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t type)
 {
 	return tms_MCUtoDevice(fd, paddr, frame, slot, type, 0, ID_GET_VERSION, sizeof(struct tms_dev_type));
 }
@@ -5243,7 +5270,7 @@ int32_t tms_GetVersion(
 static int32_t tms_AnalyseGetVersion(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
 	struct tms_dev_type *pval;
-	pval  = (struct tms_dev_type*)(pdata + GLINK_OFFSET_DATA);
+	pval  = (struct tms_dev_type *)(pdata + GLINK_OFFSET_DATA);
 	pval->frame = htonl(pval->frame);
 	pval->slot  = htonl(pval->slot);
 	pval->type  = htonl(pval->type);
@@ -5269,12 +5296,12 @@ static int32_t tms_AnalyseGetVersion(struct tms_context *pcontext, int8_t *pdata
  * @see	tms_GetVersion
  */
 int32_t tms_RetVersion(
-		int fd, 	
-		struct glink_addr *paddr, 
-		int32_t frame, 
-		int32_t slot, 
-		int32_t type, 
-		uint8_t  *version)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t type,
+    uint8_t  *version)
 {
 	struct tms_dev_version devVersion;
 
@@ -5288,10 +5315,10 @@ int32_t tms_RetVersion(
 	uint8_t *pmem;
 	int ret;
 
-	pmem = (uint8_t*)&devVersion;
+	pmem = (uint8_t *)&devVersion;
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 	glink_Build(&base_hdr, ID_RET_VERSION, sizeof(struct tms_dev_version));
@@ -5303,7 +5330,7 @@ int32_t tms_RetVersion(
 static int32_t tms_AnalyseRetVersion(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
 	struct tms_dev_version *pval;
-	pval  = (struct tms_dev_version*)(pdata + GLINK_OFFSET_DATA);
+	pval  = (struct tms_dev_version *)(pdata + GLINK_OFFSET_DATA);
 	pval->frame = htonl(pval->frame);
 	pval->slot  = htonl(pval->slot);
 	pval->type  = htonl(pval->type);
@@ -5327,36 +5354,36 @@ static int32_t tms_AnalyseRetVersion(struct tms_context *pcontext, int8_t *pdata
  * @param	size sizeof (struct A)
  * @param	cmdid 命令名
  * @retval	null
- * @remarks	
- * @see	
+ * @remarks
+ * @see
  */
 
 int32_t tms_ListFrame(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t count, 
-		void *plist,
-		int32_t size,
-		int32_t cmdid)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t count,
+    void *plist,
+    int32_t size,
+    int32_t cmdid)
 {
 	int tcount;
-	
+
 	tcount = htonl(count);
-	tms_Conv_Nx4Byte((uint32_t*)plist, (uint32_t*)plist, size*count);
+	tms_Conv_Nx4Byte((uint32_t *)plist, (uint32_t *)plist, size * count);
 	struct glink_base  base_hdr;
 	int len;
 
 	len = 	sizeof(int32_t) + (size * count);
-	
+
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 	glink_Build(&base_hdr, cmdid, len);
 	glink_SendHead(fd, &base_hdr);
-	glink_SendSerial(fd, (uint8_t*)&tcount,   sizeof(int32_t));
-	glink_SendSerial(fd, (uint8_t*)plist,   size * count);
+	glink_SendSerial(fd, (uint8_t *)&tcount,   sizeof(int32_t));
+	glink_SendSerial(fd, (uint8_t *)plist,   size * count);
 	glink_SendTail(fd);
 
 	return 0;
@@ -5365,20 +5392,20 @@ int32_t tms_AnalyseListFrame(struct tms_context *pcontext, int8_t *pdata, int32_
 {
 	int32_t *pcount;
 	int32_t *plist;
-	
-	pcount = (int32_t*)(pdata + GLINK_OFFSET_DATA);
+
+	pcount = (int32_t *)(pdata + GLINK_OFFSET_DATA);
 	if ( !CHECK_PTR(
-			pcount, 
-			int32_t, 
-			size, 
-			htonl(*pcount), 
-			pdata + len)) {
-		printf("Err: %s():%d\n",__FUNCTION__,__LINE__);
+	         pcount,
+	         int32_t,
+	         size,
+	         htonl(*pcount),
+	         pdata + len)) {
+		printf("Err: %s():%d\n", __FUNCTION__, __LINE__);
 		return -1;
 	}
-	plist   = (int32_t*)(pdata + GLINK_OFFSET_DATA +  + sizeof(int32_t));
+	plist   = (int32_t *)(pdata + GLINK_OFFSET_DATA +  + sizeof(int32_t));
 	*pcount = htonl(*pcount);
-	tms_Conv_Nx4Byte((uint32_t*)plist, (uint32_t*)plist, size * (*pcount));
+	tms_Conv_Nx4Byte((uint32_t *)plist, (uint32_t *)plist, size * (*pcount));
 
 	return 0;
 }
@@ -5390,10 +5417,10 @@ int32_t tms_AnalyseListFrame(struct tms_context *pcontext, int8_t *pdata, int32_
  * @see	tms_MCUtoDevice
  */
 int32_t tms_MCU_GetOTDRParam(
-	int     fd, 
-	struct glink_addr *paddr, 
-	int32_t frame, 
-	int32_t slot)
+    int     fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot)
 {
 	return tms_MCUtoDevice(fd, paddr, frame, slot, DEV_OTDR, 0, ID_GET_OTDR_PARAM, sizeof(int32_t) * 3);
 	// return tms_MCUtoDevice(fd, paddr, 0, 0, 0, 0, ID_GET_DEVTYPE, 0);
@@ -5412,28 +5439,28 @@ static int32_t tms_AnalyseDelAll_TbRoute(struct tms_context *pcontext, int8_t *p
 static int32_t tms_AnalyseRetOTDRParam(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
 	struct tms_otdr_produce_hdr *phdr;
-	struct tms_otdr_produce_val *plist,*ptlist;
-	
+	struct tms_otdr_produce_val *plist, *ptlist;
+
 	if (len < (int32_t) ( sizeof(struct tms_otdr_produce_hdr) + sizeof(struct tms_otdr_produce_val))) {
 		return -1;
 	}
-	phdr = (struct tms_otdr_produce_hdr*)(pdata + GLINK_OFFSET_DATA);
+	phdr = (struct tms_otdr_produce_hdr *)(pdata + GLINK_OFFSET_DATA);
 	// if ( !CHECK_PTR(
-	// 		phdr, 
-	// 		struct tms_otdr_produce_hdr, 
-	// 		struct tms_otdr_produce_val, 
-	// 		htonl(phdr->count), 
+	// 		phdr,
+	// 		struct tms_otdr_produce_hdr,
+	// 		struct tms_otdr_produce_val,
+	// 		htonl(phdr->count),
 	// 		pdata + len)) {
 	// 	return -1;
 	// }
-	plist = (struct tms_otdr_produce_val *)(((char*)phdr)   + sizeof(struct tms_otdr_produce_hdr));
+	plist = (struct tms_otdr_produce_val *)(((char *)phdr)   + sizeof(struct tms_otdr_produce_hdr));
 	printf("tms_AnalyseRetOTDRParam\n");
 
 	phdr->frame = htonl(phdr->frame);
 	phdr->slot = htonl(phdr->slot);
 	phdr->type = htonl(phdr->type);
 	phdr->count = htons(phdr->count);
-	
+
 
 	printf("count : %d\n", phdr->count);
 	ptlist = plist;
@@ -5446,7 +5473,7 @@ static int32_t tms_AnalyseRetOTDRParam(struct tms_context *pcontext, int8_t *pda
 		ptlist++;
 	}
 
-	
+
 	return 0;
 }
 
@@ -5456,11 +5483,11 @@ static int32_t tms_AnalyseRetOTDRParam(struct tms_context *pcontext, int8_t *pda
  * @see	tms_MCUtoDevice
  */
 int32_t tms_GetDevProduce(
-	int     fd, 
-	struct glink_addr *paddr, 
-	int32_t frame, 
-	int32_t slot,
-	int32_t type)
+    int     fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t type)
 {
 	return tms_MCUtoDevice(fd, paddr, frame, slot, type, 0, ID_GET_DEV_PRODUCE, sizeof(int32_t) * 3);
 }
@@ -5468,15 +5495,15 @@ int32_t tms_GetDevProduce(
 static int32_t tms_AnalyseGetDevProduce(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
 	return tms_AnalyseMCUtoDevice(pdata, len);
-	
+
 }
 
 
 // ID_RET_DEV_PRODUCE 0x80000053 ///<MCU返回板卡硬件生产信息
 int32_t tms_RetDevProduce(
-	int     fd, 
-	struct glink_addr *paddr, 
-	struct tms_dev_produce *pval)
+    int     fd,
+    struct glink_addr *paddr,
+    struct tms_dev_produce *pval)
 {
 	pval->frame     = htonl(pval->frame);
 	pval->slot      = htonl(pval->slot);
@@ -5490,12 +5517,12 @@ int32_t tms_RetDevProduce(
 	len = 	sizeof(struct tms_dev_produce);
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 	glink_Build(&base_hdr, ID_RET_DEV_PRODUCE, len);
 	glink_SendHead(fd, &base_hdr);
-	glink_SendSerial(fd, (uint8_t*)&paddr,   len);
+	glink_SendSerial(fd, (uint8_t *)&paddr,   len);
 	glink_SendTail(fd);
 
 
@@ -5505,8 +5532,8 @@ int32_t tms_RetDevProduce(
 static int32_t tms_AnalyseRetDevProduce(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
 	struct tms_dev_produce 		*pval;
-	
-	pval = (struct tms_dev_produce*)(pdata + GLINK_OFFSET_DATA);
+
+	pval = (struct tms_dev_produce *)(pdata + GLINK_OFFSET_DATA);
 
 	pval->frame = htonl(pval->frame);
 	pval->slot  = htonl(pval->slot);
@@ -5516,14 +5543,14 @@ static int32_t tms_AnalyseRetDevProduce(struct tms_context *pcontext, int8_t *pd
 	pval->hw_ver[19] = '\0';
 	pval->date[19] = '\0';
 	pval->sn[63] = '\0';
-	
 
-	
-	printf("\tval:f%2.2d/s%2.2d/t%2.2d\n", 
-				pval->frame, 
-				pval->slot, 
-				pval->type);
-	printf("\t%s %s %s \n",pval->hw_ver, pval->date,pval->sn);
+
+
+	printf("\tval:f%2.2d/s%2.2d/t%2.2d\n",
+	       pval->frame,
+	       pval->slot,
+	       pval->type);
+	printf("\t%s %s %s \n", pval->hw_ver, pval->date, pval->sn);
 	return 0;
 }
 
@@ -5534,10 +5561,10 @@ static int32_t tms_AnalyseRetDevProduce(struct tms_context *pcontext, int8_t *pd
  * @see	tms_MCUtoDevice
  */
 int32_t tms_TbRoute_Insert(
-	int fd,
-	struct glink_addr *paddr,
-	int count,
-	struct tms_route *plist)
+    int fd,
+    struct glink_addr *paddr,
+    int count,
+    struct tms_route *plist)
 {
 	return tms_ListFrame(fd, paddr, count, plist, sizeof(struct tms_route), ID_INSERT_TBROUTE);
 #if 0
@@ -5547,7 +5574,7 @@ int32_t tms_TbRoute_Insert(
 
 	tcount = htonl(count);
 	ptlist = plist;
-	for (int i = 0 ;i < count; i++) {
+	for (int i = 0 ; i < count; i++) {
 		ptlist->ip_src = htonl(ptlist->ip_src);
 		ptlist->ip_dst = htonl(ptlist->ip_dst);
 		ptlist->frame_a = htonl(ptlist->frame_a);
@@ -5564,14 +5591,14 @@ int32_t tms_TbRoute_Insert(
 
 	struct glink_base  base_hdr;
 	int len;
-	len = 	sizeof(int32_t  ) + 
-			sizeof(struct tms_route) + count;
+	len = 	sizeof(int32_t  ) +
+	        sizeof(struct tms_route) + count;
 
 	ptlist = plist;
 	glink_Build(&base_hdr, ID_INSERT_TBROUTE, len);
-	glink_SendHead(fd, &base_hdr);	
-	glink_SendSerial(fd, (uint8_t*)&tcount,   sizeof(int32_t));
-	glink_SendSerial(fd, (uint8_t*)&ptlist,   sizeof(struct tms_route) * count);
+	glink_SendHead(fd, &base_hdr);
+	glink_SendSerial(fd, (uint8_t *)&tcount,   sizeof(int32_t));
+	glink_SendSerial(fd, (uint8_t *)&ptlist,   sizeof(struct tms_route) * count);
 	glink_SendTail(fd);
 
 	return 0;
@@ -5580,7 +5607,7 @@ int32_t tms_TbRoute_Insert(
 
 int32_t tms_AnalyseTbRoute_Insert(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
-	if (0 != tms_AnalyseListFrame(pcontext, pdata, len ,sizeof(struct tms_route)) ) {
+	if (0 != tms_AnalyseListFrame(pcontext, pdata, len , sizeof(struct tms_route)) ) {
 		return -1;
 	}
 
@@ -5588,9 +5615,9 @@ int32_t tms_AnalyseTbRoute_Insert(struct tms_context *pcontext, int8_t *pdata, i
 	struct tms_route *plist;
 
 	printf("tms_AnalyseInsert_TbUnit\n");
-	
-	pcount  = (int*)(pdata + GLINK_OFFSET_DATA );
-	plist = (struct tms_route*)(pdata + GLINK_OFFSET_DATA+ sizeof(int));
+
+	pcount  = (int *)(pdata + GLINK_OFFSET_DATA );
+	plist = (struct tms_route *)(pdata + GLINK_OFFSET_DATA + sizeof(int));
 	if (pcontext->ptcb->pf_OnInsertTbRoute) {
 		pcontext->ptcb->pf_OnInsertTbRoute(pcontext, *pcount, plist);
 	}
@@ -5599,14 +5626,14 @@ int32_t tms_AnalyseTbRoute_Insert(struct tms_context *pcontext, int8_t *pdata, i
 #if 0
 	int32_t *pcount;
 	struct tms_route *plist, *ptlist;
-	
-	pcount = (int32_t*)(pdata + GLINK_OFFSET_DATA);
+
+	pcount = (int32_t *)(pdata + GLINK_OFFSET_DATA);
 	if ( !CHECK_PTR(
-			pcount, 
-			int32_t, 
-			struct tms_route, 
-			htonl(*pcount), 
-			pdata + len)) {
+	         pcount,
+	         int32_t,
+	         struct tms_route,
+	         htonl(*pcount),
+	         pdata + len)) {
 		printf("frame err\n");
 		return -1;
 	}
@@ -5615,7 +5642,7 @@ int32_t tms_AnalyseTbRoute_Insert(struct tms_context *pcontext, int8_t *pdata, i
 
 	*pcount = htonl(*pcount);
 	ptlist = plist;
-	for (int i = 0 ;i < *pcount; i++) {
+	for (int i = 0 ; i < *pcount; i++) {
 		ptlist->ip_src = htonl(ptlist->ip_src);
 		ptlist->ip_dst = htonl(ptlist->ip_dst);
 
@@ -5639,8 +5666,8 @@ int32_t tms_AnalyseTbRoute_Insert(struct tms_context *pcontext, int8_t *pdata, i
  * @see	tms_MCUtoDevice
  */
 int32_t tms_DelAll_TbRoute(
-	int     fd, 
-	struct glink_addr *paddr)
+    int     fd,
+    struct glink_addr *paddr)
 {
 	return tms_MCUtoDevice(fd, paddr, 0, 0, DEV_MCU, 0, ID_DELALL_TBROUTE, 0);
 	// return tms_MCUtoDevice(fd, paddr, 0, 0, 0, 0, ID_GET_DEVTYPE, 0);
@@ -5649,11 +5676,11 @@ int32_t tms_DelAll_TbRoute(
 ///////////////////////////////////////////////////////////////////////////
 // 与 tb_unit 表相关协议
 int32_t tms_TbUnit_any(
-	int fd,
-	struct glink_addr *paddr,
-	int count,
-	struct tms_unit *plist,
-	int cmdid)
+    int fd,
+    struct glink_addr *paddr,
+    int count,
+    struct tms_unit *plist,
+    int cmdid)
 {
 	return tms_ListFrame(fd, paddr, count, plist, sizeof(struct tms_unit), cmdid);
 #if 0
@@ -5663,7 +5690,7 @@ int32_t tms_TbUnit_any(
 
 	tcount = htonl(count);
 	ptlist = plist;
-	for (int i = 0 ;i < count; i++) {
+	for (int i = 0 ; i < count; i++) {
 		ptlist->frame_a = htonl(ptlist->frame_a);
 		ptlist->slot_a = htonl(ptlist->slot_a);
 		ptlist->type_a = htonl(ptlist->type_a);
@@ -5678,14 +5705,14 @@ int32_t tms_TbUnit_any(
 
 	struct glink_base  base_hdr;
 	int len;
-	len = 	sizeof(int32_t  ) + 
-			sizeof(struct tms_route) + count;
+	len = 	sizeof(int32_t  ) +
+	        sizeof(struct tms_route) + count;
 
 	ptlist = plist;
 	glink_Build(&base_hdr, cmdid, len);
-	glink_SendHead(fd, &base_hdr);	
-	glink_SendSerial(fd, (uint8_t*)&tcount,   sizeof(int32_t));
-	glink_SendSerial(fd, (uint8_t*)&ptlist,   sizeof(struct tms_unit) * count);
+	glink_SendHead(fd, &base_hdr);
+	glink_SendSerial(fd, (uint8_t *)&tcount,   sizeof(int32_t));
+	glink_SendSerial(fd, (uint8_t *)&ptlist,   sizeof(struct tms_unit) * count);
 	glink_SendTail(fd);
 
 	return 0;
@@ -5694,18 +5721,18 @@ int32_t tms_TbUnit_any(
 
 int32_t tms_AnalyseTbUnit_any(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
-	return tms_AnalyseListFrame(pcontext, pdata, len ,sizeof(struct tms_unit));
+	return tms_AnalyseListFrame(pcontext, pdata, len , sizeof(struct tms_unit));
 #if 0
 	int32_t *pcount;
 	struct tms_unit *plist, *ptlist;
-	
-	pcount = (int32_t*)(pdata + GLINK_OFFSET_DATA);
+
+	pcount = (int32_t *)(pdata + GLINK_OFFSET_DATA);
 	if ( !CHECK_PTR(
-			pcount, 
-			int32_t, 
-			struct tms_unit, 
-			htonl(*pcount), 
-			pdata + len)) {
+	         pcount,
+	         int32_t,
+	         struct tms_unit,
+	         htonl(*pcount),
+	         pdata + len)) {
 		printf("frame err\n");
 		return -1;
 	}
@@ -5714,7 +5741,7 @@ int32_t tms_AnalyseTbUnit_any(struct tms_context *pcontext, int8_t *pdata, int32
 
 	*pcount = htonl(*pcount);
 	ptlist = plist;
-	for (int i = 0 ;i < *pcount; i++) {
+	for (int i = 0 ; i < *pcount; i++) {
 		ptlist->frame_a = htonl(ptlist->frame_a);
 		ptlist->slot_a = htonl(ptlist->slot_a);
 		ptlist->type_a = htonl(ptlist->type_a);
@@ -5732,51 +5759,51 @@ int32_t tms_AnalyseTbUnit_any(struct tms_context *pcontext, int8_t *pdata, int32
 }
 
 /**
- * @brief	ID_INSERT_TBUNIT 0x80000056 ///<网管发送添加“光端口联动触发表”到MCU 
+ * @brief	ID_INSERT_TBUNIT 0x80000056 ///<网管发送添加“光端口联动触发表”到MCU
  * @see	tms_MCUtoDevice
  */
- int32_t tms_Insert_TbUnit(
-	int fd,
-	struct glink_addr *paddr,
-	int count,
-	struct tms_unit *plist)
+int32_t tms_Insert_TbUnit(
+    int fd,
+    struct glink_addr *paddr,
+    int count,
+    struct tms_unit *plist)
 {
 	return tms_ListFrame(fd, paddr, count, plist, sizeof(struct tms_unit), ID_INSERT_TBUNIT);
 }
 
 int32_t tms_AnalyseInsert_TbUnit(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
-	if (0 != tms_AnalyseListFrame(pcontext, pdata, len ,sizeof(struct tms_unit))) {
+	if (0 != tms_AnalyseListFrame(pcontext, pdata, len , sizeof(struct tms_unit))) {
 		return -1;
 	}
 
 
 	return 0;
 }
- /**
- * @brief	ID_DEL_TBUNIT 0x80000057 ///<网管“逐条”删除“光端口联动触发表”到MCU 
- * @see	tms_MCUtoDevice
- */
- int32_t tms_Del_TbUnit(
-	int fd,
-	struct glink_addr *paddr,
-	int count,
-	struct tms_unit *plist)
+/**
+* @brief	ID_DEL_TBUNIT 0x80000057 ///<网管“逐条”删除“光端口联动触发表”到MCU
+* @see	tms_MCUtoDevice
+*/
+int32_t tms_Del_TbUnit(
+    int fd,
+    struct glink_addr *paddr,
+    int count,
+    struct tms_unit *plist)
 {
 	return tms_ListFrame(fd, paddr, count, plist, sizeof(struct tms_unit), ID_DEL_TBUNIT);
 }
 int32_t tms_AnalyseDel_TbUnit(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
-	return tms_AnalyseListFrame(pcontext, pdata, len ,sizeof(struct tms_unit));
+	return tms_AnalyseListFrame(pcontext, pdata, len , sizeof(struct tms_unit));
 }
 
 /**
- * @brief	ID_DELALL_TBUNIT 0x80000058 ///<网管清除“全部”“光端口联动触发表”到MCU 
+ * @brief	ID_DELALL_TBUNIT 0x80000058 ///<网管清除“全部”“光端口联动触发表”到MCU
  * @see	tms_MCUtoDevice
  */
 int32_t tms_DelAll_TbUnit(
-	int     fd, 
-	struct glink_addr *paddr)
+    int     fd,
+    struct glink_addr *paddr)
 {
 	return tms_MCUtoDevice(fd, paddr, 0, 0, DEV_MCU, 0, ID_DELALL_TBUNIT, 0);
 	// return tms_MCUtoDevice(fd, paddr, 0, 0, 0, 0, ID_GET_DEVTYPE, 0);
@@ -5787,14 +5814,14 @@ int32_t tms_DelAll_TbUnit(
 
 
 /**
- * @brief	ID_INSERT_TBCYCTEST 0x80000059 ///<网管发送添加“周期性测试表”到MCU 
+ * @brief	ID_INSERT_TBCYCTEST 0x80000059 ///<网管发送添加“周期性测试表”到MCU
  * @see	tms_MCUtoDevice
  */
 int32_t tms_Insert_TbCycTest(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t count, 
-		struct tms_cyctest *plist)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t count,
+    struct tms_cyctest *plist)
 {
 	return tms_ListFrame(fd, paddr, count, plist, sizeof(struct tms_cyctest), ID_INSERT_TBCYCTEST);
 #if 0
@@ -5802,21 +5829,21 @@ int32_t tms_Insert_TbCycTest(
 	int tcount;
 
 
-	
+
 	tcount = htonl(count);
-	tms_Conv_Nx4Byte((uint32_t*)plist, (uint32_t*)plist, count);
+	tms_Conv_Nx4Byte((uint32_t *)plist, (uint32_t *)plist, count);
 
 
 	struct glink_base  base_hdr;
 	int len;
-	len = 	sizeof(int32_t  ) + 
-			sizeof(struct tms_cyctest) + count;
+	len = 	sizeof(int32_t  ) +
+	        sizeof(struct tms_cyctest) + count;
 
 	ptlist = plist;
 	glink_Build(&base_hdr, cmdid, len);
-	glink_SendHead(fd, &base_hdr);	
-	glink_SendSerial(fd, (uint8_t*)&tcount,   sizeof(int32_t));
-	glink_SendSerial(fd, (uint8_t*)&ptlist,   sizeof(struct tms_cyctest) * count);
+	glink_SendHead(fd, &base_hdr);
+	glink_SendSerial(fd, (uint8_t *)&tcount,   sizeof(int32_t));
+	glink_SendSerial(fd, (uint8_t *)&ptlist,   sizeof(struct tms_cyctest) * count);
 	glink_SendTail(fd);
 
 	return 0;
@@ -5829,21 +5856,21 @@ int32_t tms_AnalyseInsert_TbCycTest(struct tms_context *pcontext, int8_t *pdata,
 #if 0
 	int32_t *pcount;
 	struct tms_cyctest *plist, *ptlist;
-	
-	pcount = (int32_t*)(pdata + GLINK_OFFSET_DATA);
+
+	pcount = (int32_t *)(pdata + GLINK_OFFSET_DATA);
 	if ( !CHECK_PTR(
-			pcount, 
-			int32_t, 
-			struct tms_cyctest, 
-			htonl(*pcount), 
-			pdata + len)) {
+	         pcount,
+	         int32_t,
+	         struct tms_cyctest,
+	         htonl(*pcount),
+	         pdata + len)) {
 		printf("frame err\n");
 		return -1;
 	}
 
 	*pcount = htonl(*pcount);
 	ptlist = plist;
-	for (int i = 0 ;i < *pcount; i++) {
+	for (int i = 0 ; i < *pcount; i++) {
 		ptlist->frame = htonl(ptlist->frame);
 		ptlist->slot = htonl(ptlist->slot);
 		ptlist->type = htonl(ptlist->type);
@@ -5862,26 +5889,26 @@ int32_t tms_AnalyseInsert_TbCycTest(struct tms_context *pcontext, int8_t *pdata,
  * @see	tms_MCUtoDevice
  */
 int32_t tms_Del_TbCycTest(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t count, 
-		struct tms_cyctest *plist,
-		int32_t cmdid)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t count,
+    struct tms_cyctest *plist,
+    int32_t cmdid)
 {
 	return tms_ListFrame(fd, paddr, count, plist, sizeof(struct tms_cyctest), ID_DEL_TBCYCTEST);
 }
 
 int32_t tms_AnalyseDel_TbCycTest(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
-	return tms_AnalyseListFrame(pcontext, pdata, len ,sizeof(struct tms_cyctest));
+	return tms_AnalyseListFrame(pcontext, pdata, len , sizeof(struct tms_cyctest));
 }
 /**
  * @brief	ID_DELALL_TBCYCTEST 0x80000061 ///<网管发送清除“全部”“周期性测试表”关系到MCU
  * @see	tms_MCUtoDevice
  */
 int32_t tms_DelAll_TbCycTest(
-	int     fd, 
-	struct glink_addr *paddr)
+    int     fd,
+    struct glink_addr *paddr)
 {
 	return tms_MCUtoDevice(fd, paddr, 0, 0, DEV_MCU, 0, ID_DELALL_TBCYCTEST, 0);
 }
@@ -5893,11 +5920,11 @@ int32_t tms_DelAll_TbCycTest(
  * @see	tms_MCUtoDevice
  */
 int32_t tms_Del_TbOTDRRefData(
-		int fd, 
-		struct glink_addr *paddr, 
-		int32_t count, 
-		struct tms_dev_port *plist,
-		int32_t cmdid)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t count,
+    struct tms_dev_port *plist,
+    int32_t cmdid)
 {
 	return tms_ListFrame(fd, paddr, count, plist, sizeof(struct tms_dev_port), ID_DEL_TBOTDRREFDATA);
 }
@@ -5913,8 +5940,8 @@ int32_t tms_AnalyseDel_TbOTDRRefData(struct tms_context *pcontext, int8_t *pdata
  * @see	tms_MCUtoDevice
  */
 int32_t tms_DelAll_TbOTDRHistData(
-	int     fd, 
-	struct glink_addr *paddr)
+    int     fd,
+    struct glink_addr *paddr)
 {
 	return tms_MCUtoDevice(fd, paddr, 0, 0, DEV_MCU, 0, ID_DELALL_TBOTDRREFDATA, 0);
 	// return tms_MCUtoDevice(fd, paddr, 0, 0, 0, 0, ID_GET_DEVTYPE, 0);
@@ -5927,8 +5954,8 @@ int32_t tms_DelAll_TbOTDRHistData(
  * @see	tms_MCUtoDevice
  */
 uint32_t tms_GetDeviceCompositionRT(
-		int     fd, 
-		struct glink_addr *paddr)
+    int     fd,
+    struct glink_addr *paddr)
 {
 	return tms_MCUtoDevice(fd, paddr, 0, 0, 0, 0, ID_GET_COMPOSITION_RT, 0);
 }
@@ -5944,31 +5971,31 @@ uint32_t tms_GetDeviceCompositionRT(
  * @param[in]	list 指向一个 struct tms_dev_composition 一维数组
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
+ * @remarks
  * @see	tms_RetDeviceComposition_any
  */
 uint32_t tms_RetDeviceCompositionRT(
-		int      fd, 
-		struct glink_addr *paddr, 
-		uint32_t count, 
-		struct tms_dev_composition_val *list)
+    int      fd,
+    struct glink_addr *paddr,
+    uint32_t count,
+    struct tms_dev_composition_val *list)
 {
-	return tms_RetDeviceComposition_any(fd,paddr,count,list,ID_RET_COMPOSITION_RT);
+	return tms_RetDeviceComposition_any(fd, paddr, count, list, ID_RET_COMPOSITION_RT);
 }
 
 
 /**
  * @brief	ID_RET_ALARM_HW_CHANGE		0x80000068 ///< MCU返回变化的硬件告警
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
+ * @remarks
  * @see	tms_RetDeviceComposition_any
  */
 uint32_t tms_RetAlarmHWChange(
-		int      fd, 
-		struct glink_addr *paddr, 
-		int32_t total,
-		int32_t count,
-		struct tms_alarm_hw_change_val *list)
+    int      fd,
+    struct glink_addr *paddr,
+    int32_t total,
+    int32_t count,
+    struct tms_alarm_hw_change_val *list)
 {
 	uint8_t *pmem;
 	struct tms_alarm_hw_change *pcfg_hdr;
@@ -5981,12 +6008,12 @@ uint32_t tms_RetAlarmHWChange(
 	len = sizeof(struct tms_alarm_hw_change) + count * sizeof(struct tms_alarm_hw_change_val);
 
 	// printf("count = %d\n", count);
-	pmem = (uint8_t*)malloc(len);
+	pmem = (uint8_t *)malloc(len);
 	if (pmem == NULL) {
-	    return -1;
+		return -1;
 	}
-	pcfg_hdr = (struct tms_alarm_hw_change*)(pmem);
-	plist    = (struct tms_alarm_hw_change_val*)(pmem + sizeof(struct tms_alarm_hw_change));
+	pcfg_hdr = (struct tms_alarm_hw_change *)(pmem);
+	plist    = (struct tms_alarm_hw_change_val *)(pmem + sizeof(struct tms_alarm_hw_change));
 
 	// Step 2.各字段复制
 	pcfg_hdr->type = htonl(3);
@@ -5997,28 +6024,28 @@ uint32_t tms_RetAlarmHWChange(
 	// todo :防止循环count次溢出ptlist
 	ptlist = list;
 	for (int i = 0; i < count; i++) {
-	    plist->level  = htonl(ptlist->level);
-	    plist->frame  = htonl(ptlist->frame);
-	    plist->slot   = htonl(ptlist->slot);
-	    plist->reason = htonl(ptlist->reason);
+		plist->level  = htonl(ptlist->level);
+		plist->frame  = htonl(ptlist->frame);
+		plist->slot   = htonl(ptlist->slot);
+		plist->reason = htonl(ptlist->reason);
 
 #if 0
-	    // 将short按照网络字节发送，你妈B
-	    memcpy(plist->reason, ptlist->reason, 128);
-	    preason  = (uint16_t*)plist->reason;
-	    // PrintfMemory((uint8_t*)preason, 128);
-	    for (int k = 0;k < 128/2;k++) {
-	        *preason = htons(*preason);
-	        preason++;
-	    }
-	    preason  = (uint16_t*)ptlist->reason;
-	    // PrintfMemory((uint8_t*)preason, 128);
+		// 将short按照网络字节发送，你妈B
+		memcpy(plist->reason, ptlist->reason, 128);
+		preason  = (uint16_t *)plist->reason;
+		// PrintfMemory((uint8_t*)preason, 128);
+		for (int k = 0; k < 128 / 2; k++) {
+			*preason = htons(*preason);
+			preason++;
+		}
+		preason  = (uint16_t *)ptlist->reason;
+		// PrintfMemory((uint8_t*)preason, 128);
 #endif
 
-	    memcpy(plist->time,   ptlist->time,   20);
+		memcpy(plist->time,   ptlist->time,   20);
 
-	    plist++;
-	    ptlist++;
+		plist++;
+		ptlist++;
 	}
 
 	// Step 3. 发送
@@ -6034,9 +6061,10 @@ uint32_t tms_RetAlarmHWChange(
 	}
 	if (0 == fd) {
 		fd = tms_SelectFdByAddr(&base_hdr.dst);
-	}	
+	}
 	ret = glink_Send(fd, &base_hdr, pmem, len);
-_Free:;
+_Free:
+	;
 	free(pmem);
 	return ret;
 }
@@ -6051,8 +6079,8 @@ _Free:;
  * @param[in]	time 时间20byte
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
- * see	
+ * @remarks
+ * see
  */int32_t tms_RetMCUTime(int fd, struct glink_addr *paddr, uint8_t *time)
 {
 	struct glink_base  base_hdr;
@@ -6061,13 +6089,13 @@ _Free:;
 
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 
 	glink_Build(&base_hdr, ID_RET_MCU_TIME, 20);
 	ret = glink_Send(fd, &base_hdr, time, 20);
-	return ret;	
+	return ret;
 }
 
 
@@ -6075,13 +6103,13 @@ _Free:;
 static int32_t tms_AnalyseAlarmSoundONOFF(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
 	int32_t *pval;
-	pval = (int32_t*)(pdata + GLINK_OFFSET_DATA);
+	pval = (int32_t *)(pdata + GLINK_OFFSET_DATA);
 	*pval = htonl(*pval);
 
 	// printf("tms_AnalyseGetOPMOP\n");
 	// printf("val:f%d/s%x\n", pval->frame, pval->slot);
 	// fun()
-	
+
 	return 0;
 }
 
@@ -6095,26 +6123,26 @@ static int32_t tms_AnalyseAlarmSoundONOFF(struct tms_context *pcontext, int8_t *
  * @param[in]	time 时间20byte
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
- * @see	
+ * @remarks
+ * @see
  */
 int32_t tms_RetAlarmSoundState(int fd, struct glink_addr *paddr, uint32_t state)
 {
 	struct glink_base  base_hdr;
 	int32_t data_state;
 	int ret;
-	
+
 	data_state = htonl(state);
 
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 
 	glink_Build(&base_hdr, ID_RET_MCU_TIME, 4);
-	ret = glink_Send(fd, &base_hdr, (uint8_t*)&data_state, 4);
-	return ret;	
+	ret = glink_Send(fd, &base_hdr, (uint8_t *)&data_state, 4);
+	return ret;
 }
 
 /**
@@ -6130,13 +6158,13 @@ int32_t tms_GetTotalOPAlarm(int fd, struct glink_addr *paddr)
  * @brief	ID_RET_TOTAL_OP_ALARM	0x80000077 ///< 主控返回总的光功告警
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
- * @see	
+ * @remarks
+ * @see
  */
 int32_t tms_RetTotalOPAlarm(int fd, struct glink_addr *paddr,
-	int32_t type,
-	int32_t count,
-	struct tms_total_op_alarm_val *pval)
+                            int32_t type,
+                            int32_t count,
+                            struct tms_total_op_alarm_val *pval)
 {
 	int len;
 	struct tms_total_op_alarm_hdr hdr;
@@ -6155,25 +6183,25 @@ int32_t tms_RetTotalOPAlarm(int fd, struct glink_addr *paddr,
 		ptlist++;
 	}
 	struct glink_base  base_hdr;
-	
+
 
 	len = sizeof(struct tms_total_op_alarm_hdr) + count * sizeof(struct tms_total_op_alarm_val);
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	glink_Build(&base_hdr, ID_GET_TOTAL_OP_ALARM, len);
 	if (paddr != NULL && paddr->dst == GLINK_MASK_MADDR) {
 		return tms_SendAllManagerDot(&base_hdr,
-					2,
-					NULL,
-					(uint8_t*)&hdr,      sizeof(struct tms_total_op_alarm_hdr),
-					(uint8_t*)&pval,   sizeof(struct tms_total_op_alarm_val));
+		                             2,
+		                             NULL,
+		                             (uint8_t *)&hdr,      sizeof(struct tms_total_op_alarm_hdr),
+		                             (uint8_t *)&pval,   sizeof(struct tms_total_op_alarm_val));
 	}
 	if (0 == fd) {
 		fd = tms_SelectFdByAddr(&base_hdr.dst);
 	}
 	glink_Build(&base_hdr, ID_GET_TOTAL_OP_ALARM, len);
 	glink_SendHead(fd, &base_hdr);
-	glink_SendSerial(fd, (uint8_t*)&hdr,   sizeof(struct tms_total_op_alarm_hdr));
-	glink_SendSerial(fd, (uint8_t*)&pval,   count * sizeof(struct tms_total_op_alarm_val));
+	glink_SendSerial(fd, (uint8_t *)&hdr,   sizeof(struct tms_total_op_alarm_hdr));
+	glink_SendSerial(fd, (uint8_t *)&pval,   count * sizeof(struct tms_total_op_alarm_val));
 	glink_SendTail(fd);
 
 
@@ -6187,7 +6215,7 @@ static int32_t tms_AnalyseRetTotalOPAlarm(struct tms_context *pcontext, int8_t *
 
 /**
  * @brief	ID_GET_TOTAL_HW_ALARM	0x80000078 ///< 查询总的硬件告警
- * @see	
+ * @see
  */
 
 int32_t tms_GetTotalHwAlarm(int fd, struct glink_addr *paddr)
@@ -6198,7 +6226,7 @@ int32_t tms_GetTotalHwAlarm(int fd, struct glink_addr *paddr)
 
 /**
  * @brief	ID_GET_OLP_ACTION_LOG	0x80000079 ///< 网管查询OLP切换记录
- * @see	
+ * @see
  */
 
 int32_t tms_GetOLPActionLog(int fd, struct glink_addr *paddr)
@@ -6211,12 +6239,12 @@ int32_t tms_GetOLPActionLog(int fd, struct glink_addr *paddr)
  * @brief	ID_RET_OLP_ACTION_LOG	0x80000080 ///< 返回OLP切换记录
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
- * @see	
+ * @remarks
+ * @see
  */
 int32_t tms_RetOLPActionLog(int fd, struct glink_addr *paddr,
-	int32_t count,
-	struct tms_olp_action_log_val *pval)
+                            int32_t count,
+                            struct tms_olp_action_log_val *pval)
 {
 	int len;
 	struct tms_olp_action_log_hdr hdr;
@@ -6234,18 +6262,18 @@ int32_t tms_RetOLPActionLog(int fd, struct glink_addr *paddr,
 		ptlist++;
 	}
 	struct glink_base  base_hdr;
-	
+
 
 	len = sizeof(struct tms_olp_action_log_hdr) + count * sizeof(struct tms_olp_action_log_val);
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 	glink_Build(&base_hdr, ID_RET_OLP_ACTION_LOG, len);
 	glink_SendHead(fd, &base_hdr);
-	glink_SendSerial(fd, (uint8_t*)&hdr,   sizeof(struct tms_olp_action_log_hdr));
-	glink_SendSerial(fd, (uint8_t*)&pval,   count * sizeof(struct tms_olp_action_log_val));
+	glink_SendSerial(fd, (uint8_t *)&hdr,   sizeof(struct tms_olp_action_log_hdr));
+	glink_SendSerial(fd, (uint8_t *)&pval,   count * sizeof(struct tms_olp_action_log_val));
 	glink_SendTail(fd);
 
 
@@ -6263,15 +6291,14 @@ static int32_t tms_AnalyseRetOLPActionLog(struct tms_context *pcontext, int8_t *
 ////////////////////////////////////////////////////////////////////////
 // 数据包分析
 // 命令名列表0x1000xxxx、0x6000xxxx、0x8000xxxx
-static struct pro_list g_cmdname_0x1000xxxx[] = 
-{
-{"ID_TICK"}, 
-{"ID_UPDATE"}, 
-{"ID_TRACE0"}, 
-{"ID_TRACE1"}, 
-{"ID_TRACE2"}, 
-{"ID_R_COMMAMD"}, 
-{"ID_COMMAND"}, 
+static struct pro_list g_cmdname_0x1000xxxx[] = {
+	{"ID_TICK"},
+	{"ID_UPDATE"},
+	{"ID_TRACE0"},
+	{"ID_TRACE1"},
+	{"ID_TRACE2"},
+	{"ID_R_COMMAMD"},
+	{"ID_COMMAND"},
 
 
 
@@ -6279,164 +6306,164 @@ static struct pro_list g_cmdname_0x1000xxxx[] =
 
 
 static struct pro_list g_cmdname_0x6000xxxx[] = {
-{"ID_GET_DEVTYPE"},
-{"ID_RET_DEVTYPE"},
-{"ID_CU_NOTE_NET"},
-{"ID_CU_NOTE_MANAGE_CONNECT"},
-{"ID_GET_OPM_OLP_RAYPOWER"},
-{"ID_CMD_OSW_SWITCH"},
-{"ID_CMD_OLP_REQ_OTDR"},
-{"ID_CMD_OLP_START_OTDR"},
-{"ID_CMD_OLP_FINISH_OTDR"},
-{"ID_GET_ALARM_TEST"},
-{"--"},
-{"--"},
-{"--"},
-{"--"},
-{"--"},
-{"--"},
-{"ID_RET_ALARM_TEST"},
-{"ID_GET_DEV_STATE_FROM_TU"},
-{"ID_RET_DEV_STATE_FROM_TU"},
-{"ID_GET_POWER_STATE_FROM_TU"},
-{"ID_RET_POWER_STATE_FROM_TU"},
-{"ID_MCU_GET_DEV_ALARM"},
-{"ID_DEV_RET_MCU_ALARM"},
-{"ID_OLP_REQUEST_OTDR"},
+	{"ID_GET_DEVTYPE"},
+	{"ID_RET_DEVTYPE"},
+	{"ID_CU_NOTE_NET"},
+	{"ID_CU_NOTE_MANAGE_CONNECT"},
+	{"ID_GET_OPM_OLP_RAYPOWER"},
+	{"ID_CMD_OSW_SWITCH"},
+	{"ID_CMD_OLP_REQ_OTDR"},
+	{"ID_CMD_OLP_START_OTDR"},
+	{"ID_CMD_OLP_FINISH_OTDR"},
+	{"ID_GET_ALARM_TEST"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"ID_RET_ALARM_TEST"},
+	{"ID_GET_DEV_STATE_FROM_TU"},
+	{"ID_RET_DEV_STATE_FROM_TU"},
+	{"ID_GET_POWER_STATE_FROM_TU"},
+	{"ID_RET_POWER_STATE_FROM_TU"},
+	{"ID_MCU_GET_DEV_ALARM"},
+	{"ID_DEV_RET_MCU_ALARM"},
+	{"ID_OLP_REQUEST_OTDR"},
 
 };
 
 
 static struct pro_list g_cmdname_0x8000xxxx[] = {
-{"ID_CHANGE_ADDR"}, 
-{"ID_GET_SN"}, 
-{"ID_RET_SN"}, 
-{"ID_CFG_SMS"}, 
-{"ID_CFG_SMS_CLEAR"}, 
-{"ID_GET_COMPOSITION"}, 
-{"ID_RET_COMPOSITION"}, 
-{"ID_CFG_MCU_OSW_PORT"}, 
-{"ID_CFG_MCU_OSW_PORT_CLEAR"}, 
-{"ID_CFG_MCU_OLP_PORT"}, 
-{"--"}, 
-{"--"}, 
-{"--"}, 
-{"--"}, 
-{"--"}, 
-{"--"}, 
-{"ID_CFG_MCU_OLP_PORT_CLEAR"}, 
-{"ID_CFG_MCU_U_OPM_OSW"}, 
-{"ID_CFG_MCU_U_OPM_OSW_CLEAR"}, 
-{"ID_CFG_MCU_U_OLP_OSW"}, 
-{"ID_CFG_MCU_U_OLP_OSW_CLEAR"}, 
-{"ID_CFG_OPM_REF_LEVEL"}, 
-{"ID_GET_OPM_OP"}, 
-{"ID_RET_OPM_OP"}, 
-{"ID_CFG_OLP_REF_LEVEL"}, 
-{"ID_GET_OLP_OP"}, 
-{"--"}, 
-{"--"}, 
-{"--"}, 
-{"--"}, 
-{"--"}, 
-{"--"}, 
-{"ID_RET_OLP_OP"}, 
-{"ID_CFG_OTDR_REF"}, 
-{"ID_CFG_MCU_OSW_CYCLE"}, 
-{"ID_GET_OTDR_TEST"}, 
-{"ID_RET_OTDR_TEST"}, 
-{"ID_CFG_OLP_MODE"}, 
-{"ID_CMD_OLP_SWITCH"}, 
-{"ID_REPORT_OLP_ACTION"}, 
-{"ID_ALARM_OPM"}, 
-{"ID_ALARM_OPM_CHANGE"}, 
-{"--"}, 
-{"--"}, 
-{"--"}, 
-{"--"}, 
-{"--"}, 
-{"--"}, 
-{""}, 
-{"ID_ALARM_HW"}, 
-{"ID_RET_OTDR_CYC"}, 
-{"ID_CMD_SMS_TEXT"}, 
-{"ID_CMD_SMS_ERROR"}, 
-{"ID_GET_VERSION"}, 
-{"ID_RET_VERSION"}, 
-{"ID_ADJUST_TIME"}, 
-{"ID_CMD_ACK"}, 
-{"ID_GET_OTDR_TEST_CYC"}, 
-{""}, 
-{"--"}, 
-{""}, 
-{""}, 
-{""}, 
-{""}, 
-{"ID_RET_OTDR_TEST_CYC"}, 
-{"--"},
-{"--"},
-{"--"},
-{"--"},
-{"--"},
-{"--"},
-{"--"},
-{"--"},
-{"--"},
-{"--"},
-{"--"},
-{"--"},
-{"--"},
-{"--"},
-{"--"},
-{"ID_GET_OTDR_PARAM"},
-{"ID_RET_OTDR_PARAM"},
-{"ID_GET_DEV_PRODUCE"},
-{"ID_RET_DEV_PRODUCE"},
-{"ID_INSERT_TBROUTE"},
-{"ID_DELALL_TBROUTE"},
-{"ID_INSERT_TBUNIT"},
-{"ID_DEL_TBUNIT"},
-{"ID_DELALL_TBUNIT"},
-{"ID_INSERT_TBCYCTEST"},
-{"--"},
-{"--"},
-{"--"},
-{"--"},
-{"--"},
-{"--"},
-{"ID_DEL_TBCYCTEST"},
-{"ID_DELALL_TBCYCTEST"},
-{"ID_INSERT_TBOTDRREFDATA"},
-{"ID_DELALL_TBOTDRREFDATA"},
-{"--"},
-{"ID_GET_COMPOSITION_RT"},
-{"ID_RET_COMPOSITION_RT"},
-{"ID_ACK_COMPOSITION"},
-{"ID_RET_ALARM_HW_CHANGE"},
-{"ID_GET_OP_GATE"},
-{"--"},
-{"--"},
-{"--"},
-{"--"},
-{"--"},
-{"--"},
-{"ID_RET_OP_GATE"},
-{"ID_GET_MCU_TIME"},
-{"ID_RET_MCU_TIME"},
-{"ID_ALARM_SOUND_ON_OFF"},
-{"ID_GET_ALARM_SOUND_STATE"},
-{"ID_RET_ALARM_SOUND_STATE"},
-{"ID_GET_TOTAL_OP_ALARM"},
-{"ID_RET_TOTAL_OP_ALARM"},
-{"ID_GET_TOTAL_HW_ALARM"},
-{"ID_GET_OLP_ACTION_LOG"},
-{"--"},
-{"--"},
-{"--"},
-{"--"},
-{"--"},
-{"--"},
-{"ID_RET_OLP_ACTION_LOG"},
+	{"ID_CHANGE_ADDR"},
+	{"ID_GET_SN"},
+	{"ID_RET_SN"},
+	{"ID_CFG_SMS"},
+	{"ID_CFG_SMS_CLEAR"},
+	{"ID_GET_COMPOSITION"},
+	{"ID_RET_COMPOSITION"},
+	{"ID_CFG_MCU_OSW_PORT"},
+	{"ID_CFG_MCU_OSW_PORT_CLEAR"},
+	{"ID_CFG_MCU_OLP_PORT"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"ID_CFG_MCU_OLP_PORT_CLEAR"},
+	{"ID_CFG_MCU_U_OPM_OSW"},
+	{"ID_CFG_MCU_U_OPM_OSW_CLEAR"},
+	{"ID_CFG_MCU_U_OLP_OSW"},
+	{"ID_CFG_MCU_U_OLP_OSW_CLEAR"},
+	{"ID_CFG_OPM_REF_LEVEL"},
+	{"ID_GET_OPM_OP"},
+	{"ID_RET_OPM_OP"},
+	{"ID_CFG_OLP_REF_LEVEL"},
+	{"ID_GET_OLP_OP"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"ID_RET_OLP_OP"},
+	{"ID_CFG_OTDR_REF"},
+	{"ID_CFG_MCU_OSW_CYCLE"},
+	{"ID_GET_OTDR_TEST"},
+	{"ID_RET_OTDR_TEST"},
+	{"ID_CFG_OLP_MODE"},
+	{"ID_CMD_OLP_SWITCH"},
+	{"ID_REPORT_OLP_ACTION"},
+	{"ID_ALARM_OPM"},
+	{"ID_ALARM_OPM_CHANGE"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{""},
+	{"ID_ALARM_HW"},
+	{"ID_RET_OTDR_CYC"},
+	{"ID_CMD_SMS_TEXT"},
+	{"ID_CMD_SMS_ERROR"},
+	{"ID_GET_VERSION"},
+	{"ID_RET_VERSION"},
+	{"ID_ADJUST_TIME"},
+	{"ID_CMD_ACK"},
+	{"ID_GET_OTDR_TEST_CYC"},
+	{""},
+	{"--"},
+	{""},
+	{""},
+	{""},
+	{""},
+	{"ID_RET_OTDR_TEST_CYC"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"ID_GET_OTDR_PARAM"},
+	{"ID_RET_OTDR_PARAM"},
+	{"ID_GET_DEV_PRODUCE"},
+	{"ID_RET_DEV_PRODUCE"},
+	{"ID_INSERT_TBROUTE"},
+	{"ID_DELALL_TBROUTE"},
+	{"ID_INSERT_TBUNIT"},
+	{"ID_DEL_TBUNIT"},
+	{"ID_DELALL_TBUNIT"},
+	{"ID_INSERT_TBCYCTEST"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"ID_DEL_TBCYCTEST"},
+	{"ID_DELALL_TBCYCTEST"},
+	{"ID_INSERT_TBOTDRREFDATA"},
+	{"ID_DELALL_TBOTDRREFDATA"},
+	{"--"},
+	{"ID_GET_COMPOSITION_RT"},
+	{"ID_RET_COMPOSITION_RT"},
+	{"ID_ACK_COMPOSITION"},
+	{"ID_RET_ALARM_HW_CHANGE"},
+	{"ID_GET_OP_GATE"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"ID_RET_OP_GATE"},
+	{"ID_GET_MCU_TIME"},
+	{"ID_RET_MCU_TIME"},
+	{"ID_ALARM_SOUND_ON_OFF"},
+	{"ID_GET_ALARM_SOUND_STATE"},
+	{"ID_RET_ALARM_SOUND_STATE"},
+	{"ID_GET_TOTAL_OP_ALARM"},
+	{"ID_RET_TOTAL_OP_ALARM"},
+	{"ID_GET_TOTAL_HW_ALARM"},
+	{"ID_GET_OLP_ACTION_LOG"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"--"},
+	{"ID_RET_OLP_ACTION_LOG"},
 
 
 
@@ -6455,7 +6482,7 @@ void tms_PrintCmdName(int32_t cmdid)
 	uint32_t cmdh, cmdl;
 	cmdh = cmdid & 0xf0000000;
 	cmdl = cmdid & 0x0fffffff;
-	
+
 	switch(cmdh) {
 	case 0x80000000:
 		if (cmdl >= sizeof(g_cmdname_0x8000xxxx) / sizeof(struct pro_list)) {
@@ -6470,7 +6497,7 @@ void tms_PrintCmdName(int32_t cmdid)
 			goto _Unknow;
 		}
 		printf("%s\n", g_cmdname_0x6000xxxx[cmdl].name);
-		
+
 		break;
 	case 0x10000000:
 		if (cmdl >= sizeof(g_cmdname_0x1000xxxx) / sizeof(struct pro_list)) {
@@ -6480,14 +6507,15 @@ void tms_PrintCmdName(int32_t cmdid)
 		printf("%s\n", g_cmdname_0x1000xxxx[cmdl].name);
 		break;
 	default:
-_Unknow:;
+_Unknow:
+		;
 		printf("unname\n");
 		break;
 	}
 }
 
 // 转发网管的数据到设备
-// static 
+// static
 int32_t tms_Transmit2Dev(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
 	int fd;
@@ -6506,30 +6534,30 @@ int32_t tms_Transmit2Dev(struct tms_context *pcontext, int8_t *pdata, int32_t le
 		return 0;
 	}
 	else {
-		return glink_SendSerial(fd, (uint8_t*)pdata, len);
+		return glink_SendSerial(fd, (uint8_t *)pdata, len);
 	}
 
 }
 // 转发设备的数据到网管
-// static 
+// static
 int32_t tms_Transmit2Manager(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
 	int fd;
 	// struct glink_base  base_hdr;
-	uint32_t src,dst;
+	uint32_t src, dst;
 
 	struct glink_base *pbase_hdr;
-	pbase_hdr = (struct glink_base*)(pdata + sizeof(int32_t));
+	pbase_hdr = (struct glink_base *)(pdata + sizeof(int32_t));
 	src = htonl(pbase_hdr->src);
 	dst = htonl(pbase_hdr->dst);
 
 	dbg_tms("tms_Transmit2Manager()\n");
-	dbg_tms("\t%x , %x\n",src,dst);
+	dbg_tms("\t%x , %x\n", src, dst);
 
 	// 过滤设备发往MCU的数据包，不向网管转发
-	if (dst == GLINK_4412_ADDR || 
-        src == GLINK_4412_ADDR ||
-        GLINK_MASK_MADDR != (dst & GLINK_MASK_MADDR)) {
+	if (dst == GLINK_4412_ADDR ||
+	    src == GLINK_4412_ADDR ||
+	    GLINK_MASK_MADDR != (dst & GLINK_MASK_MADDR)) {
 		dbg_tms("can't not transmit to manager\n");
 		return 0;
 	}
@@ -6542,7 +6570,7 @@ int32_t tms_Transmit2Manager(struct tms_context *pcontext, int8_t *pdata, int32_
 	if (fd == 0) {
 		return 0;
 	}
-	return glink_SendSerial(fd, (uint8_t*)pdata, len);
+	return glink_SendSerial(fd, (uint8_t *)pdata, len);
 }
 
 // 向所有网管转发
@@ -6588,16 +6616,16 @@ int32_t tms_SendAllManager(struct glink_base  *pbase_hdr, uint8_t *pdata, int32_
   * @see	tms_SendAllManager
  */
 
-int32_t tms_SendAllManagerDot(struct glink_base  *pbase_hdr, int group, uint8_t *fmt,...)
+int32_t tms_SendAllManagerDot(struct glink_base  *pbase_hdr, int group, uint8_t *fmt, ...)
 {
 	va_list args;
 	int fd;
 	uint32_t dst;
 	uint8_t *pdata;
-	uint32_t len;	
+	uint32_t len;
 	int i;
-	
-	
+
+
 
 	// 以后改用 tms_SelectFdByIndex
 	for (dst = 0x3a; dst <= 0x3f; dst++) {
@@ -6611,18 +6639,18 @@ int32_t tms_SendAllManagerDot(struct glink_base  *pbase_hdr, int group, uint8_t 
 
 
 		glink_SendHead(fd, pbase_hdr);
-		va_start(args, (const char*)fmt);
+		va_start(args, (const char *)fmt);
 		for (i = 0; i < group; i++) {
-			
-			
-			pdata = va_arg(args, uint8_t*);
+
+
+			pdata = va_arg(args, uint8_t *);
 			len = va_arg(args, int);
-			glink_SendSerial(fd, (uint8_t*)pdata,      len);
+			glink_SendSerial(fd, (uint8_t *)pdata,      len);
 		}
 		glink_SendTail(fd);
 		va_end(args);
 	}
-	
+
 
 	return 0;
 }
@@ -6631,17 +6659,17 @@ static int32_t tms_Copy2Use(struct tms_context *pcontext, int8_t *pdata, int32_t
 {
 
 	struct glink_base *pbase_hdr;
-	pbase_hdr = (struct glink_base*)(pdata + sizeof(int32_t));
+	pbase_hdr = (struct glink_base *)(pdata + sizeof(int32_t));
 #if 0
 	pbase_hdr->cmdid   = htonl(pbase_hdr->cmdid);
 	pbase_hdr->datalen = htonl(pbase_hdr->datalen);
 
 	if (pcontext->ptcb->pf_OnCopy2Use) {
 		pcontext->ptcb->pf_OnCopy2Use(
-				(char*)(pdata + GLINK_OFFSET_CMDID), 
-				pbase_hdr->datalen, 
-				1,
-				pcontext->fd);
+		    (char *)(pdata + GLINK_OFFSET_CMDID),
+		    pbase_hdr->datalen,
+		    1,
+		    pcontext->fd);
 	}
 	return 0;
 #endif
@@ -6674,13 +6702,13 @@ static int32_t tms_Copy2Use(struct tms_context *pcontext, int8_t *pdata, int32_t
 
 	// 强制指向指针
 	// pcontext->pgb = pbase_hdr;
-	
+
 	if (pcontext->ptcb->pf_OnCopy2Use) {
 		pcontext->ptcb->pf_OnCopy2Use(
-				(char*)(pdata + GLINK_OFFSET_CMDID), 
-				pbase_hdr->datalen, 
-				1,
-				pcontext);
+		    (char *)(pdata + GLINK_OFFSET_CMDID),
+		    pbase_hdr->datalen,
+		    1,
+		    pcontext);
 	}
 
 	return 0;
@@ -6702,12 +6730,12 @@ static int32_t tms_AnalyseUnuse(struct tms_context *pcontext, int8_t *pdata, int
  * @param[in]	port 指定板卡端口数
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
+ * @remarks
  * @see	tms_MCUtoDevice
  */
 uint32_t tms_GetDevStateFromTU(
-		int     fd, 
-		struct glink_addr *paddr)
+    int     fd,
+    struct glink_addr *paddr)
 {
 	return tms_MCUtoDevice(fd, paddr, 0, 0, 0, 0, ID_GET_DEV_STATE_FROM_TU, 0);
 }
@@ -6730,12 +6758,12 @@ static int32_t tms_AnalyseRetDevStateFromTU(struct tms_context *pcontext, int8_t
  * @param[in]	port 指定板卡端口数
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
+ * @remarks
  * @see	tms_MCUtoDevice
  */
 uint32_t tms_GetPowerStateFromTU(
-		int     fd, 
-		struct glink_addr *paddr)
+    int     fd,
+    struct glink_addr *paddr)
 {
 	return tms_MCUtoDevice(fd, paddr, 0, 0, 0, 0, ID_GET_POWER_STATE_FROM_TU, 0);
 }
@@ -6750,17 +6778,17 @@ static int32_t tms_AnalyseRetPowerStateFromTU(struct tms_context *pcontext, int8
 	struct tms_ret_power_state_from_tu *pcfg_hdr;
 	struct tms_ret_power_state_from_tu_val  *plist, *ptlist;
 
-	pcfg_hdr = (struct tms_ret_power_state_from_tu*)(pdata + GLINK_OFFSET_DATA);
+	pcfg_hdr = (struct tms_ret_power_state_from_tu *)(pdata + GLINK_OFFSET_DATA);
 	if ( !CHECK_PTR(
-		pcfg_hdr, 
-		struct tms_ret_power_state_from_tu, 
-		struct tms_ret_power_state_from_tu_val, 
-		htonl(pcfg_hdr->count), 
-		pdata + len)) {
-		printf("Err: %s():%d\n",__FUNCTION__,__LINE__);
+	         pcfg_hdr,
+	         struct tms_ret_power_state_from_tu,
+	         struct tms_ret_power_state_from_tu_val,
+	         htonl(pcfg_hdr->count),
+	         pdata + len)) {
+		printf("Err: %s():%d\n", __FUNCTION__, __LINE__);
 		return -1;
 	}
-	plist    = (struct tms_ret_power_state_from_tu_val*)  (pdata + GLINK_OFFSET_DATA + sizeof(struct tms_ret_power_state_from_tu));
+	plist    = (struct tms_ret_power_state_from_tu_val *)  (pdata + GLINK_OFFSET_DATA + sizeof(struct tms_ret_power_state_from_tu));
 	// PrintfMemory((uint8_t *)plist, sizeof(struct tms_alarm_hw_val));
 
 	pcfg_hdr->frame = htonl(pcfg_hdr->frame);
@@ -6768,7 +6796,7 @@ static int32_t tms_AnalyseRetPowerStateFromTU(struct tms_context *pcontext, int8
 	pcfg_hdr->type = htonl(pcfg_hdr->type);
 	pcfg_hdr->count = htonl(pcfg_hdr->count);
 
-    	// TODO：防止count溢出
+	// TODO：防止count溢出
 	ptlist = plist;
 	for (int i = 0; i < pcfg_hdr->count; i++) {
 		ptlist->frame		= htonl(ptlist->frame);
@@ -6793,15 +6821,15 @@ static int32_t tms_AnalyseRetPowerStateFromTU(struct tms_context *pcontext, int8
  * @param[in]	port 指定板卡端口数
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
+ * @remarks
  * @see	tms_MCUtoDevice
  */
 uint32_t tms_MCUGeTDevAlarm(
-	int fd,
-	struct glink_addr *paddr,
-	int32_t frame,
-	int32_t slot,
-	int32_t type)
+    int fd,
+    struct glink_addr *paddr,
+    int32_t frame,
+    int32_t slot,
+    int32_t type)
 {
 	return tms_MCUtoDevice(fd, paddr, frame, slot, type, 0, ID_MCU_GET_DEV_ALARM, sizeof(struct tms_mcu_get_dev_alarm));
 }
@@ -6813,21 +6841,21 @@ static int32_t tms_AnalyseDevRetMCUAlarm(struct tms_context *pcontext, int8_t *p
 {
 	// 下面仅仅是个模板
 	// int tcount;
-	// #define CHECK_PTR(ptrA, struct_A, struct_B, B_Count, PtrEnd) 	
+	// #define CHECK_PTR(ptrA, struct_A, struct_B, B_Count, PtrEnd)
 	struct tms_dev_ret_mcu_alarm *pcfg_hdr;
 	struct tms_dev_ret_mcu_alarm_val  *plist, *ptlist;
 
-	pcfg_hdr = (struct tms_dev_ret_mcu_alarm*)(pdata + GLINK_OFFSET_DATA);
+	pcfg_hdr = (struct tms_dev_ret_mcu_alarm *)(pdata + GLINK_OFFSET_DATA);
 	if ( !CHECK_PTR(
-		pcfg_hdr, 
-		struct tms_dev_ret_mcu_alarm, 
-		struct tms_dev_ret_mcu_alarm_val, 
-		htonl(pcfg_hdr->count), 
-		pdata + len)) {
-		printf("Err: %s():%d\n",__FUNCTION__,__LINE__);
+	         pcfg_hdr,
+	         struct tms_dev_ret_mcu_alarm,
+	         struct tms_dev_ret_mcu_alarm_val,
+	         htonl(pcfg_hdr->count),
+	         pdata + len)) {
+		printf("Err: %s():%d\n", __FUNCTION__, __LINE__);
 		return -1;
 	}
-	plist    = (struct tms_dev_ret_mcu_alarm_val*)  (pdata + GLINK_OFFSET_DATA + sizeof(struct tms_dev_ret_mcu_alarm));
+	plist    = (struct tms_dev_ret_mcu_alarm_val *)  (pdata + GLINK_OFFSET_DATA + sizeof(struct tms_dev_ret_mcu_alarm));
 	// PrintfMemory((uint8_t *)plist, sizeof(struct tms_alarm_hw_val));
 
 	pcfg_hdr->alarm_type = htonl(pcfg_hdr->alarm_type);
@@ -6836,7 +6864,7 @@ static int32_t tms_AnalyseDevRetMCUAlarm(struct tms_context *pcontext, int8_t *p
 	pcfg_hdr->type = htonl(pcfg_hdr->type);
 	pcfg_hdr->count = htonl(pcfg_hdr->count);
 
-    	// TODO：防止count溢出
+	// TODO：防止count溢出
 	ptlist = plist;
 	for (int i = 0; i < pcfg_hdr->count; i++) {
 		ptlist->level      = htonl(ptlist->level);
@@ -6863,8 +6891,8 @@ static int32_t tms_AnalyseAlarmOPM(struct tms_context *pcontext, int8_t *pdata, 
 	struct tms_alarm_opm      *phdr;
 	struct tms_alarm_opm_val  *plist, *ptlist;
 
-	phdr  = (struct tms_alarm_opm*)(pdata + GLINK_OFFSET_DATA );
-	plist = (struct tms_alarm_opm_val*)(pdata +GLINK_OFFSET_DATA+ sizeof(struct tms_alarm_opm));
+	phdr  = (struct tms_alarm_opm *)(pdata + GLINK_OFFSET_DATA );
+	plist = (struct tms_alarm_opm_val *)(pdata + GLINK_OFFSET_DATA + sizeof(struct tms_alarm_opm));
 
 	phdr->alarm_type  = htonl(phdr->alarm_type);
 	phdr->frame = htonl(phdr->frame);
@@ -6874,20 +6902,20 @@ static int32_t tms_AnalyseAlarmOPM(struct tms_context *pcontext, int8_t *pdata, 
 	ptlist = plist;
 	for (int i = 0; i < phdr->count; i++) {
 		ptlist->port  = htonl(ptlist->port);
-		ptlist->levelx  = htonl(ptlist->levelx);		
+		ptlist->levelx  = htonl(ptlist->levelx);
 		ptlist->power = htonl(ptlist->power);
 		ptlist++;
 	}
 
 	printf("tms_AnalyseAlarmOPM\n");
-    	printf("val:f%d/s%d/t%d\n", phdr->frame, phdr->slot, phdr->alarm_type);
-	printf("count %d\n",phdr->count);
+	printf("val:f%d/s%d/t%d\n", phdr->frame, phdr->slot, phdr->alarm_type);
+	printf("count %d\n", phdr->count);
 	ptlist = plist;
 	for (int i = 0; i < phdr->count; i++) {
 		printf("\tport %d Lvx %d power %d times %s\n", ptlist->port, ptlist->levelx, ptlist->power, ptlist->time);
 		ptlist++;
 	}
-	
+
 	return 0;
 }
 
@@ -6903,17 +6931,17 @@ static int32_t tms_AnalyseAlarmOPMChange(struct tms_context *pcontext, int8_t *p
 
 	printf("--------------------------\n");
 	printf("tms_AnalyseAlarmOPMChange\n");
-	phdr  = (struct tms_alarm_opm_change*)(pdata + GLINK_OFFSET_DATA );
+	phdr  = (struct tms_alarm_opm_change *)(pdata + GLINK_OFFSET_DATA );
 	if ( !CHECK_PTR(
-			phdr, 
-			struct tms_alarm_opm_change, 
-			struct tms_alarm_opm_val, 
-			htonl(phdr->count), 
-			pdata + len)) {
-		printf("Err: %s():%d\n",__FUNCTION__,__LINE__);
+	         phdr,
+	         struct tms_alarm_opm_change,
+	         struct tms_alarm_opm_val,
+	         htonl(phdr->count),
+	         pdata + len)) {
+		printf("Err: %s():%d\n", __FUNCTION__, __LINE__);
 		return -1;
 	}
-	plist = (struct tms_alarm_opm_val*)(pdata +GLINK_OFFSET_DATA+ sizeof(struct tms_alarm_opm_change));
+	plist = (struct tms_alarm_opm_val *)(pdata + GLINK_OFFSET_DATA + sizeof(struct tms_alarm_opm_change));
 
 	phdr->alarm_type  = htonl(phdr->alarm_type);
 	phdr->frame		  = htonl(phdr->frame);
@@ -6921,14 +6949,14 @@ static int32_t tms_AnalyseAlarmOPMChange(struct tms_context *pcontext, int8_t *p
 	phdr->alarm_cnt   = htonl(phdr->alarm_cnt);
 	phdr->count       = htonl(phdr->count);
 
-	
+
 	ptlist = plist;
 	for (int i = 0; i < phdr->count; i++) {
 		ptlist->port  = htonl(ptlist->port);
-		ptlist->levelx  = htonl(ptlist->levelx);		
+		ptlist->levelx  = htonl(ptlist->levelx);
 		ptlist->power = htonl(ptlist->power);
 		ptlist++;
-		printf("%d ",i);
+		printf("%d ", i);
 	}
 
 	printf("\n");
@@ -6945,16 +6973,16 @@ static int32_t tms_AnalyseAlarmOPMChange(struct tms_context *pcontext, int8_t *p
 
 
 /**
- * @brief	
+ * @brief
  * @param	null
  * @retval	null
- * @remarks	
- * @see	
+ * @remarks
+ * @see
  */
 int32_t tms_AdjustTime(
-	int fd, 
-	struct glink_addr *paddr, 
-	int8_t (*time)[20])
+    int fd,
+    struct glink_addr *paddr,
+    int8_t (*time)[20])
 {
 	int8_t pdata[20];
 
@@ -6962,11 +6990,11 @@ int32_t tms_AdjustTime(
 
 	struct glink_base  base_hdr;
 	uint8_t *pmem;
-	
-	pmem = (uint8_t*)&pdata;
+
+	pmem = (uint8_t *)&pdata;
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 	glink_Build(&base_hdr, ID_ADJUST_TIME, sizeof(struct tms_ack));
@@ -6983,23 +7011,23 @@ static int32_t tms_AnalyseAdjustTime(struct tms_context *pcontext, int8_t *pdata
 	return 0;
 }
 
- /**
- * @brief	ID_CMD_ACK 0x80000038 RTU返回应答码
- * @param[in]	fd 套接字文件描述符
- * @param[in]	paddr glink帧源地址和目的地址，如果填NULL则采用默认的
- 				TMS_DEFAULT_LOCAL_ADDR和TMS_DEFAULT_RMOTE_ADDR填充，两个宏的意义通过
- 				修改tmsxx.h设定
- * @param[in]	errcode 错误代码
- * @param[in]	cmdid 因为哪个命令而相应的ID
- * @retval	>0 发送成功
- * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
- */
+/**
+* @brief	ID_CMD_ACK 0x80000038 RTU返回应答码
+* @param[in]	fd 套接字文件描述符
+* @param[in]	paddr glink帧源地址和目的地址，如果填NULL则采用默认的
+				TMS_DEFAULT_LOCAL_ADDR和TMS_DEFAULT_RMOTE_ADDR填充，两个宏的意义通过
+				修改tmsxx.h设定
+* @param[in]	errcode 错误代码
+* @param[in]	cmdid 因为哪个命令而相应的ID
+* @retval	>0 发送成功
+* @retval	0 发送失败，该链接失效，立即断开
+* @remarks
+*/
 int32_t tms_Ack(
-	int fd, 
-	struct glink_addr *paddr, 
-	int errcode, 
-	int cmdid)
+    int fd,
+    struct glink_addr *paddr,
+    int errcode,
+    int cmdid)
 {
 	struct tms_ack ack;
 
@@ -7010,32 +7038,32 @@ int32_t tms_Ack(
 	uint8_t *pmem;
 	int ret;
 
-	pmem = (uint8_t*)&ack;
+	pmem = (uint8_t *)&ack;
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
-		// fd = 
+		// fd =
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 	glink_Build(&base_hdr, ID_CMD_ACK, sizeof(struct tms_ack));
 	ret = glink_Send(fd, &base_hdr, pmem, sizeof(struct tms_ack));
 	return ret;
 }
- /**
- * @brief	ID_CMD_ACK 0x80000038 RTU返回应答码
- * @param[in]	fd 套接字文件描述符
- * @param[in]	paddr glink帧源地址和目的地址，如果填NULL则采用默认的
- 				TMS_DEFAULT_LOCAL_ADDR和TMS_DEFAULT_RMOTE_ADDR填充，两个宏的意义通过
- 				修改tmsxx.h设定
- * @param[in]	errcode 错误代码
- * @param[in]	cmdid 因为哪个命令而相应的ID
- * @retval	>0 发送成功
- * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
- */
+/**
+* @brief	ID_CMD_ACK 0x80000038 RTU返回应答码
+* @param[in]	fd 套接字文件描述符
+* @param[in]	paddr glink帧源地址和目的地址，如果填NULL则采用默认的
+				TMS_DEFAULT_LOCAL_ADDR和TMS_DEFAULT_RMOTE_ADDR填充，两个宏的意义通过
+				修改tmsxx.h设定
+* @param[in]	errcode 错误代码
+* @param[in]	cmdid 因为哪个命令而相应的ID
+* @retval	>0 发送成功
+* @retval	0 发送失败，该链接失效，立即断开
+* @remarks
+*/
 int32_t tms_AckEx(
-	int fd, 
-	struct glink_addr *paddr, 
-	struct tms_ack *pack)
+    int fd,
+    struct glink_addr *paddr,
+    struct tms_ack *pack)
 {
 	struct tms_ack ack;
 
@@ -7052,13 +7080,13 @@ int32_t tms_AckEx(
 	int ret;
 
 
-	pmem = (uint8_t*)&ack;
+	pmem = (uint8_t *)&ack;
 
 	tms_FillGlinkFrame(&base_hdr, paddr);
 	if (0 == fd) {
 
 		fd = tms_SelectFdByAddr(&paddr->dst);
-		printf("fd = 0 find %d %x\n", fd, paddr->dst);	
+		printf("fd = 0 find %d %x\n", fd, paddr->dst);
 	}
 	glink_Build(&base_hdr, ID_CMD_ACK, sizeof(struct tms_ack));
 	ret = glink_Send(fd, &base_hdr, pmem, sizeof(struct tms_ack));
@@ -7103,22 +7131,22 @@ static int32_t tms_AnalyseAck(struct tms_context *pcontext, int8_t *pdata, int32
 	pval->reserve2 = htonl(pval->reserve2);
 	pval->reserve3 = htonl(pval->reserve3);
 	pval->reserve4 = htonl(pval->reserve4);
-	
+
 
 	printf("tms_AnalyseAck\n");
 	if ((uint32_t)pval->errcode >= sizeof(list) / sizeof(struct pro_list)) {
 		printf("\terror errcode [%2.2d]!!!\n", pval->errcode);
 	}
 	else {
-		printf("\tf%d/s%d/t%d/p%d err [%2.2d] %s \t\tcmdid [0x%8.8x] ", 
-					(pval->reserve1 >> 16) & 0xffff,
-					(pval->reserve1 >> 0) & 0xffff,
-					(pval->reserve2 >> 16) & 0xffff,
-					(pval->reserve2 >> 0) & 0xffff,
-					pval->errcode, list[pval->errcode].name, pval->cmdid);
+		printf("\tf%d/s%d/t%d/p%d err [%2.2d] %s \t\tcmdid [0x%8.8x] ",
+		       (pval->reserve1 >> 16) & 0xffff,
+		       (pval->reserve1 >> 0) & 0xffff,
+		       (pval->reserve2 >> 16) & 0xffff,
+		       (pval->reserve2 >> 0) & 0xffff,
+		       pval->errcode, list[pval->errcode].name, pval->cmdid);
 		tms_PrintCmdName(pval->cmdid);
 	}
-	
+
 	return 0;
 }
 
@@ -7126,7 +7154,7 @@ static int32_t tms_AnalyseAck(struct tms_context *pcontext, int8_t *pdata, int32
 static int tms_AnalyseSMSError(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
 	struct tms_sms_state *pval;
-	pval = (struct tms_sms_state*)(pdata + GLINK_OFFSET_DATA);
+	pval = (struct tms_sms_state *)(pdata + GLINK_OFFSET_DATA);
 	pval->state = htonl(pval->state);
 
 	printf("tms_AnalyseSMSError()\n");
@@ -7145,8 +7173,8 @@ static int tms_AckDevice(struct tms_context *pcontext, int8_t *pdata, int32_t le
 {
 	// pcontext->fd,
 	// int32_t tms_AckEx(
-	// int fd, 
-	// struct glink_addr *paddr, 
+	// int fd,
+	// struct glink_addr *paddr,
 	// struct tms_ack *pack)
 
 	// int fd;
@@ -7155,13 +7183,13 @@ static int tms_AckDevice(struct tms_context *pcontext, int8_t *pdata, int32_t le
 	struct glink_base *pbase_hdr;
 	struct glink_addr base_hdr;
 
-	pbase_hdr = (struct glink_base*)(pdata + sizeof(int32_t));
-	
+	pbase_hdr = (struct glink_base *)(pdata + sizeof(int32_t));
+
 	// printf(" ..................%s %x id %x\n", __FUNCTION__, htonl(pbase_hdr->src) ,htonl(pbase_hdr->cmdid));
 	if (htonl(pbase_hdr->src) != GLINK_DEV_ADDR) {
 		return 0;
 	}
-	
+
 	base_hdr.pkid = htonl(pbase_hdr->pkid);
 	base_hdr.src = htonl(pbase_hdr->dst);
 	base_hdr.dst = htonl(pbase_hdr->src);
@@ -7174,7 +7202,7 @@ static int tms_AckDevice(struct tms_context *pcontext, int8_t *pdata, int32_t le
 	ack.reserve4 = 0;
 	tms_AckEx(pcontext->fd, &base_hdr, &ack);
 
-	
+
 	// struct tms_context *popt;
 	// popt = (tms_context *)ptr_opt;
 	// gl_addr.dst = popt->pgb->src;
@@ -7197,177 +7225,174 @@ static int tms_AckDevice(struct tms_context *pcontext, int8_t *pdata, int32_t le
 }
 
 
-static struct tms_analyse_array sg_analyse_0x1000xxxx[] = 
-{
-{	tms_AnalyseTick	, 1}, //	0x10000000	ID_TICK
-{	tms_AnalyseUpdate	, PROCCESS_2DEV_AND_COPY2USE}, //	0x10000001	ID_UPDATE
-{	tms_AnalyseTrace	, 1}, //	0x10000002	ID_TRACE0
-{	tms_AnalyseTrace	, 1}, //	0x10000003	ID_TRACE1
-{	tms_AnalyseTrace	, 1}, //	0x10000004	ID_TRACE2
-{	tms_AnalyseCommand	, 1}, //	0x10000005	ID_TRACE3
-{	tms_AnalyseCommand	, 1}, //	0x10000006	ID_COMMAND
+static struct tms_analyse_array sg_analyse_0x1000xxxx[] = {
+	{	tms_AnalyseTick	, 1}, //	0x10000000	ID_TICK
+	{	tms_AnalyseUpdate	, PROCCESS_2DEV_AND_COPY2USE}, //	0x10000001	ID_UPDATE
+	{	tms_AnalyseTrace	, 1}, //	0x10000002	ID_TRACE0
+	{	tms_AnalyseTrace	, 1}, //	0x10000003	ID_TRACE1
+	{	tms_AnalyseTrace	, 1}, //	0x10000004	ID_TRACE2
+	{	tms_AnalyseCommand	, 1}, //	0x10000005	ID_TRACE3
+	{	tms_AnalyseCommand	, 1}, //	0x10000006	ID_COMMAND
 };
-static struct tms_analyse_array sg_analyse_0x6000xxxx[] = 
-{
-{	tms_AnalyseGetDevType	,9},//	0x60000000	ID_GET_DEVTYPE
-{	tms_AnalyseRetDevType	,5},//	0x60000001	ID_RET_DEVTYPE
-{	tms_AnalyseCUNoteNet	,1},//	0x60000002	ID_CU_NOTE_NET
-{	tms_AnalyseCUNoteManageConnect	,0},//	0x60000003	ID_CU_NOTE_MANAGE_CONNECT
-{	tms_AnalyseGetOPMOLPRayPower	,2},//	0x60000004	ID_GET_OPM_OLP_RAYPOWER
-{	tms_AnalyseMCU_OSWSwitch	,2},//	0x60000005	ID_CMD_OSW_SWITCH
-{	tms_AnalyseMCU_OLPReqOTDRTest	,0},//	0x60000006	ID_CMD_OLP_REQ_OTDR
-{	tms_AnalyseUnuse	,2},//	0x60000007	ID_CMD_OLP_START_OTDR
-{	tms_AnalyseUnuse	,2},//	0x60000008	ID_CMD_OLP_FINISH_OTDR
-{	tms_AnalyseUnuse	,8},//	0x60000009	ID_GET_ALARM_TEST
-{	tms_AnalyseUnuse	,8},//	0x6000000A	--
-{	tms_AnalyseUnuse	,8},//	0x6000000B	--
-{	tms_AnalyseUnuse	,8},//	0x6000000C	--
-{	tms_AnalyseUnuse	,8},//	0x6000000D	--
-{	tms_AnalyseUnuse	,8},//	0x6000000E	--
-{	tms_AnalyseUnuse	,8},//	0x6000000F	ID_GET_ALARM_TEST
-{	tms_AnalyseAnyRetOTDRTest	,0},//	0x60000010	ID_RET_ALARM_TEST
-{	tms_AnalyseUnuse	,8},//	0x60000011	ID_GET_DEV_STATE_FROM_TU
-{	tms_AnalyseRetDevStateFromTU	,0},//	0x60000012	ID_RET_DEV_STATE_FROM_TU
-{	tms_AnalyseUnuse	,8},//	0x60000013	ID_GET_POWER_STATE_FROM_TU
-{	tms_AnalyseRetPowerStateFromTU	,0},//	0x60000014	ID_RET_POWER_STATE_FROM_TU
-{	tms_AnalyseUnuse	,8},//	0x60000015	ID_MCU_GET_DEV_ALARM
-{	tms_AnalyseDevRetMCUAlarm	,0},//	0x60000016	ID_DEV_RET_MCU_ALARM
-{	tms_AnalyseDevRetMCUAlarm	,0},//	0x60000017	ID_OLP_REQUEST_OTDR
+static struct tms_analyse_array sg_analyse_0x6000xxxx[] = {
+	{	tms_AnalyseGetDevType	, 9}, //	0x60000000	ID_GET_DEVTYPE
+	{	tms_AnalyseRetDevType	, 5}, //	0x60000001	ID_RET_DEVTYPE
+	{	tms_AnalyseCUNoteNet	, 1}, //	0x60000002	ID_CU_NOTE_NET
+	{	tms_AnalyseCUNoteManageConnect	, 0}, //	0x60000003	ID_CU_NOTE_MANAGE_CONNECT
+	{	tms_AnalyseGetOPMOLPRayPower	, 2}, //	0x60000004	ID_GET_OPM_OLP_RAYPOWER
+	{	tms_AnalyseMCU_OSWSwitch	, 2}, //	0x60000005	ID_CMD_OSW_SWITCH
+	{	tms_AnalyseMCU_OLPReqOTDRTest	, 0}, //	0x60000006	ID_CMD_OLP_REQ_OTDR
+	{	tms_AnalyseUnuse	, 2}, //	0x60000007	ID_CMD_OLP_START_OTDR
+	{	tms_AnalyseUnuse	, 2}, //	0x60000008	ID_CMD_OLP_FINISH_OTDR
+	{	tms_AnalyseUnuse	, 8}, //	0x60000009	ID_GET_ALARM_TEST
+	{	tms_AnalyseUnuse	, 8}, //	0x6000000A	--
+	{	tms_AnalyseUnuse	, 8}, //	0x6000000B	--
+	{	tms_AnalyseUnuse	, 8}, //	0x6000000C	--
+	{	tms_AnalyseUnuse	, 8}, //	0x6000000D	--
+	{	tms_AnalyseUnuse	, 8}, //	0x6000000E	--
+	{	tms_AnalyseUnuse	, 8}, //	0x6000000F	ID_GET_ALARM_TEST
+	{	tms_AnalyseAnyRetOTDRTest	, 0}, //	0x60000010	ID_RET_ALARM_TEST
+	{	tms_AnalyseUnuse	, 8}, //	0x60000011	ID_GET_DEV_STATE_FROM_TU
+	{	tms_AnalyseRetDevStateFromTU	, 0}, //	0x60000012	ID_RET_DEV_STATE_FROM_TU
+	{	tms_AnalyseUnuse	, 8}, //	0x60000013	ID_GET_POWER_STATE_FROM_TU
+	{	tms_AnalyseRetPowerStateFromTU	, 0}, //	0x60000014	ID_RET_POWER_STATE_FROM_TU
+	{	tms_AnalyseUnuse	, 8}, //	0x60000015	ID_MCU_GET_DEV_ALARM
+	{	tms_AnalyseDevRetMCUAlarm	, 0}, //	0x60000016	ID_DEV_RET_MCU_ALARM
+	{	tms_AnalyseDevRetMCUAlarm	, 0}, //	0x60000017	ID_OLP_REQUEST_OTDR
 
 };
 
-struct tms_analyse_array sg_analyse_0x8000xxxx[] = 
-{
-{	tms_AnalyseSetIPAddress	,1},//	0x80000000	ID_CHANGE_ADDR
-{	tms_AnalyseGetSerialNumber	,0},//	0x80000001	ID_GET_SN
-{	tms_AnalyseRetSerialNumber	,1},//	0x80000002	ID_RET_SN
-{	tms_AnalyseCfgSMSAuthorization	,0},//	0x80000003	ID_CFG_SMS
-{	tms_AnalyseClearSMSAuthorization	,0},//	0x80000004	ID_CFG_SMS_CLEAR
-{	tms_AnalyseGetDeviceComposition	,0},//	0x80000005	ID_GET_COMPOSITION
-{	tms_AnalyseRetDeviceComposition	,0},//	0x80000006	ID_RET_COMPOSITION
-{	tms_AnalyseCfgMCUOSWPort	,0},//	0x80000007	ID_CFG_MCU_OSW_PORT
-{	tms_AnalyseCfgMCUOPMPortClear	,0},//	0x80000008	ID_CFG_MCU_OSW_PORT_CLEAR
-{	tms_AnalyseCfgMCUOLPPort	,0},//	0x80000009	ID_CFG_MCU_OLP_PORT
-{	tms_AnalyseUnuse	,8},//	0x8000000A	--
-{	tms_AnalyseUnuse	,8},//	0x8000000B	--
-{	tms_AnalyseUnuse	,8},//	0x8000000C	--
-{	tms_AnalyseUnuse	,8},//	0x8000000D	--
-{	tms_AnalyseUnuse	,8},//	0x8000000E	--
-{	tms_AnalyseUnuse	,8},//	0x8000000F	--
-{	tms_AnalyseCfgMCUOLPPortClear	,0},//	0x80000010	ID_CFG_MCU_OLP_PORT_CLEAR
-{	tms_AnalyseCfgMCUUniteOPMOSW	,0},//	0x80000011	ID_CFG_MCU_U_OPM_OSW
-{	tms_AnalyseCfgMCUUniteOPMOSWClear	,0},//	0x80000012	ID_CFG_MCU_U_OPM_OSW_CLEAR
-{	tms_AnalyseCfgMCUUniteOLPOSW	,0},//	0x80000013	ID_CFG_MCU_U_OLP_OSW
-{	tms_AnalyseCfgMCUUniteOLPOSWClear	,0},//	0x80000014	ID_CFG_MCU_U_OLP_OSW_CLEAR
-{	tms_AnalyseCfgOPMRefLevel	,2},//0},//	0x80000015	ID_CFG_OPM_REF_LEVEL
-{	tms_AnalyseGetOPMOP	,4},//	0x80000016	ID_GET_OPM_OP
-{	tms_AnalyseRetOPMOP	,5},//	0x80000017	ID_RET_OPM_OP
-{	tms_AnalyseCfgOLPRefLevel	,2},//0},//	0x80000018	ID_CFG_OLP_REF_LEVEL
-{	tms_AnalyseUnuse	,2},//	0x80000019	ID_GET_OLP_OP
-{	tms_AnalyseUnuse	,8},//	0x8000001A	--
-{	tms_AnalyseUnuse	,8},//	0x8000001B	--
-{	tms_AnalyseUnuse	,8},//	0x8000001C	--
-{	tms_AnalyseUnuse	,8},//	0x8000001D	--
-{	tms_AnalyseUnuse	,8},//	0x8000001E	--
-{	tms_AnalyseUnuse	,8},//	0x8000001F	--
-{	tms_AnalyseRetOLPOP	,5},//	0x80000020	ID_RET_OLP_OP
-{	tms_AnalyseCfgOTDRRef	,0},//	0x80000021	ID_CFG_OTDR_REF
-{	tms_AnalyseCfgMCUOSWCycle	,0},//	0x80000022	ID_CFG_MCU_OSW_CYCLE
-{	tms_AnalyseGetOTDRTest	,9},//	0x80000023	ID_GET_OTDR_TEST
-{	tms_AnalyseRetOTDRTest	,5},//	0x80000024	ID_RET_OTDR_TEST
-{	tms_AnalyseCfgOSWMode	,2},//	0x80000025	ID_CFG_OLP_MODE
-{	tms_MCU_AnalyseOLPSwitch	,2},//	0x80000026	ID_CMD_OLP_SWITCH
-{	tms_AnalyseReportOLPAction	,5},//	0x80000027	ID_REPORT_OLP_ACTION
-{	tms_AnalyseAlarmOPM	,5},//	0x80000028	ID_ALARM_OPM
-{	tms_AnalyseAlarmOPMChange	,5},//	0x80000029	ID_ALARM_OPM_CHANGE
-{	tms_AnalyseUnuse	,8},//	0x8000002A	--
-{	tms_AnalyseUnuse	,8},//	0x8000002B	--
-{	tms_AnalyseUnuse	,8},//	0x8000002C	--
-{	tms_AnalyseUnuse	,8},//	0x8000002D	--
-{	tms_AnalyseUnuse	,8},//	0x8000002E	--
-{	tms_AnalyseUnuse	,8},//	0x8000002F	--
-{	tms_AnalyseAlarmLine	,0},//	0x80000030	ID_ALARM_LINE
-{	tms_AnalyseAlarmHW	,9},//	0x80000031	ID_ALARM_HW
-{	tms_AnalyseRetOTDRCycle_V2	,0},//	0x80000032	ID_RET_OTDR_CYC
-{	tms_AnalyseSendSMS	,9},//	0x80000033	ID_CMD_SMS_TEXT
-{	tms_AnalyseSMSError	,5},//	0x80000034	ID_CMD_SMS_ERROR
-{	tms_AnalyseGetVersion	,2},//	0x80000035	ID_GET_VERSION
-{	tms_AnalyseRetVersion	,5},//	0x80000036	ID_RET_VERSION
-{	tms_AnalyseAdjustTime	,0},//	0x80000037	ID_ADJUST_TIME
-{	tms_AnalyseAck	,5},//	0x80000038	ID_CMD_ACK
-{	tms_AnalyseGetOTDRTest	,9},//	0x80000039	ID_GET_OTDR_TEST_CYC
-{	tms_AnalyseUnuse	,8},//	0x8000003A	0
-{	tms_AnalyseUnuse	,8},//	0x8000003B	--
-{	tms_AnalyseUnuse	,8},//	0x8000003C	0
-{	tms_AnalyseUnuse	,8},//	0x8000003D	0
-{	tms_AnalyseUnuse	,8},//	0x8000003E	0
-{	tms_AnalyseUnuse	,8},//	0x8000003F	0
-{	tms_AnalyseRetOTDRTest	,5},//	0x80000040	ID_RET_OTDR_TEST_CYC
-{	tms_AnalyseUnuse	,8},//	0x80000041	--
-{	tms_AnalyseUnuse	,8},//	0x80000042	--
-{	tms_AnalyseUnuse	,8},//	0x80000043	--
-{	tms_AnalyseUnuse	,8},//	0x80000044	--
-{	tms_AnalyseUnuse	,8},//	0x80000045	--
-{	tms_AnalyseUnuse	,8},//	0x80000046	--
-{	tms_AnalyseUnuse	,8},//	0x80000047	--
-{	tms_AnalyseUnuse	,8},//	0x80000048	--
-{	tms_AnalyseUnuse	,8},//	0x80000049	--
-{	tms_AnalyseUnuse	,8},//	0x8000004A	--
-{	tms_AnalyseUnuse	,8},//	0x8000004B	--
-{	tms_AnalyseUnuse	,8},//	0x8000004C	--
-{	tms_AnalyseUnuse	,8},//	0x8000004D	--
-{	tms_AnalyseUnuse	,8},//	0x8000004E	--
-{	tms_AnalyseUnuse	,8},//	0x8000004F	--
-{	tms_AnalyseUnuse	,2},//	0x80000050	ID_GET_OTDR_PARAM
-{	tms_AnalyseRetOTDRParam	,5},//	0x80000051	ID_RET_OTDR_PARAM
-{	tms_AnalyseGetDevProduce	,2},//	0x80000052	ID_GET_DEV_PRODUCE
-{	tms_AnalyseRetDevProduce	,5},//	0x80000053	ID_RET_DEV_PRODUCE
-{	tms_AnalyseTbRoute_Insert	,0},//	0x80000054	ID_INSERT_TBROUTE
-{	tms_AnalyseDelAll_TbRoute	,0},//	0x80000055	ID_DELALL_TBROUTE
-{	tms_AnalyseInsert_TbUnit	,0},//	0x80000056	ID_INSERT_TBUNIT
-{	tms_AnalyseDel_TbUnit	,0},//	0x80000057	ID_DEL_TBUNIT
-{	tms_AnalyseDelAll_TbUnit	,0},//	0x80000058	ID_DELALL_TBUNIT
-{	tms_AnalyseInsert_TbCycTest	,0},//	0x80000059	ID_INSERT_TBCYCTEST
-{	tms_AnalyseUnuse	,8},//	0x8000005A	--
-{	tms_AnalyseUnuse	,8},//	0x8000005B	--
-{	tms_AnalyseUnuse	,8},//	0x8000005C	--
-{	tms_AnalyseUnuse	,8},//	0x8000005D	--
-{	tms_AnalyseUnuse	,8},//	0x8000005E	--
-{	tms_AnalyseUnuse	,8},//	0x8000005F	--
-{	tms_AnalyseDel_TbCycTest	,0},//	0x80000060	ID_DEL_TBCYCTEST
-{	tms_AnalyseDelAll_TbCycTest	,0},//	0x80000061	ID_DELALL_TBCYCTEST
-{	tms_AnalyseDel_TbOTDRRefData	,0},//	0x80000062	ID_INSERT_TBOTDRREFDATA
-{	tms_AnalyseDelAll_TbOTDRHistData	,0},//	0x80000063	ID_DELALL_TBOTDRREFDATA
-{	tms_AnalyseUnuse	,8},//	0x80000064	--
-{	tms_AnalyseGetDeviceCompositionRT	,0},//	0x80000065	ID_GET_COMPOSITION_RT
-{	tms_AnalyseRetDeviceComposition	,3},//	0x80000066	ID_RET_COMPOSITION_RT
-{	tms_AnalyseRetDeviceComposition	,0},//	0x80000067	ID_ACK_COMPOSITION
-{	tms_AnalyseUnuse	,8},//	0x80000068	ID_RET_ALARM_HW_CHANGE
-{	tms_AnalyseUnuse	,2},//	0x80000069	ID_GET_OP_GATE
-{	tms_AnalyseUnuse	,8},//	0x8000006A	--
-{	tms_AnalyseUnuse	,8},//	0x8000006B	--
-{	tms_AnalyseUnuse	,8},//	0x8000006C	--
-{	tms_AnalyseUnuse	,8},//	0x8000006D	--
-{	tms_AnalyseUnuse	,8},//	0x8000006E	--
-{	tms_AnalyseUnuse	,8},//	0x8000006F	--
-{	tms_AnalyseUnuse	,3},//	0x80000070	ID_RET_OP_GATE
-{	tms_AnalyseUnuse	,0},//	0x80000071	ID_GET_MCU_TIME
-{	tms_AnalyseUnuse	,8},//	0x80000072	ID_RET_MCU_TIME
-{	tms_AnalyseUnuse	,0},//	0x80000073	ID_ALARM_SOUND_ON_OFF
-{	tms_AnalyseUnuse	,0},//	0x80000074	ID_GET_ALARM_SOUND_STATE
-{	tms_AnalyseUnuse	,8},//	0x80000075	ID_RET_ALARM_SOUND_STATE
+struct tms_analyse_array sg_analyse_0x8000xxxx[] = {
+	{	tms_AnalyseSetIPAddress	, 0}, //	0x80000000	ID_CHANGE_ADDR
+	{	tms_AnalyseGetSerialNumber	, 0}, //	0x80000001	ID_GET_SN
+	{	tms_AnalyseRetSerialNumber	, 1}, //	0x80000002	ID_RET_SN
+	{	tms_AnalyseCfgSMSAuthorization	, 0}, //	0x80000003	ID_CFG_SMS
+	{	tms_AnalyseClearSMSAuthorization	, 0}, //	0x80000004	ID_CFG_SMS_CLEAR
+	{	tms_AnalyseGetDeviceComposition	, 0}, //	0x80000005	ID_GET_COMPOSITION
+	{	tms_AnalyseRetDeviceComposition	, 0}, //	0x80000006	ID_RET_COMPOSITION
+	{	tms_AnalyseCfgMCUOSWPort	, 0}, //	0x80000007	ID_CFG_MCU_OSW_PORT
+	{	tms_AnalyseCfgMCUOPMPortClear	, 0}, //	0x80000008	ID_CFG_MCU_OSW_PORT_CLEAR
+	{	tms_AnalyseCfgMCUOLPPort	, 0}, //	0x80000009	ID_CFG_MCU_OLP_PORT
+	{	tms_AnalyseUnuse	, 8}, //	0x8000000A	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000000B	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000000C	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000000D	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000000E	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000000F	--
+	{	tms_AnalyseCfgMCUOLPPortClear	, 0}, //	0x80000010	ID_CFG_MCU_OLP_PORT_CLEAR
+	{	tms_AnalyseCfgMCUUniteOPMOSW	, 0}, //	0x80000011	ID_CFG_MCU_U_OPM_OSW
+	{	tms_AnalyseCfgMCUUniteOPMOSWClear	, 0}, //	0x80000012	ID_CFG_MCU_U_OPM_OSW_CLEAR
+	{	tms_AnalyseCfgMCUUniteOLPOSW	, 0}, //	0x80000013	ID_CFG_MCU_U_OLP_OSW
+	{	tms_AnalyseCfgMCUUniteOLPOSWClear	, 0}, //	0x80000014	ID_CFG_MCU_U_OLP_OSW_CLEAR
+	{	tms_AnalyseCfgOPMRefLevel	, 2}, //0},//	0x80000015	ID_CFG_OPM_REF_LEVEL
+	{	tms_AnalyseGetOPMOP	, 4}, //	0x80000016	ID_GET_OPM_OP
+	{	tms_AnalyseRetOPMOP	, 5}, //	0x80000017	ID_RET_OPM_OP
+	{	tms_AnalyseCfgOLPRefLevel	, 2}, //0},//	0x80000018	ID_CFG_OLP_REF_LEVEL
+	{	tms_AnalyseUnuse	, 2}, //	0x80000019	ID_GET_OLP_OP
+	{	tms_AnalyseUnuse	, 8}, //	0x8000001A	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000001B	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000001C	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000001D	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000001E	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000001F	--
+	{	tms_AnalyseRetOLPOP	, 5}, //	0x80000020	ID_RET_OLP_OP
+	{	tms_AnalyseCfgOTDRRef	, 0}, //	0x80000021	ID_CFG_OTDR_REF
+	{	tms_AnalyseCfgMCUOSWCycle	, 0}, //	0x80000022	ID_CFG_MCU_OSW_CYCLE
+	{	tms_AnalyseGetOTDRTest	, 9}, //	0x80000023	ID_GET_OTDR_TEST
+	{	tms_AnalyseRetOTDRTest	, 5}, //	0x80000024	ID_RET_OTDR_TEST
+	{	tms_AnalyseCfgOSWMode	, 2}, //	0x80000025	ID_CFG_OLP_MODE
+	{	tms_MCU_AnalyseOLPSwitch	, 2}, //	0x80000026	ID_CMD_OLP_SWITCH
+	{	tms_AnalyseReportOLPAction	, 5}, //	0x80000027	ID_REPORT_OLP_ACTION
+	{	tms_AnalyseAlarmOPM	, 5}, //	0x80000028	ID_ALARM_OPM
+	{	tms_AnalyseAlarmOPMChange	, 5}, //	0x80000029	ID_ALARM_OPM_CHANGE
+	{	tms_AnalyseUnuse	, 8}, //	0x8000002A	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000002B	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000002C	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000002D	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000002E	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000002F	--
+	{	tms_AnalyseAlarmLine	, 0}, //	0x80000030	ID_ALARM_LINE
+	{	tms_AnalyseAlarmHW	, 9}, //	0x80000031	ID_ALARM_HW
+	{	tms_AnalyseRetOTDRCycle_V2	, 0}, //	0x80000032	ID_RET_OTDR_CYC
+	{	tms_AnalyseSendSMS	, 9}, //	0x80000033	ID_CMD_SMS_TEXT
+	{	tms_AnalyseSMSError	, 5}, //	0x80000034	ID_CMD_SMS_ERROR
+	{	tms_AnalyseGetVersion	, 2}, //	0x80000035	ID_GET_VERSION
+	{	tms_AnalyseRetVersion	, 5}, //	0x80000036	ID_RET_VERSION
+	{	tms_AnalyseAdjustTime	, 0}, //	0x80000037	ID_ADJUST_TIME
+	{	tms_AnalyseAck	, 5}, //	0x80000038	ID_CMD_ACK
+	{	tms_AnalyseGetOTDRTest	, 9}, //	0x80000039	ID_GET_OTDR_TEST_CYC
+	{	tms_AnalyseUnuse	, 8}, //	0x8000003A	0
+	{	tms_AnalyseUnuse	, 8}, //	0x8000003B	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000003C	0
+	{	tms_AnalyseUnuse	, 8}, //	0x8000003D	0
+	{	tms_AnalyseUnuse	, 8}, //	0x8000003E	0
+	{	tms_AnalyseUnuse	, 8}, //	0x8000003F	0
+	{	tms_AnalyseRetOTDRTest	, 5}, //	0x80000040	ID_RET_OTDR_TEST_CYC
+	{	tms_AnalyseUnuse	, 8}, //	0x80000041	--
+	{	tms_AnalyseUnuse	, 8}, //	0x80000042	--
+	{	tms_AnalyseUnuse	, 8}, //	0x80000043	--
+	{	tms_AnalyseUnuse	, 8}, //	0x80000044	--
+	{	tms_AnalyseUnuse	, 8}, //	0x80000045	--
+	{	tms_AnalyseUnuse	, 8}, //	0x80000046	--
+	{	tms_AnalyseUnuse	, 8}, //	0x80000047	--
+	{	tms_AnalyseUnuse	, 8}, //	0x80000048	--
+	{	tms_AnalyseUnuse	, 8}, //	0x80000049	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000004A	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000004B	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000004C	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000004D	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000004E	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000004F	--
+	{	tms_AnalyseUnuse	, 2}, //	0x80000050	ID_GET_OTDR_PARAM
+	{	tms_AnalyseRetOTDRParam	, 5}, //	0x80000051	ID_RET_OTDR_PARAM
+	{	tms_AnalyseGetDevProduce	, 2}, //	0x80000052	ID_GET_DEV_PRODUCE
+	{	tms_AnalyseRetDevProduce	, 5}, //	0x80000053	ID_RET_DEV_PRODUCE
+	{	tms_AnalyseTbRoute_Insert	, 0}, //	0x80000054	ID_INSERT_TBROUTE
+	{	tms_AnalyseDelAll_TbRoute	, 0}, //	0x80000055	ID_DELALL_TBROUTE
+	{	tms_AnalyseInsert_TbUnit	, 0}, //	0x80000056	ID_INSERT_TBUNIT
+	{	tms_AnalyseDel_TbUnit	, 0}, //	0x80000057	ID_DEL_TBUNIT
+	{	tms_AnalyseDelAll_TbUnit	, 0}, //	0x80000058	ID_DELALL_TBUNIT
+	{	tms_AnalyseInsert_TbCycTest	, 0}, //	0x80000059	ID_INSERT_TBCYCTEST
+	{	tms_AnalyseUnuse	, 8}, //	0x8000005A	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000005B	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000005C	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000005D	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000005E	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000005F	--
+	{	tms_AnalyseDel_TbCycTest	, 0}, //	0x80000060	ID_DEL_TBCYCTEST
+	{	tms_AnalyseDelAll_TbCycTest	, 0}, //	0x80000061	ID_DELALL_TBCYCTEST
+	{	tms_AnalyseDel_TbOTDRRefData	, 0}, //	0x80000062	ID_INSERT_TBOTDRREFDATA
+	{	tms_AnalyseDelAll_TbOTDRHistData	, 0}, //	0x80000063	ID_DELALL_TBOTDRREFDATA
+	{	tms_AnalyseUnuse	, 8}, //	0x80000064	--
+	{	tms_AnalyseGetDeviceCompositionRT	, 0}, //	0x80000065	ID_GET_COMPOSITION_RT
+	{	tms_AnalyseRetDeviceComposition	, 3}, //	0x80000066	ID_RET_COMPOSITION_RT
+	{	tms_AnalyseRetDeviceComposition	, 0}, //	0x80000067	ID_ACK_COMPOSITION
+	{	tms_AnalyseUnuse	, 8}, //	0x80000068	ID_RET_ALARM_HW_CHANGE
+	{	tms_AnalyseUnuse	, 2}, //	0x80000069	ID_GET_OP_GATE
+	{	tms_AnalyseUnuse	, 8}, //	0x8000006A	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000006B	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000006C	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000006D	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000006E	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000006F	--
+	{	tms_AnalyseUnuse	, 3}, //	0x80000070	ID_RET_OP_GATE
+	{	tms_AnalyseUnuse	, 0}, //	0x80000071	ID_GET_MCU_TIME
+	{	tms_AnalyseUnuse	, 8}, //	0x80000072	ID_RET_MCU_TIME
+	{	tms_AnalyseUnuse	, 0}, //	0x80000073	ID_ALARM_SOUND_ON_OFF
+	{	tms_AnalyseUnuse	, 0}, //	0x80000074	ID_GET_ALARM_SOUND_STATE
+	{	tms_AnalyseUnuse	, 8}, //	0x80000075	ID_RET_ALARM_SOUND_STATE
 
-{	tms_AnalyseUnuse	,0},//	0x80000076	ID_GET_TOTAL_OP_ALARM
-{	tms_AnalyseRetTotalOPAlarm	,8},//	0x80000077	ID_RET_TOTAL_OP_ALARM
-{	tms_AnalyseUnuse	,0},//	0x80000078	ID_GET_TOTAL_HW_ALARM
-{	tms_AnalyseUnuse	,0},//	0x80000079	ID_GET_OLP_ACTION_LOG
-{	tms_AnalyseUnuse	,8},//	0x8000007A	--
-{	tms_AnalyseUnuse	,8},//	0x8000007B	--
-{	tms_AnalyseUnuse	,8},//	0x8000007C	--
-{	tms_AnalyseUnuse	,8},//	0x8000007D	--
-{	tms_AnalyseUnuse	,8},//	0x8000007E	--
-{	tms_AnalyseUnuse	,8},//	0x8000007F	--
-{	tms_AnalyseRetOLPActionLog	,8},//	0x80000080	ID_RET_OLP_ACTION_LOG
+	{	tms_AnalyseUnuse	, 0}, //	0x80000076	ID_GET_TOTAL_OP_ALARM
+	{	tms_AnalyseRetTotalOPAlarm	, 8}, //	0x80000077	ID_RET_TOTAL_OP_ALARM
+	{	tms_AnalyseUnuse	, 0}, //	0x80000078	ID_GET_TOTAL_HW_ALARM
+	{	tms_AnalyseUnuse	, 0}, //	0x80000079	ID_GET_OLP_ACTION_LOG
+	{	tms_AnalyseUnuse	, 8}, //	0x8000007A	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000007B	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000007C	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000007D	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000007E	--
+	{	tms_AnalyseUnuse	, 8}, //	0x8000007F	--
+	{	tms_AnalyseRetOLPActionLog	, 8}, //	0x80000080	ID_RET_OLP_ACTION_LOG
 
 };
 /**
@@ -7390,20 +7415,19 @@ int32_t tms_Analyse(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 #ifdef CONFIG_ACK_DEVICE
 	tms_AckDevice(pcontext, pdata, len);
 #endif
-	pbase_hdr = (struct glink_base*)(pdata + sizeof(int32_t));
+	pbase_hdr = (struct glink_base *)(pdata + sizeof(int32_t));
 	cmdid = htonl(pbase_hdr->cmdid);
 	cmdh = cmdid & 0xf0000000;
 	cmdl = cmdid & 0x0fffffff;
-	
+
 	// if (cmdid != ID_TICK &&
 	// 	(ID_TRACE0 > cmdid &&  ID_TRACE3 < cmdid)  )
-	if (cmdid != ID_TICK)
-	{
-		fecho("\n[frame]:-----[ %d ] cmdid [%8.8x] fd [%d]", len, cmdid, pcontext->fd);	
+	if (cmdid != ID_TICK) {
+		fecho("\n[frame]:-----[ %d ] cmdid [%8.8x] fd [%d]", len, cmdid, pcontext->fd);
 		tms_PrintCmdName(cmdid);
 	}
 
-	
+
 	// 可以考虑在这里提取 glink 头指针 pcontext->pgb = htonl(pbase_hdr->xxx);
 	// pbase_hdr->pklen 	= htonl(pbase_hdr->pklen);
 	// pbase_hdr->version 	= htonl(pbase_hdr->version);
@@ -7447,11 +7471,12 @@ int32_t tms_Analyse(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 		// sg_analyse_0x1000xxxx[cmdl].ptrfun(pcontext, pdata, len);
 		break;
 	default:
-_Unknow:;
+_Unknow:
+		;
 		fecho("unknow command id 0x%8.8x\n", cmdid);
 		break;
 	}
-	
+
 
 	// 未知cmdid
 	if (pwhichArr == NULL) {
@@ -7464,7 +7489,7 @@ _Unknow:;
 		pwhichArr->ptrfun( pcontext, pdata, len);
 		break;
 	case PROCCESS_2MANAGE:
-        fecho("PROCCESS_2MANAGE\n");
+		fecho("PROCCESS_2MANAGE\n");
 		tms_Transmit2Manager( pcontext, pdata, len);
 		pwhichArr->ptrfun( pcontext, pdata, len);
 		break;
@@ -7472,12 +7497,12 @@ _Unknow:;
 		pwhichArr->ptrfun(pcontext, pdata, len);
 		break;
 	case PROCCESS_COPY2USE:
-        fecho("PROCCESS_COPY2USE\n");
+		fecho("PROCCESS_COPY2USE\n");
 		pwhichArr->ptrfun(pcontext, pdata, len);
 		tms_Copy2Use(pcontext, pdata, len);
 		break;
 	case PROCCESS_2DEV_AND_COPY2USE:
-        fecho("PROCCESS_2DEV_AND_COPY2USE\n");
+		fecho("PROCCESS_2DEV_AND_COPY2USE\n");
 		tms_Transmit2Dev( pcontext, pdata, len);
 		pwhichArr->ptrfun(pcontext, pdata, len);
 		tms_Copy2Use(pcontext, pdata, len);
@@ -7505,7 +7530,7 @@ _Unknow:;
 		fecho("undefine dowhat!!!!!\n");
 		break;
 	}
-	
+
 	return 0;
 }
 
@@ -7548,7 +7573,7 @@ void tms_Init()
  * @param[out]	pout 返回设备信息
  * @retval	0 设备并未返回设备信息，此槽位未检测到连接，pout值无效，pout->fd设置成0
  * @retval	>0 有效fd描述符
- * @remarks	
+ * @remarks
  * @see	tms_GetDevBaseByFd
  */
 int32_t tms_GetDevBaseByLocation(int32_t frame, int32_t slot, struct tms_devbase *pout)
@@ -7584,7 +7609,7 @@ int32_t tms_GetDevBaseByFd(int fd, struct tms_devbase *pout)
 	}
 
 	pdev = &sg_devnet[0][0];
-	for (int i = 0; i < MAX_FRAME* MAX_SLOT; i++) {
+	for (int i = 0; i < MAX_FRAME * MAX_SLOT; i++) {
 		if (pdev->fd == fd) {
 			pout->fd   = pdev->fd;
 			pout->frame = i / MAX_SLOT;
@@ -7607,15 +7632,15 @@ int32_t tms_GetTempFd()
  * @param[out]	fd 所有
  * @retval	0 没有连接网管
  * @retval	>0 有效fd个数，所有fd在输出值fd中
- * @remarks	
+ * @remarks
  * @see	tms_AddManage\n tms_DelManage\n tms_ManageCount
  */
 int32_t tms_GetTCManageFd(
-		int (*fd)[MANAGE_COUNT])
+    int (*fd)[MANAGE_COUNT])
 {
 	int count = 0;
 
-	for (register int i = 0;i < MANAGE_COUNT; i++) {
+	for (register int i = 0; i < MANAGE_COUNT; i++) {
 		if (sg_manage.fdtc[i] != 0) {
 			fd[0][count] = sg_manage.fd[i];
 			count++;
@@ -7628,12 +7653,12 @@ int32_t tms_GetTCManageFd(
  * @param	null
  * @retval	0 没有连接网管
  * @retval	>0 有效fd
- * @remarks	
+ * @remarks
  * @see	tms_AddManage\n tms_DelManage\n tms_ManageCount
  */
 int32_t tms_GetManageFd()
 {
-	for (int i = 0;i < MANAGE_COUNT; i++) {
+	for (int i = 0; i < MANAGE_COUNT; i++) {
 		if (sg_manage.fd[i] != 0) {
 			return sg_manage.fd[i];
 		}
@@ -7648,25 +7673,25 @@ int32_t tms_GetManageFd()
  * @retval	0 不存在有效的网管连接
  * @remarks	TMSxxV1.2 废除 tms_GetManageFd 而代之，当接收到 ID_GET_SN 数据包则表明发送方是网管，
  			将网管的源地址添加到内部缓存tms_AddMange\n
- 			
+
  			对于网管的fd管理:\n
  			accept  ---> 收到 ID_GET_SN 数据包 ---> tms_AddMange ---> tms_SelectManageByAddr
  			对于设备的fd管理其实也可以用该方法，但是目前依旧采用 tms_GetDevBaseByLocation、
  			tms_GetDevBaseByFd\n
- 			accept  ---> 收到 ID_RET_DEVTYPE 数据包 ---> tms_AddDev ---> 
+ 			accept  ---> 收到 ID_RET_DEVTYPE 数据包 ---> tms_AddDev --->
  			tms_GetDevBaseByLocation\tms_GetDevBaseByFd
- * @see	
+ * @see
  */
 
 int32_t tms_SelectFdByAddr(uint32_t *paddr)
 {
-    // return tms_GetCUFd();
+	// return tms_GetCUFd();
 	// addr 无效
 	if (0 == paddr) {
 		return 0;
 	}
 	// 找到有效对应的网管
-	for (int i = 0;i < MANAGE_COUNT; i++) {
+	for (int i = 0; i < MANAGE_COUNT; i++) {
 		if (sg_manage.fd_addr[i] == (int)*paddr) {
 			return sg_manage.fd[i];
 		}
@@ -7684,7 +7709,7 @@ int32_t tms_CountList(struct tms_man_base *list, int32_t count)
 
 	plist = list;
 	ret = 0;
-	for (int i = 0;i < MANAGE_COUNT; i++) {
+	for (int i = 0; i < MANAGE_COUNT; i++) {
 		if (sg_manage.fd_addr[i] == 0) {
 			continue;
 		}
@@ -7704,8 +7729,8 @@ int32_t tms_CountList(struct tms_man_base *list, int32_t count)
  * @brief	修改
  * @param	null
  * @retval	null
- * @remarks	
- * @see	
+ * @remarks
+ * @see
  */
 
 int32_t tms_SetCUFd(int fd)
@@ -7719,8 +7744,8 @@ int32_t tms_SetCUFd(int fd)
  * @brief	获取CUfd
  * @retval	0 无效fd，未连接CU
  * @retval	>0 有效CU fd
- * @remarks	
- * @see	
+ * @remarks
+ * @see
  */
 
 int32_t tms_GetCUFd()
@@ -7741,7 +7766,7 @@ void tms_UseEpollServer(struct ep_t *p)
  				MT_TRACE 1 支持命令行的网管
  * @retval	0  添加成功
  * @retval	-1 当前连接网管数过多
- * @remarks	
+ * @remarks
  * @see	tms_GetManageFd\n tms_DelManage\n tms_ManageCount
  */
 
@@ -7761,14 +7786,14 @@ int32_t tms_AddManage(struct tms_context *pcontext, int fd, int32_t type)
 	// return -1;
 
 	register int i;
-	printf("%s()\n",__FUNCTION__);
-	for ( i = 0;i < MANAGE_COUNT; i++) {
+	printf("%s()\n", __FUNCTION__);
+	for ( i = 0; i < MANAGE_COUNT; i++) {
 		if (sg_manage.fd[i] == fd) {
 			printf("have use fd %d\n", fd);
 			return 0;
 		}
 	}
-	for ( i = 0;i < MANAGE_COUNT; i++) {
+	for ( i = 0; i < MANAGE_COUNT; i++) {
 		if (sg_manage.fd[i] == 0) {
 			sg_manage.fd[i] = fd;
 			if (type == 1) {
@@ -7783,7 +7808,7 @@ int32_t tms_AddManage(struct tms_context *pcontext, int fd, int32_t type)
 				sg_manage.fd_addr[i]   = pcontext->pgb->src;
 				sg_manage.fdtc_addr[i] = pcontext->pgb->src;
 				printf("----src %x dst %x--------\n", pcontext->pgb->src,
-					pcontext->pgb->dst);
+				       pcontext->pgb->dst);
 				printf("add fd\n");
 			}
 
@@ -7803,10 +7828,10 @@ int32_t tms_AddManage(struct tms_context *pcontext, int fd, int32_t type)
  * @brief	将网管从到TMSxx管理缓存中移除
  * @param[in]	fd socket文件描述符
  * @retval	null
- * @remarks	
+ * @remarks
  * @see	tms_GetManageFd\n tms_AddManage\n tms_ManageCount
  */
- int32_t tms_DelManage(struct tms_context *pcontext, int fd)
+int32_t tms_DelManage(struct tms_context *pcontext, int fd)
 {
 	// 下面有问题的
 	// for (register int i = 0;i < MANAGE_COUNT; i++) {
@@ -7818,7 +7843,7 @@ int32_t tms_AddManage(struct tms_context *pcontext, int fd, int32_t type)
 	// }
 	// return -1;
 #if 0
-	for (register int i = 0;i < MANAGE_COUNT; i++) {
+	for (register int i = 0; i < MANAGE_COUNT; i++) {
 		if (sg_manage.fd[i]  != 0 && sg_manage.fd[i] == fd) {
 			printf("-------tms_DelManage--------   %d\n", fd);
 			sg_manage.fd[i]   = 0;
@@ -7830,7 +7855,7 @@ int32_t tms_AddManage(struct tms_context *pcontext, int fd, int32_t type)
 #endif
 
 	int count = 0;
-	for (register int i = 0;i < MANAGE_COUNT; i++) {
+	for (register int i = 0; i < MANAGE_COUNT; i++) {
 		if (sg_manage.fd[i]  != 0 ) {
 			count++;
 			if (sg_manage.fd[i] == fd) {
@@ -7846,20 +7871,20 @@ int32_t tms_AddManage(struct tms_context *pcontext, int fd, int32_t type)
 		pcontext->ptcb->pf_OnCUNoteManageConnect(0);
 	}
 	return -1;
-	
+
 }
 
 /**
  * @brief	当前连接的网管数
  * @retval	null
- * @remarks	
+ * @remarks
  * @see	tms_GetManageFd\n tms_AddManage\n tms_DelManage
  */
 int32_t tms_ManageCount()
 {
 	register int32_t count = 0;
 
-	for (register int i = 0;i < MANAGE_COUNT; i++) {
+	for (register int i = 0; i < MANAGE_COUNT; i++) {
 		if (sg_manage.fd[i] != 0) {
 			count++;
 		}
@@ -7882,17 +7907,17 @@ int32_t tms_RemoveDev(int fd)
 	struct tms_devbase *pdev;
 
 	pdev = &sg_devnet[0][0];
-	for (int i = 0; i < MAX_FRAME* MAX_SLOT; i++) {
+	for (int i = 0; i < MAX_FRAME * MAX_SLOT; i++) {
 		if (pdev->fd == fd) {
 			pdev->fd   = 0;
 			pdev->frame  = 0;
 			pdev->slot   = 0;
 			pdev->port = 0;
-			pdev->type = 0;			
+			pdev->type = 0;
 			break;
 		}
 		pdev++;
-	}	
+	}
 	return 0;
 }
 int32_t tms_RemoveByLocation(int32_t frame, int32_t slot)
@@ -7904,13 +7929,13 @@ int32_t tms_RemoveByLocation(int32_t frame, int32_t slot)
 	}
 
 	pdev = &sg_devnet[frame][slot];
-	
+
 	pdev->fd   = 0;
 	pdev->frame  = 0;
 	pdev->slot   = 0;
 	pdev->port = 0;
-	pdev->type = 0;			
-	
+	pdev->type = 0;
+
 	return 0;
 }
 
@@ -7925,7 +7950,7 @@ int32_t tms_RemoveByLocation(int32_t frame, int32_t slot)
  			以后可能会取消该函数的对外可见性
  * @see	tms_RemoveDev
  */
-// static 
+// static
 void tms_AddDev(int32_t frame, int32_t slot, struct tms_devbase *pdev)
 {
 	if ((uint32_t)frame >= MAX_FRAME || (uint32_t)slot > MAX_SLOT) {
@@ -7950,8 +7975,8 @@ void tms_AddDev(int32_t frame, int32_t slot, struct tms_devbase *pdev)
  * @param	null
  * @retval	>0 发送成功
  * @retval	0 发送失败，该链接失效，立即断开
- * @remarks	
- * @see	
+ * @remarks
+ * @see
  */
 
 int32_t tms_GetFrame(int32_t frame, struct tms_devbase (*pdev)[MAX_SLOT])
@@ -7989,14 +8014,14 @@ void tms_SetDoWhat(int cmdh, int count, int *arr)
 	case 0x60000000:
 		if ((uint32_t)count >= sizeof(sg_analyse_0x6000xxxx) / sizeof(struct tms_analyse_array)) {
 			count = sizeof(sg_analyse_0x6000xxxx) / sizeof(struct tms_analyse_array);
-			
+
 		}
 		p = sg_analyse_0x6000xxxx;
 		break;
 	case 0x10000000:
 		if ((uint32_t)count >= sizeof(sg_analyse_0x1000xxxx) / sizeof(struct tms_analyse_array)) {
 			count = sizeof(sg_analyse_0x1000xxxx) / sizeof(struct tms_analyse_array);
-			
+
 		}
 		p = sg_analyse_0x1000xxxx;
 		break;
