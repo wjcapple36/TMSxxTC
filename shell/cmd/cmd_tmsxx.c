@@ -1719,6 +1719,9 @@ int32_t DevStr2Int(char *name)
 	else if (strcmp(name,"sms") == 0) {
 		return DEV_SMS;
 	}
+	else if (strcmp(name,"tu") == 0) {
+		return DEV_TU;
+	}
 	// return 0;
 	return atoi(name);
 }
@@ -1888,9 +1891,9 @@ _Delete:;
 		}
 	}
 	else {
-_Usage:;
-		printf("\tatb add\n");
-		printf("\tatb del\n");
+// _Usage:;
+// 		printf("\tatb add\n");
+// 		printf("\tatb del\n");
 	}
 
 
@@ -3372,7 +3375,7 @@ int cmd_tmsall(int argc, char **argv)
 		struct tms_retotdr_test_hdr   test_hdr;
 		struct tms_retotdr_test_param test_param;
 		struct tms_retotdr_data_hdr   data_hdr;
-		struct tms_retotdr_data_val   data_val[10] = {1,2,3,4,5,6};
+		struct tms_retotdr_data_val   data_val[10] = {{1},{2},{3},{4},{5},{6}};
 		struct tms_retotdr_event_hdr  event_hdr;
 		struct tms_retotdr_event_val  event_val;
 		struct tms_retotdr_chain      chain;
@@ -3693,7 +3696,7 @@ int cmd_gver(int argc, char **argv)
 
 	// gver dev <frame/slot>
 	else if (argc == 5 && memcmp(argv[1], "dev", strlen(argv[1])) == 0) {
-		struct tms_devbase devbase;
+		// struct tms_devbase devbase;
 		frame = atoi(argv[2]);
 		slot  = atoi(argv[3]);
 
@@ -4139,6 +4142,9 @@ int cmd_olp(int argc, char **argv)
 		else if  ('s' == (argv[4][0] | 0x20)) {
 			port = OLP_SWITCH_B;
 		}
+		else {
+			return 0;
+		}
 
 		if ( (unsigned int)port < 7) {
 			tms_MCU_OLPSwitch(sg_sockfdid, NULL, frame, slot, port);	
@@ -4328,12 +4334,13 @@ int cmd_otdr(int argc, char **argv)
 
 	// otdr test <osw frame/slot/port>
 	if (argc == 5 && memcmp(argv[1], "test", strlen(argv[1])) == 0) {
+		int otdrport;
 		frame = atoi(argv[2]);
 		slot = atoi(argv[3]);
 		port = atoi(argv[4]);
+		otdrport = port;
 
-
-		tms_GetOTDRTest(sg_sockfdid, NULL, frame, slot, DEV_OTDR,port, 0,&test_param);
+		tms_GetOTDRTest(sg_sockfdid, NULL, frame, slot, DEV_OTDR,port, otdrport,&test_param);
 		return 0;
 	}
 
@@ -4460,10 +4467,11 @@ int cmd_produce(int argc, char **argv)
 	int frame,slot, type;
 
 	// prod <dev frame/slot/type>
-	if (argc == 4) {
-		frame = atoi(argv[1]);
-		slot  = atoi(argv[2]);
-		type = DevStr2Int(argv[3]);
+	if (argc == 5) {
+		frame = atoi(argv[2]);
+		slot  = atoi(argv[3]);
+		type = DevStr2Int(argv[4]);
+		struct glink_addr gl;
 
 		tms_GetDevProduce(sg_sockfdid, NULL, frame, slot, type);
 	}
@@ -4636,6 +4644,7 @@ void AnalyseComposition(int argc, char **argv)
 		dev.type  = atoi(argv[index]); index++;
 		dev.port  = atoi(argv[index]); index++;
 
+		printf("%d %d %d %d\n", dev.frame, dev.slot, dev.type, dev.port);
 		tms_AddDev(dev.frame, dev.slot, &dev);
 	}
 }
@@ -4645,12 +4654,12 @@ void AnalyseComposition(int argc, char **argv)
 int cmd_sn(int argc, char **argv)
 {
 	char strout[64];
-	int ret;
+	// int ret;
 
 	printf("send sn\n");
 	// sn 
 	if (argc == 1) {
-		ret = snprintf(strout, 64,"sn request");
+		snprintf(strout, 64,"sn request");
 		// tms_Command(sg_sockfdid, NULL, strout, ret + 1);
 		tms_GetSerialNumber(sg_sockfdid, NULL);
 	}
@@ -4700,7 +4709,7 @@ int cmd_setip(int argc, char **argv)
 }
 int cmd_update(int argc, char **argv)
 {
-	struct tms_devbase oneframe[12];
+	struct tms_devbase oneframe[MAX_SLOT];
 	int havedev;
 	char strout[256];
 	int ret;
@@ -4712,7 +4721,7 @@ int cmd_update(int argc, char **argv)
 			memcmp(argv[2], "request", strlen(argv[2])) == 0) {
 
 		// 遍历16个机框各槽位
-		for (int i = 0; i < 16; i++) {
+		for (int i = 0; i < MAX_SLOT; i++) {
 			havedev = 0;
 			tms_GetFrame(i, &oneframe);
 			tc.strout = strout;
@@ -4723,7 +4732,7 @@ int cmd_update(int argc, char **argv)
 			ret = snprintf(strout, 64, "update com refurbish");
 			tc.offset += ret;
 			
-			for (int k = 0; k < 12; k++) {
+			for (int k = 0; k < MAX_SLOT; k++) {
 				if (oneframe[k].fd != 0) {
 					havedev = 1;
 					ret = snprintf(tc.strout + tc.offset, tc.empty - tc.offset, " %d %d %d %d ",
@@ -4772,9 +4781,9 @@ int cmd_update(int argc, char **argv)
 			type  = DEV_OPM;
 			strcpy(target, TARGET_OPM);
 		}
-		else if (strcmp(argv[5], "osw") == 0) {
+		else if (strcmp(argv[5], "osw-gx-8") == 0) {
 			type  = DEV_OSW;
-			strcpy(target, TARGET_OSW);
+			strcpy(target, TARGET_OSW_GX_8);
 		}
 		else if (strcmp(argv[5], "otdr") == 0) {
 			type  = DEV_OTDR;
@@ -4793,6 +4802,9 @@ int cmd_update(int argc, char **argv)
 			type  = DEV_SMS;
 			strcpy(target, TARGET_SMS);
 			// todo 计算MD5
+		}
+		else {
+			return 0;
 		}
 
 		// 读取bin文件
@@ -4864,6 +4876,18 @@ int cmd_remotecmd(int argc, char **argv)
 	return 0;
 }
 W_BOOT_CMD(r, cmd_remotecmd, "cmd epoll server send");
+
+/**
+ * 重复的地址链接会被MCU断掉
+ * tc <ip> <port> [glink addr index]
+ * 	glink addr index	glink addr
+ *		a		0x3a
+ *		b		0x3b
+ *		c		0x3c
+ *		d		0x3d
+ *		e		0x3d
+ *		f		0x3f
+ */
 int cmd_term_connect(int argc,char **argv)
 {
 	struct ep_con_t client;
@@ -4891,7 +4915,7 @@ int cmd_term_connect(int argc,char **argv)
 		// 发送 序列号请求 ID_GET_SN 必须在 Im Trace 之前，
 		// 保证先将Trace网管的地址加入MCU的缓存
 		ret = snprintf(strout, 64, "sn");
-		// tms_Command(client.sockfd, NULL, strout, ret + 1);
+		tms_Command(client.sockfd, NULL, strout, ret + 1);
 
 		if (argc == 4) {
 			struct glink_addr gl;
@@ -4926,7 +4950,7 @@ int cmd_im(int argc, char **argv)
 		tms_Command(sg_sockfdid, NULL, strout, sizeof(strout));
 	}
 	else if (argc == 3 && memcmp(argv[1], "add", strlen(argv[1])) == 0) {	
-		int fd = tms_GetTempFd();
+		// int fd = tms_GetTempFd();
 		// tms_AddManage(0, fd, MT_TRACE);
 	}
 
@@ -5008,7 +5032,7 @@ void sh_analyse (char *fmt, long len);
 int cmd_intface(int argc, char **argv)
 {
 	int frame = 0, slot = 0, sockfd = 0;
-	struct tms_devbase oneframe[12];
+	struct tms_devbase oneframe[MAX_SLOT];
 
 	if (argc == 2) {
 		char c = 0;
@@ -5023,7 +5047,7 @@ int cmd_intface(int argc, char **argv)
 			(unuse >= '0' && unuse <= '9') &&
 			unuse1 == 0) {
 
-			if ((unsigned int)frame > 15 || (unsigned int)slot > 11) {
+			if ((unsigned int)frame > (MAX_FRAME-1) || (unsigned int)slot > (MAX_SLOT-1)) {
 				printf("Error over range\n");
 				return 0;
 			}
@@ -5089,7 +5113,7 @@ W_BOOT_CMD(interface, cmd_intface, "cmd epoll server send");
 int cmd_device(int argc, char **argv)
 {
 	int frame = 0, slot = 0;
-	struct tms_devbase oneframe[12];
+	struct tms_devbase oneframe[MAX_SLOT];
 
 	if (argc == 2 || argc == 3) {
 		char c = 0;
@@ -5451,6 +5475,7 @@ int DispFrame(struct tms_devbase *pframe, uint32_t flag, struct trace_cache *ptc
 		{"OLS   "}, 
 		{"OLP   "}, 
 		{"GSM   "}, 
+		{"TU   "}, 
 	};
 	int ret;
 
@@ -5459,21 +5484,21 @@ int DispFrame(struct tms_devbase *pframe, uint32_t flag, struct trace_cache *ptc
 	}
 	// printf("ptc = %x",(int)ptc);
 	ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset,
-			"-------------------------------------------------\n");
+			"-----------------------------------------------------------------\n");
 	ptc->offset += ret;
 
-	for (int k = 0; k < 12; k++) {
+	for (int k = 0; k < MAX_SLOT; k++) {
 		ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset, 
 				"|%2.2d ", k);
 		ptc->offset += ret;		
 	}
 
 	ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset, 
-			"|\n-------------------------------------------------\n");
+			"|\n-----------------------------------------------------------------\n");
 	ptc->offset += ret;
 
 	for (int i = 0; i < 5; i++) {
-		for (int k = 0; k < 12; k++) {
+		for (int k = 0; k < MAX_SLOT; k++) {
 			// 防止溢出
 			if ((uint32_t)pframe[k].type < sizeof(devName) / sizeof(char[8])) {
 				ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset, 
@@ -5484,20 +5509,20 @@ int DispFrame(struct tms_devbase *pframe, uint32_t flag, struct trace_cache *ptc
 		ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset, "|\n");
 		ptc->offset += ret;
 	}
-	for (int k = 0; k < 12; k++) {
+	for (int k = 0; k < MAX_SLOT; k++) {
 		ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset,
 				"|%2.2d ", pframe[k].port);
 		ptc->offset += ret;
 	}
 
 	ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset, 
-		"|\n-------------------------------------------------\n");
+		"|\n-----------------------------------------------------------------\n");
 	ptc->offset += ret;
 
 	if (flag & 0x01) {
 		ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset, "Socket Fd:\n");
 		ptc->offset += ret;
-		for (int i = 0; i < 12; i++) {
+		for (int i = 0; i < MAX_SLOT; i++) {
 			if (pframe[i].fd == 0) {
 				ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset, "%2.2d:no    ", i);
 				ptc->offset += ret;
@@ -5506,7 +5531,7 @@ int DispFrame(struct tms_devbase *pframe, uint32_t flag, struct trace_cache *ptc
 				ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset, "%2.2d:%-5.0d ", i, pframe[i].fd);
 				ptc->offset += ret;
 			}
-			if (i == 5) {
+			if (i == (MAX_SLOT/2 - 1) ) {
 				ret = snprintf(ptc->strout + ptc->offset, ptc->empty - ptc->offset, "\n");
 				ptc->offset += ret;
 			}
@@ -5533,7 +5558,7 @@ int Dispinf(struct tms_devbase *pframe, uint32_t flag, struct trace_cache *ptc)
 		tms_Trace(NULL, ptc->strout, ptc->offset, LEVEL_TC);
 		ptc->offset = 0;
 	}
-	for (int i = 0; i < 12; i++) {
+	for (int i = 0; i < MAX_SLOT; i++) {
 		if (pframe[i].fd != 0) {
 			fd = pframe[i].fd;
 
@@ -5611,7 +5636,7 @@ int cmd_Disp(int argc, char **argv)
 	int frametotal = 0, slottotal = 0;
 	int slot = 0;
 	char strout[1024];
-	struct tms_devbase oneframe[12];
+	struct tms_devbase oneframe[MAX_SLOT];
 	// struct _dispinf cbval;
 	struct trace_cache tc;
 	int ret;
@@ -5637,11 +5662,11 @@ int cmd_Disp(int argc, char **argv)
 	if (argc == 2 && (flag & (FLAG_DISP_FRAME + FLAG_DISP_CON) ) ) {
 
 		// 遍历16个机框各槽位
-		for (int i = 0; i < 16; i++) {
+		for (int i = 0; i < MAX_SLOT; i++) {
 			havedev = 0;
 			slot = 0;
 			tms_GetFrame(i, &oneframe);
-			for (int k = 0; k < 12; k++) {
+			for (int k = 0; k < MAX_SLOT; k++) {
 				if (oneframe[k].fd != 0) {
 					havedev = 1;
 					slottotal++;
@@ -5734,7 +5759,7 @@ int cmd_Disp(int argc, char **argv)
 
 	// disp manager
 	else if(argc == 2 && memcmp(argv[1], "manager", strlen(argv[1])) == 0) {
-		struct tms_man_base fdlist[16];
+		struct tms_man_base fdlist[MAX_FRAME];
 		int count;
 		
 		count = tms_CountList(fdlist, sizeof(fdlist) /  sizeof(struct tms_man_base));
@@ -5759,8 +5784,8 @@ int cmd_Disp(int argc, char **argv)
 	else if(argc == 2 && memcmp(argv[1], "clear", strlen(argv[1])) == 0 ) {
 
 _Clear:;
-		for (int i = 0; i < 16; i++) {
-			for (int j = 0; j < 12; j++) {
+		for (int i = 0; i < MAX_FRAME; i++) {
+			for (int j = 0; j < MAX_SLOT; j++) {
 				tms_RemoveByLocation(i, j);
 			}
 		}

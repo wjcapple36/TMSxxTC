@@ -56,7 +56,10 @@ extern "C" {
  				( ((uint8_t*)(ptrA)) + sizeof(struct_A) + \
 				   sizeof(struct_B) * (int32_t)(B_Count-1) <= ((uint8_t*)(PtrEnd)-sizeof(struct_B)) )
 
-
+////////////////////////////////////////////////////////////////////////////////
+// 机框，槽位数
+#define MAX_FRAME 16
+#define MAX_SLOT 16
 
 ////////////////////////////////////////////////////////////////////////////////
 // Section 1 返回值
@@ -83,6 +86,10 @@ extern "C" {
 #define RET_SAVE_SOURCE             19///<存在两个相同的源地址连接，两个网管
 #define RET_CONNECT_PORT_NOT_TEST   20///<本端口属于级联端口，不能进行测试
 #define RET_MODULE_ROUTE_NO_EXIST   21///<模块路由不存在
+#define RET_MODULE_ROUTE_ILLEGALT   22///<模块路由非法
+#define RET_SMS_PHONE_ILLEGALT          23 /// 短信电话非法
+#define RET_SMS_TEXT_VOERFLOW          24 /// 短信内容长度越界
+#define RET_SMS_EQ_ERROR                     25 //短信猫设备故障
 
 ////////////////////////////////////////////////////////////////////////////////
 // Section  Proccess 数据包处理方式
@@ -108,11 +115,13 @@ extern "C" {
 #define DEV_OLS					6	///<光源板
 #define DEV_OLP					7	///<光功率板
 #define DEV_SMS					8	///<短信模块板
+#define DEV_TU					9	///<子机框TU模块板
 
 // 在线升级设备名
 #define TARGET_PWU				"pwu.bin" ///<电源板
 #define TARGET_MCU				"mcu.bin" ///<主控板
 #define TARGET_OPM				"opm.bin" ///<光功率模块板
+#define TARGET_OSW_GX_8                                "osw-gx-8.bin" ///<光开关板
 #define TARGET_OSW				"osw.bin" ///<光开关板
 #define TARGET_OTDR				"otdr.exe" ///<OTDR板
 #define TARGET_OLS				"ols.bin" ///<光源板
@@ -196,7 +205,9 @@ extern "C" {
 #define ID_RET_DEV_STATE_FROM_TU	0x60000012 ///<TU板卡返回其所在机框的板卡插拔状态
 #define ID_GET_POWER_STATE_FROM_TU 	0x60000013 ///<工控板向TU板卡查询其所在机框的电源组成信息
 #define ID_RET_POWER_STATE_FROM_TU 	0x60000014 ///<TU板卡返回其所在机框的电源组成信息
-
+#define ID_MCU_GET_DEV_ALARM	 	0x60000015 ///<工控板查询某槽位上总的硬件告警
+#define ID_DEV_RET_MCU_ALARM	 	0x60000016 ///<各业务单板向MCU返回总的硬件告警
+#define ID_OLP_REQUEST_OTDR		0x60000017 ///<OLP板卡向MCU请求OTDR测试
 ////////////////////////////////////////////////////////////////////////////////
 // 命令类型:网管与MCU之间的通信
 ///<网管查询MCU的设备序列号
@@ -450,6 +461,17 @@ struct tms_dev_port
 	int32_t port;
 };
 
+struct tms_ret_dev_type
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+	int32_t port;
+	int32_t reserved0;
+	int32_t reserved1;
+	int32_t reserved2;
+	int32_t reserved3;
+};
 // #define tms_dev_base tms_dev_port 
 	
 struct tms_dev_composition
@@ -469,6 +491,78 @@ struct tms_dev_composition_val
 	int32_t reserved2;
 	int32_t reserved3;
 };
+
+// 0x60000012
+struct tms_dev_status_from_tu
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+	int32_t dev_status;
+};
+
+//###################################################################
+// 0x60000014 ID_RET_POWER_STATE_FROM_TU
+struct tms_ret_power_state_from_tu
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+	int32_t count;
+};
+
+struct tms_ret_power_state_from_tu_val
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+	int32_t port;
+	int32_t reserve0;
+	int32_t reserve1;
+	int32_t reserve2;
+	int32_t reserve3;
+
+};
+
+//#end
+// 0x60000015 ID_MCU_GET_DEV_ALARM
+struct tms_mcu_get_dev_alarm
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+};
+
+//###################################################################
+// 0x60000016 ID_DEV_RET_MCU_ALARM
+struct tms_dev_ret_mcu_alarm
+{
+	int32_t	alarm_type;
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+	int32_t count;
+};
+
+struct tms_dev_ret_mcu_alarm_val
+{
+	int32_t level;
+	int32_t frame;
+	int32_t slot;
+	uint32_t reason;
+	int8_t time[20];
+};
+//#end
+
+// 0x60000017 ID_OLP_REQUEST_OTDR
+struct tms_olp_request_otdr
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+	int32_t port;
+};
+
 
 
 
@@ -1353,7 +1447,7 @@ struct tms_callback
 	int32_t (*pf_OnSpAnyGetOTDRTest)(struct tms_context *pcontext, int8_t *pdata, int32_t len);
 	int32_t (*pf_OnSpSendSMS)(struct tms_context *pcontext, int8_t *pdata, int32_t len);
 	int32_t (*pf_OnSpAck)(struct tms_context *pcontext, int8_t *pdata, int32_t len);
-	int32_t (*pf_OnRetDevType)(struct tms_context *pcontext, struct tms_dev_port *pval);
+	int32_t (*pf_OnRetDevType)(struct tms_context *pcontext, struct tms_ret_dev_type *pval);
 	int32_t (*pf_OnRetVersion)(struct tms_context *pcontext, struct tms_dev_version *pval);
 	int32_t (*pf_OnRetAnyOP)(struct tms_context *pcontext, struct tms_any_op *phdr, struct tms_any_op_val  *plist);
 	int32_t (*pf_OnGetSerialNumber)(struct tms_context *pcontext);
@@ -1412,6 +1506,10 @@ int32_t tms_MCU_RetDeviceType(
 	int32_t slot, 
 	int32_t type, 
 	int32_t port);
+int32_t tms_MCU_RetDeviceType_V2(
+	int     fd, 
+	struct glink_addr *paddr, 
+	struct tms_ret_dev_type *pval);
 // int32_t tms_MCU_GetOPMRayPower(
 int32_t tms_MCU_GetOPMAlarm(
 	int     fd, 
@@ -1614,7 +1712,7 @@ int32_t tms_ManageCount();
 int32_t tms_AddManage(struct tms_context *pcontext, int fd, int32_t type);
 // int32_t tms_DelManage(int fd);
 int32_t tms_DelManage(struct tms_context *pcontext, int fd);
-int32_t tms_GetFrame(int32_t frame, struct tms_devbase (*pdev)[12]);
+int32_t tms_GetFrame(int32_t frame, struct tms_devbase (*pdev)[MAX_SLOT]);
 
 void tms_Init();
 int32_t tms_CfgMCUOSWCycle(
@@ -2030,6 +2128,8 @@ void tms_Echo(int en);
 int32_t tms_SendAllManager(struct glink_base  *pbase_hdr, uint8_t *pdata, int32_t len);
 int32_t tms_SendAllManagerDot(struct glink_base  *pbase_hdr, int group, uint8_t *fmt,...);
 int32_t tms_CountList(struct tms_man_base *list, int32_t count);
+int32_t tms_RetOLPActionLog(int fd, struct glink_addr *paddr, int32_t count, struct tms_olp_action_log_val *pval);
+int32_t tms_ManageCount();
 #ifdef __cplusplus
 }
 #endif

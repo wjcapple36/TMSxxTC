@@ -48,6 +48,7 @@ int unuse_copy2use(char *buf, int datalen, int msec, int fd)
 #endif
 int unuse_copy2use(char *buf, int datalen, int msec, void *ptr)
 {
+	return 0;
 	struct tms_context *ptms = (struct tms_context *)ptr;
 	struct glink_base *pgb = ptms->pgb;
 	uint32_t *pid;
@@ -77,35 +78,38 @@ int unuse_copy2use(char *buf, int datalen, int msec, void *ptr)
 
 int32_t tms_OnGetDeviceComposition(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
-	printf("OnGetDeviceComposition\n");
-	struct tms_dev_composition_val devcom[16*12];
+	printf("%s()%d\n", __FUNCTION__, __LINE__);
+	return 0;
+#if 0
+	struct tms_dev_composition_val devcom[16*MAX_SLOT];
 
 	int havedev;
 	int frametotal = 0,slottotal = 0;
 	int slot = 0;
-	struct tms_devbase oneframe[12];
+	struct tms_devbase oneframe[MAX_SLOT];
 
 	int count = 0;
 
 	for (int i = 0; i < 16; i++) {
 		tms_GetFrame(i, &oneframe);
-		for (int k = 0;k < 12;k++) {
-			devcom[i*12+k].frame = oneframe[k].frame;
-			devcom[i*12+k].slot  = oneframe[k].slot;
-			devcom[i*12+k].type  = oneframe[k].type;
-			devcom[i*12+k].port  = oneframe[k].port;
+		for (int k = 0;k < MAX_SLOT;k++) {
+			devcom[i*MAX_SLOT+k].frame = oneframe[k].frame;
+			devcom[i*MAX_SLOT+k].slot  = oneframe[k].slot;
+			devcom[i*MAX_SLOT+k].type  = oneframe[k].type;
+			devcom[i*MAX_SLOT+k].port  = oneframe[k].port;
 			count++;
 		}
 	}
 	printf("count = %d\n",count);
 	// tms_RetDeviceComposition(pcontext->fd, NULL, count,devcom);
 	return 0;
+#endif
 }
 
 
 
 
-struct tms_dev_composition_val sg_appdevcom[17][12] = {0};
+struct tms_dev_composition_val sg_appdevcom[17][12] = {{{0}}};
 
 // extern int DispFrame(struct tms_devbase *pframe,uint32_t flag);
 
@@ -132,7 +136,30 @@ int32_t tmsapp_GetFrame(int32_t frame, struct tms_devbase (*pdev)[12])
 int32_t tms_OnSetIPAddress(uint8_t (*ip)[16], uint8_t (*mask)[16], uint8_t (*gw)[16])
 {
 	printf("ip  :%s\nmask:%s\ngate:%s\n",ip[0],mask[0],gw[0]);
-	return 0;
+	char strout[256];
+	snprintf(strout, 256, "/usr/MenglongWu/bin/netcard.elf %s %s %s\n",
+		ip[0], mask[0], gw[0]);
+	printf("strout: %s", strout);
+
+	int ret = system(strout);
+
+	ret = WEXITSTATUS(ret);
+
+	// 0 正确
+	// 1 ip规则错误
+	// 2 mask规则错误
+	// 3 gw规则错误
+	// 4 ip和gw不在同一网段
+	if (ret == 0) {
+		// 设置IP并配置防火墙，并同步文件系统
+		system("/etc/init.d/ifconfig-eth0");
+		system("/etc/init.d/ifconfig-wlan0");
+		system("/etc/init.d/ifconfig-eth1");
+		system("/etc/init.d/ifconfig-lan0");
+		system("/bin/deffirewall");		
+		system("sync");
+	}	
+	return ret;
 }
 int32_t tms_OnRetSerialNumber(uint8_t (*sn)[128])
 {
@@ -173,7 +200,7 @@ int32_t tms_OnRetDeviceComposition(struct tms_context *pcontext, int8_t *pdata, 
 	struct tms_devbase oneframe[12];
 
 	struct tms_dev_composition_val *ptlist;
-	int frame;
+
 
 
 	ptlist = plist;
@@ -367,12 +394,12 @@ int32_t tms_OnCfgOTDRRef(struct tms_context *pcontext,
 // 调试用
 int32_t tms_OnSpAnyGetOTDRTest(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
-    struct tms_devbase oneframe[12];
+    struct tms_devbase oneframe[MAX_SLOT];
     int fd;
 
     for (int i = 0; i < 16; i++) {
         tms_GetFrame(i, &oneframe);
-        for (int k = 0; k < 12; k++) {
+        for (int k = 0; k < MAX_SLOT; k++) {
             if (oneframe[k].fd != 0 && oneframe[k].type == DEV_OTDR) {
                 fd = oneframe[k].fd;
                 goto _Find;
@@ -387,12 +414,12 @@ _Find:;
 
 int32_t tms_OnSpSendSMS(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
-	struct tms_devbase oneframe[12];
+	struct tms_devbase oneframe[MAX_SLOT];
 	int fd;
 
 	for (int i = 0; i < 16; i++) {
 		tms_GetFrame(i, &oneframe);
-		for (int k = 0; k < 12; k++) {
+		for (int k = 0; k < MAX_SLOT; k++) {
 			if (oneframe[k].fd != 0 && oneframe[k].type == DEV_SMS) {
 				fd = oneframe[k].fd;
 				goto _Find;
@@ -410,7 +437,7 @@ _Find:;
 int32_t tms_OnSpAck(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
 	struct tms_ack *pval;
-	int cmdid;
+	uint32_t cmdid;
 	pval = (struct tms_ack *)(pdata + GLINK_OFFSET_DATA);
 	cmdid   = htonl(pval->cmdid);
 
@@ -420,7 +447,7 @@ int32_t tms_OnSpAck(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 	return 0;
 }
 
-int32_t tms_OnRetDevType(struct tms_context *pcontext, struct tms_dev_port *pval)
+int32_t tms_OnRetDevType(struct tms_context *pcontext, struct tms_ret_dev_type *pval)
 {
 	struct pro_list typelist[] = {
 		{"Dev Undefine"}, 
@@ -431,7 +458,8 @@ int32_t tms_OnRetDevType(struct tms_context *pcontext, struct tms_dev_port *pval
 		{"DEV_OTDR"}, 
 		{"DEV_OLS"}, 
 		{"DEV_OLP"}, 
-		{"DEV_SMS"}, 
+		{"DEV_SMS"},
+		{"DEV_TU"}, 
 	};
 	char strout[128];
 	int ret;
@@ -533,7 +561,8 @@ int32_t tms_OnRetAnyOP(struct tms_context *pcontext, struct tms_any_op *phdr, st
 
 int32_t tms_OnGetSerialNumber(struct tms_context *pcontext)
 {
-    return 0;
+	return 0;
+#if 0
 	tdb_sn_t input, mask;
 	tdb_sn_t *ppout;
 	int row;
@@ -558,16 +587,17 @@ int32_t tms_OnGetSerialNumber(struct tms_context *pcontext)
 		struct glink_addr gl;
 		gl.src = GLINK_4412_ADDR;
 		gl.dst = GLINK_MANAGE_ADDR;
-        gl.pkid = pcontext->pgb->pkid;
+        	gl.pkid = pcontext->pgb->pkid;
 		ret = snprintf(strout, 64,"%s",ppout[r].sn);
-        tms_RetSerialNumber(tms_GetCUFd(), &gl, (uint8_t (*)[128])strout);
-		printf("cu fd %d\n", tms_GetCUFd());
+        	tms_RetSerialNumber(tms_GetCUFd(), &gl, (uint8_t (*)[128])strout);
+		printf("cu fd %d %d\n", tms_GetCUFd());
 		break;
 	}
 	
 	// 注意，用完后必须释放
 	free(ppout);
 	return 0;
+#endif
 }
 
 extern int DispRoute_V2(struct tdb_route *prl, int count, struct trace_cache *ptc);
@@ -662,13 +692,102 @@ void tms_SetCB(void *fun)
 
 void *ThreadConnectCU(void *arg)
 {
+	// struct tmsxx_app *ptmsapp;
+	// struct tms_context *pcontext;
+	// struct ep_t *pep = (struct ep_t*)arg;
+	struct ep_con_t client;
+	
+	int server_fd;
+	// int server_cnt;
+	uint32_t server_addr;
+	struct glink_addr gl_addr;
+	bzero(&client, sizeof(struct ep_con_t));
+
+	
+#ifdef _MANAGE
+	return 0;
+#endif
+	
+	usleep(3000000);//延时3s，防止x86下efence奔溃
+	
+	gl_addr.pkid = 0;
+	gl_addr.src = TMS_DEFAULT_LOCAL_ADDR;
+	while(1) {
+		for (server_addr = 0x3a; server_addr <=0x3f;  server_addr++) {
+			server_fd = tms_SelectFdByAddr(&server_addr);
+			gl_addr.dst = server_addr;
+
+			if (server_fd) {
+				// printf("ser cnt %d\n", server_fd);
+				tms_Tick(server_fd, &gl_addr);	
+			}
+
+		}
+		
+
+		// if (g_en_connect_cu == 1 && 0 == tms_ManageCount()) {
+		// 	if (0 == ep_Connect(pep,&client, "192.168.0.253", 6000) ) {
+		// 	// if (0 == ep_Connect(pep,&client, "192.168.1.251", 6000) ) {
+		//     	printf("connect CU success :  %s:%d\n", 
+		// 					inet_ntoa(client.loc_addr.sin_addr),
+		// 					htons(client.loc_addr.sin_port));
+
+		//     	// ptmsapp = (struct tmsxx_app*)client.ptr;
+		//     	// pcontext = &ptmsapp->context;
+		//     	// printf("pcontext %d\n", pcontext->fd);
+		//     	// pcontext = (struct tms_context*) ((struct tmsxx_app*)client.ptr->context);
+		//     	tms_AddManage(NULL,client.sockfd, 0);
+		//     	tms_SetCUFd(client.sockfd);
+		//     	sleep(5);
+		//     }
+		//     else {
+		//     	sleep(5);
+		//     	continue;
+		//     }
+	 //    	}
+	    #if 0
+	    // if (g_en_connect_cu == 1 && 0 != tms_ManageCount()) {
+	    if (g_en_connect_cu == 1 && 0 != client.sockfd) {
+	    	struct tmsxx_app *ptapp = (struct tmsxx_app*)client.ptr;
+			
+			for (int i = 0;i < 10; i++) {
+				tms_Tick(client.sockfd, NULL);
+				sleep(3);
+
+				if (ptapp->context.tick == 0) {
+					if (i < 6) {
+						printf("continue send TICK to cu %d\n",i);
+						continue;
+					}
+					else {
+						tms_SetCUFd(0);
+						tms_DelManage(NULL,client.sockfd); // 解决bug
+						ep_Close(pep, NULL, client.sockfd);
+						client.sockfd = 0;
+						break;
+					}
+				}
+				else {
+					break;
+				}
+			}
+			ptapp->context.tick = 0;
+	    }
+	    #endif
+	    sleep(10);
+	}
+    
+	return NULL;
+}
+#if 0
+void *ThreadConnectCU(void *arg)
+{
 	struct tmsxx_app *ptmsapp;
 	struct tms_context *pcontext;
 	struct ep_t *pep = (struct ep_t*)arg;
 	struct ep_con_t client;
 	
 	bzero(&client, sizeof(struct ep_con_t));
-	return 0;
 #ifdef _MANAGE
 	return 0;
 #endif
@@ -726,6 +845,7 @@ void *ThreadConnectCU(void *arg)
     
 
 }
+#endif
 
 #ifdef __cplusplus
 }

@@ -48,10 +48,10 @@ typedef struct md5_ctx {
 #define S44 21
 
 
-static unsigned char PADDING[64] = {
-  0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+// static unsigned char PADDING[64] = {
+//   0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 /* F, G, H and I are basic MD5 functions.*/
 #define F(x, y, z) (((x) & (y)) | ((~x) & (z)))
@@ -87,7 +87,7 @@ Rotation is separate from addition to prevent recomputation.
   }
 
 
-
+#ifdef  USE_MD5
 class CMD5  
 {
 public:
@@ -107,7 +107,7 @@ public:
 	virtual ~CMD5();
 
 };
-
+#endif
 
 
 #ifdef __cplusplus

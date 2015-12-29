@@ -103,7 +103,7 @@ extern "C" {
 #define DB_PATH "/etc/tmsxx.db"
 // #define DB_PATH "/home/wjc/src-example/mcu/tmsxx.db"
 
-static int sg_echo = 1;
+static int sg_echo = 0;
 ////////////////////////////////////////////////////////////////////////////////
 // 数据库创建
 
@@ -705,20 +705,20 @@ int tmsdb_CheckDb()
 			memcpy(dst, pcol_data, col_byte); \
 		} \
 }
-
-//#define TEXT_COPY_S(pstmt, index, dst, max) \
-//{ \
-//		const void *pcol_data; \
-//		int col_byte; \
-//		pcol_data          = sqlite3_column_blob(pstmt,index); \
-//		if (pcol_data) { \
-//			col_byte = strlen((char*)pcol_data);  \
-//			col_byte = col_byte > (max) ? (max) : col_byte; \
-//			memcpy(dst, pcol_data, col_byte); \
-//			dst[col_byte] = '\0';\
-//		} \
-//}
-
+/*
+#define TEXT_COPY_S(pstmt, index, dst, max) \
+{ \
+		const void *pcol_data; \
+		int col_byte; \
+		pcol_data          = sqlite3_column_blob(pstmt,index); \
+		if (pcol_data) { \
+			col_byte = strlen((char*)pcol_data);  \
+			col_byte = col_byte > (max) ? (max) : col_byte; \
+			memcpy(dst, pcol_data, col_byte); \
+			dst[col_byte] = '\0';\
+		} \
+}
+*/
 
 
 #define TEXT_COPY_S(pstmt, index, dst, max) \
@@ -1028,7 +1028,7 @@ int tmsdb_Insert_dev_map(
 		int count)
 {
 	sqlite3 *db;
-	char *errMsg = NULL;
+	// char *errMsg = NULL;
 	int rc;
 	char sql[1024];
 	sqlite3_stmt *pstmt;
@@ -5398,7 +5398,10 @@ alarm_type,alarm_level,alarm_frame,alarm_slot,alarm_port,alarm_position,alarm_ti
 
 	else if (pcondition != NULL && pmask != NULL)
 	{
-		if (pmask->id) {
+		if (pmask->id == DB_MORE) {
+			snprintf(sqlid, 64, "and id>%d", pcondition->id);
+		}
+		if (pmask->id == DB_EQ) {
 			snprintf(sqlid, 64, "and id=%d", pcondition->id);
 		}
 		// 构造SQL语句

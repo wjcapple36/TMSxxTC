@@ -33,54 +33,65 @@
  *
  * <h2><center>&copy; COPYRIGHT </center></h2> 
 */
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
- 
 
+#include "autoconfig.h"
 #include "minishell_core.h"
-// #include "board.h"
-// #include "linux/string.h"
-#include "shell.h"
-#include "stdio.h"
-#include "malloc.h"
-#include <readline/readline.h>
-#include <readline/history.h>
+
+
+#ifdef CONFIG_MINISHELL_READLINE
+	#define echo_printf printf
+
+#else
+	#define echo_printf printk
+#endif
+
+#ifdef CMD_ARRAY 
+	#include "shell.h"
+#endif
+
+#ifdef CONFIG_MINISHELL_READLINE
+	#include "stdio.h"
+	#include "malloc.h"
+	#include <readline/readline.h>
+	#include <readline/history.h>
+	
+#else
+	#include "board.h"
+	#include "linux/string.h"
+#endif
 
 
 
-int do_help(int argc,char **argv);
-int do_null(int argc,char **argv);
 
+extern struct cmd_table __w_boot_cmd_start,__w_boot_cmd_end;
 
 #ifdef CMD_SECTION
-volatile int __wcmd_start __attribute__ ((section (".w_boot_start"))) = 0;
+	volatile int __wcmd_start __attribute__ ((section (".w_boot_start"))) = 0;
+	W_BOOT_CMD(help, do_help, "shell help");
+	volatile int __wcmd_end   __attribute__ ((section (".w_boot_end"))) = 0;
 
-W_BOOT_CMD(help,do_help,"shell help");
-volatile int __wcmd_end   __attribute__ ((section (".w_boot_end"))) = 0;
 #endif
 
 //*****************************************************************************
 //命令列表
 
 #ifdef CMD_ARRAY
-int do_help(int argc,char **argv);
-
-int cmd_Server(int argc,char **argv);
-int cmd_Connect(int argc,char **argv);
-int cmd_InfoServer(int argc,char **argv);
-static struct cmd_table cmd_tbl_list[] = 
-{
+static struct cmd_table cmd_tbl_list[] = {
+	// INIT_CMD define in shell/shell.h
 	INIT_CMD,
-	{(char*)"help",do_help,(char*)"shell help"},
-	{(char*)"quit",do_null,(char*)"quit shell"},
-	// {"server",cmd_Server,"dsdsf"},
-	// {"inf",cmd_InfoServer,"dsdsf"},
-	// {"connect",cmd_Connect,"dsdsf"},
-	
+
+	{(char *)"help", do_help, (char *)"shell help"},
+	{(char *)"quit", do_null, (char *)"quit shell"},
+
 	// SHELL_REG_CMD(0,0,0),
-	{0,0,0},
+	{0, 0, 0},
 };
+
 #endif
 
 struct env g_envLocal;
@@ -99,7 +110,7 @@ int do_null(int argc,char **argv)
  */
 
 
-W_BOOT_CMD(null,do_null,"shell help");
+W_BOOT_CMD(null, do_null, "do nothing");
 void sh_sort();
 int do_help(int argc,char **argv)
 {
@@ -123,17 +134,18 @@ int do_help(int argc,char **argv)
 	MINISHELL_START(pstart);
 	MINISHELL_END(pend);
 
-	
+
 	// pstart = &__w_boot_cmd_start;
 	while((pstart < pend)) {
-		printf("  %-12s\t",pstart->name);
-		printf("%s\r\n",pstart->help);
+		echo_printf("  %-12s\t",pstart->name);
+		echo_printf("%s\r\n",pstart->help);
 		pstart++;
 	}
 	return 0;
-	
 }
-
+#ifdef CMD_LDS
+	W_BOOT_CMD(help, do_help, "shell help");
+#endif
 
 /**
  * @brief	Mini Shell自带命令，修改命令提示符名
@@ -155,7 +167,7 @@ int do_hostname(int argc,char **argv)
 	}
 	return 0;	
 }
-
+W_BOOT_CMD(hostname,do_hostname,"set hostname");
 
 
 //*****************************************************************************
@@ -208,6 +220,7 @@ void sh_sort()
 	}	
 }
 
+#ifdef CONFIG_MINISHELL_EX
 /**
  * @brief	按照字母顺序排序编译后生成的Mini Shell命令
  */
@@ -242,7 +255,7 @@ void sh_sort_ex(struct cmd_prompt *cmdlist, int count)
 		pstart++;
 	}	
 }
-
+#endif
 /**
  * @brief	Mini Shell分析命令，找到命令则执行
  * @param	fmt 若干个"  ,\t\n"分隔的字符串
@@ -254,7 +267,7 @@ void sh_sort_ex(struct cmd_prompt *cmdlist, int count)
 void sh_analyse (char *fmt,long len)
 {
 	//char (*cmd)[10];
-	char *cmd[256],*token = NULL;	
+	char *cmd[256],*token = NULL;
 	unsigned int count = 0;
 	char seps[]   = " ,\t\n";
 
@@ -273,7 +286,7 @@ void sh_analyse (char *fmt,long len)
 		MINISHELL_END(pend);
 
 
-		
+
 		// pstart = &__w_boot_cmd_null;
 		while((pstart < pend)) {
 			
@@ -296,7 +309,7 @@ void sh_analyse (char *fmt,long len)
 			pstart->fun(count,(char**)cmd);
 		}
 		else {
-			printf("%s: command not found\n",token);
+			echo_printf("%s: command not found\n",token);
 		}
 	}
 }
@@ -305,12 +318,12 @@ void sh_editpath(char *path)
 {
 	int len;
 	len = strlen(path);
-	if (len > SHALL_PATH_LEN) {
-		len = SHALL_PATH_LEN;
+	if (len > SHELL_PATH_LEN) {
+		len = SHELL_PATH_LEN;
 	}
 	memcpy(g_envLocal.path, path, len);
 	g_envLocal.path[len] = '\0';
-	g_envLocal.path[SHALL_PATH_LEN-1] = '\0';
+	g_envLocal.path[SHELL_PATH_LEN-1] = '\0';
 }
 
 
@@ -318,21 +331,21 @@ void sh_editpath(char *path)
  * @brief	Mini Shell入口函数，完成一切初始化，
  * @remark	单行命令长度不得超过256字节
  */
+#ifdef CONFIG_MINISHELL_READLINE
 
 int sh_enter()
 {
 	char shell_prompt[256];
-	char *input = (char*)NULL;
+	char *input = (char *)NULL;
 	sh_sort();
 	// sh_init();
-	memcpy(g_envLocal.host,"MiniShell\0",10);
+	memcpy(g_envLocal.host, "MiniShell\0", 10);
 	g_envLocal.path[0] = '\0';
-	
+
 	// add_history(g_envLocal.host);
 	// add_history("aaaaddf");
-	while(1) 
-	{
-		
+	while(1) {
+
 		// printf("%s>",g_envLocal.host);
 		//gets_s(input,256);
 		// input = fgets(shell_prompt,80,stdin);
@@ -340,9 +353,9 @@ int sh_enter()
 			free(input);
 			input = NULL;
 		}
-		
-		snprintf(shell_prompt, sizeof(shell_prompt),"%s:%s>",g_envLocal.host,g_envLocal.path);
-		input= readline(shell_prompt);
+
+		snprintf(shell_prompt, sizeof(shell_prompt), "%s:%s>", g_envLocal.host, g_envLocal.path);
+		input = readline(shell_prompt);
 		if(!input) {
 			return -1;
 		}
@@ -352,24 +365,52 @@ int sh_enter()
 
 			// printf("bef analy\n");
 			// sh_analyse(input,256);
-			sh_analyse(input,strlen(input));
+			sh_analyse(input, strlen(input));
 			// printf("aft analy\n");
-			
-			
-			
-			if(0 == strcmp(input,"quit")) {
+
+
+
+			if(0 == strcmp(input, "quit")) {
 				printf("\r\n");
 				break;
-			}	
+			}
 		}
 	}
 
 	return 0;
 }
+#else
+
+int sh_enter()
+{
+	char input[256];
+	// sh_sort();
+	//sh_init();
+	memcpy(g_envLocal.host, "MiniShell\0", 10);
+
+	while(1) {
+
+		printk("%s>", g_envLocal.host);
+		// printk("%s>","shell");
+		gets_s(input, 256);
+
+
+		sh_analyse(input, 256);
+
+		if(0 == strcmp(input, "quit")) {
+			printk("\r\n");
+			break;
+		}
+	}
+	return 0;
+}
+
+#endif
 
 
 
-W_BOOT_CMD(hostname,do_hostname,"set hostname");
+
+
 
 #ifdef __cplusplus
 }

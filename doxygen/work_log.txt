@@ -1,4 +1,30 @@
 /*! \page workhis TMSxxTC 项目工作日志
+2015-12-23: Menglong Wu
+	- Add 添加IP设置回调处理，也传递给QT应用层，成功、失败都向网管汇报，失败返回RET_UNEXIST，不知道这个错误码对方能不能接受，
+
+2015-12-03: Menglong Wu
+	- 0x60000015 ///< 工控板查询某槽位上总的硬件告警
+	- 0x60000016 ///< 各业务单板向MCU返回总的硬件告警
+	- 0x60000017 ///< OLP板卡向MCU请求OTDR测试
+
+2015-12-03: Menglong Wu
+	- Change 加回网管心跳机制，但网管不回应心跳不主动断开
+	- Issus 貌似tms_AddManage检测网管地址冲突有漏洞，
+
+2015-11-24: Menglong Wu
+	- Bug TC网管获取设备组成信息失败，设备返回的update com refurbish内容槽位好错误
+
+2015-11-19: Menglong Wu
+	- Project 基本完成MCU单板测试工程 producttest.elf
+
+2015-11-17: Menglong Wu
+	- Add 无脑响应设备数据，防止刷屏
+-----
+
+2015-10-27: Menglong Wu
+	- Change 废除 tms_MCU_RetDeviceType 改成 tms_MCU_RetDeviceType_V2
+	- Change tms_AddDev,tms_GetFrame 添加保留项信息，我本人并不关注多出的信息，文金朝关注
+	
 2015-10-22: Menglong Wu
 	- Add tms_SendAllManagerDot 可变参数向网管转发
 	- Test tms_AlarmLine 上测试测试群发成功，测试方法：
@@ -11,6 +37,7 @@
 		+ tms_CountList
 		+ disp mananger
 		+ DispMananger
+	- <h3>发布doxygen帮助文档，此次更新从2015-08-06开始</h3>	
 
 2015-10-21: Menglong Wu
 	- Think 在【任务进度】命令解析函数表.xlsx里统计需要群发的数据包

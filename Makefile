@@ -157,7 +157,8 @@ endif
 
 
 ifeq ("$(ARCH)", "i586")
-	INCLUDE_DIR	+= -I/usr/win32/install/include
+	INCLUDE_DIR	+= -I/usr/win32/install/include \
+					-I/usr/include/i386-linux-gnu
 	LFLAGS		+= 
 	LIB_DIR 	+= -L/usr/win32/install/lib
 	CFLAGS		+= 
@@ -186,8 +187,10 @@ OBJCOPY = $(CROSS_COMPILE)objcopy
 # CC_FLAGS		- Compile only for *.c file option
 # CS_FLAGS		- Compile only for *.S file option
 CFLAGS		+= -O -g  	 -Wall -static -rdynamic -D_UNUSE_QT_ -fshort-wchar  \
--DUSE_MD5 \
--DTMS_DEBUG
+			-DUSE_MD5 \
+			-DTMS_DEBUG \
+			-DCONFIG_ACK_DEVICE \
+			-DUSE_INLINE
 ifeq ("$(GCC_G++)","gcc") # 只有gcc编译器才使用该选项，g++无此选项
 	CC_FLAGS    = -std=gnu99
 else
