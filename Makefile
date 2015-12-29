@@ -157,7 +157,8 @@ endif
 
 
 ifeq ("$(ARCH)", "i586")
-	INCLUDE_DIR	+= -I/usr/win32/install/include
+	INCLUDE_DIR	+= -I/usr/win32/install/include \
+					-I/usr/include/i386-linux-gnu
 	LFLAGS		+= 
 	LIB_DIR 	+= -L/usr/win32/install/lib
 	CFLAGS		+= 
