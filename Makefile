@@ -129,7 +129,8 @@ BUILD_DATE="$(shell date "+%Y-%m-%d_%H:%M:%S")"
 
 #when app.elf run will select *.so/a from $(PATH) -> ./ -> ./lib/
 INCLUDE_DIR	+= -I./include -I./osnet -I./shell -I./ -I./src -I/usr/include/readline
-LFLAGS		+= -lreadline -lpthread -lhistory -lncurses -lsqlite3 -lmd5
+LFLAGS		+= -lreadline -lpthread -lhistory -lncurses -lsqlite3 
+#-lmd5
 LIB_DIR 	+= 
 CFLAGS      += -DBUILD_DATE=\"$(BUILD_DATE)\"  -DPRJ_VERSION=\"$(PRJ_VERSION)\" -DPRJ_NAME=\"$(PRJ_NAME)\" 
 ifeq ("$(ARCH)", "x86")
