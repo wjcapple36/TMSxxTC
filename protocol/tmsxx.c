@@ -657,6 +657,129 @@ static int32_t tms_AnalyseMCUtoDevice(int8_t *pdata, int32_t len)
 
 
 /**
+ * @brief	ID_TEST_NET_STRONG			0x20000000	///< 测试网络强壮性
+ */
+int32_t tms_TestPacketID(
+    int fd,
+    struct glink_addr *paddr,
+    uint8_t *pdata,
+    uint32_t len,
+    uint32_t cmdid)
+{
+#ifdef CONFIG_TEST_NET_STRONG
+	// 发送
+	struct glink_base  base_hdr;
+	int ret;
+
+	tms_FillGlinkFrame(&base_hdr, paddr);
+	if (0 == fd) {
+		// fd =
+		tms_SelectFdByAddr(&base_hdr.dst);
+	}
+	glink_Build(&base_hdr, cmdid, len);
+	glink_SendHead(fd, &base_hdr);
+	glink_SendSerial(fd, (uint8_t *)pdata, len);
+	glink_SendTail(fd);
+
+	return 0;
+#endif
+	return 0;
+}
+
+#ifdef CONFIG_TEST_NET_STRONG
+void test_save_bin( int8_t *pdata, int32_t len)
+{
+	struct test_netpacket *pkt;
+	pkt = (struct test_netpacket *)(pdata + GLINK_OFFSET_DATA);
+	pkt->fname[ sizeof(pkt->fname) - 1] = '\0';
+	pkt->save = 0;
+
+	FILE *fp;
+
+	fp = fopen((char*)pkt->fname, "w");
+	int ret;
+	ret = fwrite(pdata, 1, len, fp);
+	printf("ret = %d len %d\n", ret, len);
+	fclose(fp);
+}
+static int32_t tms_AnalyseTestPacketSave(struct tms_context *pcontext, int8_t *pdata, int32_t len)
+{
+	// printf("%s:%d\n",__FUNCTION__, __LINE__);
+	// struct test_netpacket *pkt;
+	// pkt = (struct test_netpacket *)(pdata + GLINK_OFFSET_DATA);
+	
+
+	// FILE *fp;
+
+	// fp = fopen((char*)pkt->fname, "w");
+	// fwrite(pdata, 1, len, fp);
+	// fclose(fp);
+	return 0;
+}
+
+static int32_t tms_AnalyseTestPacketEcho(struct tms_context *pcontext, int8_t *pdata, int32_t len)
+{
+	// printf("%s:%d\n",__FUNCTION__, __LINE__);
+	// 回显
+	static uint8_t pecho[32];
+	int ret;
+	struct test_netpacket *pkt;
+	pkt = (struct test_netpacket *)(pdata + GLINK_OFFSET_DATA);
+
+	// printf("pkt->save %d %d %d\n", pkt->save, len, 
+	// 	len - GLINK_OFFSET_DATA - GLINK_END_H);
+	if (pkt->save == 1) {
+		test_save_bin(pdata, len);
+	}
+	
+	ret = snprintf((char*)pecho, 32, "%8.8d %dB\n", 
+		pcontext->net_pack_id,
+		len - GLINK_OFFSET_DATA - GLINK_END_H);
+	glink_SendSerial(pcontext->fd, (uint8_t *)pecho, 32);
+	
+	// struct glink_base *pbase_hdr;
+	// pbase_hdr = (struct glink_base *)(pdata + sizeof(int32_t));
+	// pbase_hdr->cmdid = htonl(ID_TEST_NETPACK_ACK);
+	// printf("len %d\n", len);
+	// for (int i = 0; i < 10;i++) {
+	// 	glink_SendSerial(pcontext->fd, (uint8_t *)pdata, len);	
+	// 	// sleep(1);
+	// }
+	
+	return 0;
+}
+
+static int32_t tms_AnalyseTestPacketAck(struct tms_context *pcontext, int8_t *pdata, int32_t len)
+{
+	// printf("%s:%d\n",__FUNCTION__, __LINE__);
+	// 回显
+	static uint8_t pecho[64];
+	int ret;
+	struct test_netpacket *pkt;
+	pkt = (struct test_netpacket *)(pdata + GLINK_OFFSET_DATA);
+
+	printf("pkt->save %8.8x %d %d\n", pkt->save, len, 
+		len - GLINK_OFFSET_DATA - GLINK_END_H);
+	if (pkt->save == 1) {
+		test_save_bin(pdata, len);
+	}
+	
+	ret = snprintf((char*)pecho, 64, "%8.8d %8.8d %8.8d %dB\n", 
+		pcontext->net_pack_id,
+		pkt->id,
+		pkt->thread_id,
+		len - GLINK_OFFSET_DATA - GLINK_END_H);
+	glink_SendSerial(pcontext->fd, (uint8_t *)pecho, ret);
+	
+	
+	return 0;
+	return 0;
+}
+#endif
+
+
+
+/**
  * @brief	1 ID_RET_DEVTYPE 0x60000000 返回设备类型信息
  * @param[in]	fd 套接字文件描述符
  * @param[in]	paddr glink帧源地址和目的地址，如果填NULL则采用默认的
@@ -7234,6 +7357,16 @@ static struct tms_analyse_array sg_analyse_0x1000xxxx[] = {
 	{	tms_AnalyseCommand	, 1}, //	0x10000005	ID_TRACE3
 	{	tms_AnalyseCommand	, 1}, //	0x10000006	ID_COMMAND
 };
+
+
+#ifdef CONFIG_TEST_NET_STRONG
+static struct tms_analyse_array sg_analyse_0x2000xxxx[] = {
+	{ 	tms_AnalyseTestPacketSave, 1},
+	{ 	tms_AnalyseTestPacketEcho, 1},
+	{ 	tms_AnalyseTestPacketAck, 1},
+};
+
+#endif
 static struct tms_analyse_array sg_analyse_0x6000xxxx[] = {
 	{	tms_AnalyseGetDevType	, 9}, //	0x60000000	ID_GET_DEVTYPE
 	{	tms_AnalyseRetDevType	, 5}, //	0x60000001	ID_RET_DEVTYPE
@@ -7422,10 +7555,17 @@ int32_t tms_Analyse(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 
 	// if (cmdid != ID_TICK &&
 	// 	(ID_TRACE0 > cmdid &&  ID_TRACE3 < cmdid)  )
+// #ifdef CONFIG_TEST_NET_STRONG
+// 	if (cmdid != ID_TICK && cmdh != 0x20000000) {
+// 		fecho("\n[frame]:-----[ %d ] cmdid [%8.8x] fd [%d]", len, cmdid, pcontext->fd);
+// 		tms_PrintCmdName(cmdid);
+// 	}
+// #else
 	if (cmdid != ID_TICK) {
 		fecho("\n[frame]:-----[ %d ] cmdid [%8.8x] fd [%d]", len, cmdid, pcontext->fd);
 		tms_PrintCmdName(cmdid);
 	}
+// #endif
 
 
 	// 可以考虑在这里提取 glink 头指针 pcontext->pgb = htonl(pbase_hdr->xxx);
@@ -7470,6 +7610,18 @@ int32_t tms_Analyse(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 		pwhichArr = &sg_analyse_0x1000xxxx[cmdl];
 		// sg_analyse_0x1000xxxx[cmdl].ptrfun(pcontext, pdata, len);
 		break;
+
+#ifdef CONFIG_TEST_NET_STRONG
+	case 0x20000000:
+		if (cmdl >= sizeof(sg_analyse_0x2000xxxx) / sizeof(struct tms_analyse_array)) {
+			fecho("0x10000000 out of cmd memory!!!\n");
+			goto _Unknow;
+		}
+		pcontext->ptr_analyse_arr = sg_analyse_0x2000xxxx + cmdl;
+		pwhichArr = &sg_analyse_0x2000xxxx[cmdl];
+		break;
+#endif
+
 	default:
 _Unknow:
 		;

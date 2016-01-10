@@ -94,7 +94,7 @@ else
 endif
 
 ifeq ("$(OUTPUT_ELF)", "")
-	OUTPUT_ELF	= download.elf
+	OUTPUT_ELF	= download2.elf
 endif
 ifeq ("$(OUTPUT_DIS)", "")
 	OUTPUT_DIS	= download.dis
@@ -192,6 +192,8 @@ CFLAGS		+= -O -g  	 -Wall -static -rdynamic -D_UNUSE_QT_ -fshort-wchar  \
 			-DTMS_DEBUG \
 			-DCONFIG_ACK_DEVICE \
 			-DUSE_INLINE
+			# -DBIPBUFF_ECHO \
+			
 ifeq ("$(GCC_G++)","gcc") # 只有gcc编译器才使用该选项，g++无此选项
 	CC_FLAGS    = -std=gnu99
 else

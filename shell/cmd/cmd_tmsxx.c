@@ -10,6 +10,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include "autoconfig.h"
+
 #include <wchar.h>
 #include "minishell_core.h"
 #include "epollserver.h"
@@ -5804,7 +5806,134 @@ _Clear:;
 W_BOOT_CMD(disp, cmd_Disp, "Display more information");
 
 
+int cmd_testnetpacket(int argc, char **argv)
+{
+#ifdef CONFIG_TEST_NET_STRONG
 
+	static uint8_t pdata[100*1024], first = 1;
+	int scale = 0;
+	int val = 10;
+	int len;
+	int cmdid = ID_TEST_NETPACK_ECHO;
+	struct test_netpacket *pkt = (struct test_netpacket *) pdata;
+
+	if (first == 1) {
+		for (int i = 0; i < sizeof(pdata); i++) {
+			pdata[i] = i;
+		}
+
+		first = 0;
+	}
+
+	// tnp <n> <k/b>
+	if (argc >= 3) {
+		switch(argv[2][0]) {
+		case 'k':
+			scale = 1024;
+			break;
+		default:
+			scale = 1;
+			break;
+		}
+
+		val = atoi(argv[1]);
+		if (val > 100 && scale == 1024) {
+			val = 100;
+		}
+	}
+
+	// tnp <n> <k/b> <e/a>
+	if (argc >= 4) {
+		switch(argv[3][0]) {
+		case 'e':
+			cmdid = ID_TEST_NETPACK_ECHO;
+			break;
+		case 'a':
+			cmdid = ID_TEST_NETPACK_ACK;
+			break;
+		
+		default:
+			break;
+		}
+	}
+	// tnp <n> <k/b> <e/a> <name>
+	if (argc >= 5) {
+		
+		pkt->fname[0] = 'a';
+		pkt->fname[1] = '.';
+		pkt->fname[2] = 'b';
+		pkt->fname[3] = 'i';
+		pkt->fname[4] = 'n';
+		pkt->fname[5] = '\0';
+
+		strncpy((char*)pkt->fname, argv[4], sizeof(pkt->fname));
+		pkt->fname[strlen(argv[4])] = '\0';
+		pkt->fname[ sizeof(pkt->fname) - 1] = '\0';
+		// 必须放在字符串赋值下面，防止字符串拷贝溢出
+		pkt->save = 1;
+		printf("name %s save %d\n", pkt->fname, pkt->save);
+	}
+	else {
+		pkt->save = 0;
+	}
+
+	len = val * scale;
+	if (len < sizeof(struct test_netpacket)) {
+		len = sizeof(struct test_netpacket);
+	}
+	printf("len = %d\n", len);
+	tms_TestPacketID(sg_sockfdid, NULL,(uint8_t*)pdata, len, cmdid);
+	sleep(1);
+
+
+#else
+	printf("undefine CONFIG_TEST_NET_STRONG\n");
+#endif
+	
+	return 0;
+}
+W_BOOT_CMD(tnp, cmd_testnetpacket, "Test net packet id");
+
+int cmd_testnetpacket_file(int argc, char **argv)
+{
+#ifdef CONFIG_TEST_NET_STRONG
+	uint8_t pdata[200*1024];
+
+	if (argc < 2) {
+		return 0;
+	}
+	FILE *fp;
+	uint32_t flen;
+
+	fp = fopen(argv[1], "rb");
+
+	fseek(fp, 0, SEEK_END);
+	flen = ftell(fp);
+	printf("flen %d\n", flen);
+	fseek(fp, 0, SEEK_SET);
+
+
+	fread(pdata, 1, flen, fp);
+	fclose(fp);
+
+	// tms_TestPacketID(sg_sockfdid, NULL,(uint8_t*)pdata, len, cmdid);
+	// glink_SendSerial(sg_sockfdid, (uint8_t *)pdata, flen);
+	// glink_SendSerial(sg_sockfdid, (uint8_t *)pdata+20, 34);
+	// glink_SendSerial(sg_sockfdid, (uint8_t *)pdata+20, 34);
+	// glink_SendSerial(sg_sockfdid, (uint8_t *)pdata+20, 34);
+	// glink_SendSerial(sg_sockfdid, (uint8_t *)pdata+20, 34);
+	// glink_SendSerial(sg_sockfdid, (uint8_t *)pdata+20, 34);
+	// glink_SendSerial(sg_sockfdid, (uint8_t *)pdata+20, 34);
+	// glink_SendSerial(sg_sockfdid, (uint8_t *)pdata+20, 34);
+	// sleep(3);
+	glink_SendSerial(sg_sockfdid, (uint8_t *)pdata, flen);
+	// glink_SendSerial(sg_sockfdid, (uint8_t *)pdata, flen);
+
+#else
+	printf("undefine CONFIG_TEST_NET_STRONG\n");
+#endif
+	return 0;
+}
 #ifdef __cplusplus
 }
 #endif

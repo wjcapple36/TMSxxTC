@@ -14,6 +14,7 @@
 
 #ifndef _TMSXX_H_
 #define _TMSXX_H_
+#include "autoconfig.h"
 #include "glink.h"
 #include "osnet/epollserver.h"
 
@@ -177,7 +178,12 @@ extern "C" {
 
 ////////////////////////////////////////////////////////////////////////////////
 // Section 3 命令ID
+#ifdef CONFIG_TEST_NET_STRONG
+#define 	ID_TEST_NETPACK_SAVE			0x20000000	///< 测试网络强壮性
+#define 	ID_TEST_NETPACK_ECHO			0x20000001	///< 测试网络强壮性
+#define 	ID_TEST_NETPACK_ACK				0x20000002	///< 测试网络强壮性
 
+#endif
 
 #define 	ID_TICK			0x10000000	///< 心跳
 #define 	ID_UPDATE			0x10000001	///< 在线升级
@@ -311,6 +317,16 @@ struct pro_list
 	// int len;
 };
 
+#ifdef CONFIG_TEST_NET_STRONG
+struct test_netpacket
+{
+	uint8_t fname[16];
+	int32_t save;
+	uint32_t id;
+	uint32_t thread_id;
+
+};
+#endif
 ////////////////////////////////////////////////////////////////////////////////
 // Section 4 TMSxx通信各种包结构
 struct tms_dev_slot
@@ -1286,6 +1302,9 @@ struct tms_context
 	struct tms_callback *ptcb;
 	// void     *ptr_analyse_arr;  ///<应用层不要读取任何值，tmsxx协议内部使用
 	struct tms_analyse_array *ptr_analyse_arr;
+#ifdef CONFIG_TEST_NET_STRONG
+	uint32_t net_pack_id;
+#endif
 };
 
 struct tms_dev_produce
@@ -1494,6 +1513,12 @@ int32_t tms_MCUtoDevice(
 	int32_t port,
 	int32_t cmdID,
 	int32_t len);
+int32_t tms_TestPacketID(
+    int fd,
+    struct glink_addr *paddr,
+    uint8_t *pdata,
+    uint32_t len,
+    uint32_t cmdid);
 // 一下函数间接调用tms_MCUtoDevice
 int32_t tms_MCU_GetDeviceType(
 	int fd,

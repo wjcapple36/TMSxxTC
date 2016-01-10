@@ -321,7 +321,8 @@ int32_t glink_FindFrame(int8_t *pdata, int32_t *recvlen, int32_t *retframelen)
 	if ((uint32_t)(*recvlen) <  sizeof(struct glink_frame) + sizeof(struct glink_base) ) {
 	// if (sizeof(struct glink_frame) + sizeof(struct glink_base) < *recvlen ) {
 		*retframelen = sizeof(struct glink_frame) + sizeof(struct glink_base) - *recvlen;
-		return -3;
+		// return -3;
+		return -2;
 	}
 
 

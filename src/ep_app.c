@@ -6,6 +6,7 @@
 
 
 */
+#include "autoconfig.h"
 #include "epollserver.h"
 #include <stdio.h>
 #include "bipbuffer.h"
@@ -58,6 +59,10 @@ int InitSocketStruct(struct tmsxx_app **pss, int fd)
 	//bipbuffer_AllocateBuffer(&(*pss)->bb,1024*2);
 	bipbuffer_AllocateBuffer(&(*pss)->bb,BIPBUFFER_LEN);
 	(*pss)->morebyte = 400;
+
+#ifdef CONFIG_TEST_NET_STRONG
+	(**pss).context.net_pack_id = 10;
+#endif
 	return 0;	
 }
 
@@ -224,13 +229,20 @@ int epFUI_OnRecv(struct ep_t *pep, struct ep_con_t *pnode)
 		sleep(1);
 		return 1;
 	}
+
+#ifdef CONFIG_TEST_NET_STRONG
+	struct tms_context *ptms_context = &(((struct tmsxx_app*)(pnode->ptr))->context);
+	ptms_context->net_pack_id++;
+
+#endif
+	
 	pss = (struct tmsxx_app *)pnode->ptr;
 	//pss->morebyte = 100;
 	if (pss->enable_lbb == 0) {
 		pdata = bipbuffer_Reserve(&pss->bb,pss->morebyte,&reserved);	
 	}
 	else {
-		printf("bipbuffer_Reserve lbb  ");
+		// printf("bipbuffer_Reserve lbb  ");
 		pdata = bipbuffer_Reserve(&pss->lbb,pss->lbyte,&reserved);
 		int size;
 		bipbuffer_GetContiguousBlock(&pss->lbb,&size);
@@ -247,6 +259,7 @@ int epFUI_OnRecv(struct ep_t *pep, struct ep_con_t *pnode)
 	else if (pss->enable_lbb == 0) {
 		// printf("want to recv %d\n",reserved);
 		retRecv = recv(pnode->sockfd, pdata, reserved, 0);	
+		// printf("retRecv %d\n", retRecv);
 		// printf("recv count = %d\n", retRecv);
 		// printf("2-1 %d ", retRecv);
 		// printf("this times recv %d\n",retRecv);
@@ -314,10 +327,10 @@ _Again:;
 		//}
 	}
 	else if (ret == -2) {
-		// printf("a -5 ");
+
 		// printf("frame err Decommit %d %d\n",retFramelen,reserved);
 		bipbuffer_DecommitBlock(&pss->bb, retFramelen);
-		
+		// printf("a -5 %d\n", retFramelen);
 
 		pss->morebyte = 40;
 		//if (reserved > 0) {
@@ -325,11 +338,17 @@ _Again:;
 		//}
 	}
 	else if (ret == -3) {
-		// printf("a -6 ");
+// #ifdef CONFIG_TEST_NET_STRONG
+// 	struct tms_context *ptms_context = &(((struct tmsxx_app*)(pnode->ptr))->context);
+// 	ptms_context->net_pack_id++;
+
+// #endif
+		// printf("a -6 \n");
 		// printf("recvTotal %d retFramelen %d used %d\n",recvTotal,retFramelen,bipbuffer_GetUsedSize(&pss->bb));
 		if (recvTotal + retFramelen <= bipbuffer_GetUsedSize(&pss->bb)) {
 			int unuse;
 			bipbuffer_GetUnContiguousBlock(&pss->bb, &unuse);
+			printf("a-k\n");
 		}
 		pss->morebyte = 40;//retFramelen;
 		bipbuffer_GetContiguousBlock(&pss->bb, &reserved);
@@ -337,12 +356,11 @@ _Again:;
 		// 	recvTotal,reserved,retFramelen);
 		bipbuffer_PrintMemory(&pss->bb);
 		if (reserved >=  recvTotal + retFramelen) {
-			// printf("a -7 ");
+			printf("a -7 \n ");
 			goto _Again;
 		}
 
 		if (retFramelen + recvTotal > BIPBUFFER_LEN) {
-			// printf("a -8 ");
 			// 初始化大块临时缓存
 			printf("large bipbuffer\n");
 			char *pbb_buf,*plbb_buf;
@@ -369,8 +387,7 @@ _Again:;
 	
 
 	if (pss->enable_lbb == 1 && pss->lbyte <= 0) {
-		// printf("a -9 ");
-		printf("free....\n");
+		// printf("free....\n");
 		struct bipbuffer tbb;
 
 		pss->enable_lbb = 0;
@@ -381,7 +398,7 @@ _Again:;
 		bipbuffer_FreeBuffer(&pss->lbb);
 		
 	}
-	// printf("end \n");
+	//printf("end \n");
 	return retRecv;
 
 
@@ -1208,11 +1225,11 @@ int ThreadRunServerAndShell(struct ep_t *pep)
 	ep_Callback(pep);               // 设在epollserver在本工程的回掉函数
 
 #ifdef _MANAGE
-    if(ep_Listen(pep,6000)) {     // 监听TCP 0.0.0.0:6500端口
+    if(ep_Listen(pep,6001)) {     // 监听TCP 0.0.0.0:6500端口
         return 0;
     }
 #else
-	if(ep_Listen(pep,6000)) {     // 监听TCP 0.0.0.0:6500端口
+	if(ep_Listen(pep,6001)) {     // 监听TCP 0.0.0.0:6500端口
         return 0;
     }
 #endif
