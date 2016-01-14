@@ -6263,7 +6263,7 @@ int32_t tms_RetAlarmSoundState(int fd, struct glink_addr *paddr, uint32_t state)
 		tms_SelectFdByAddr(&base_hdr.dst);
 	}
 
-	glink_Build(&base_hdr, ID_RET_MCU_TIME, 4);
+	glink_Build(&base_hdr, ID_RET_ALARM_SOUND_STATE, 4);
 	ret = glink_Send(fd, &base_hdr, (uint8_t *)&data_state, 4);
 	return ret;
 }
