@@ -7517,7 +7517,7 @@ struct tms_analyse_array sg_analyse_0x8000xxxx[] = {
 	{	tms_AnalyseUnuse	, 3}, //	0x80000070	ID_RET_OP_GATE
 	{	tms_AnalyseUnuse	, 0}, //	0x80000071	ID_GET_MCU_TIME
 	{	tms_AnalyseUnuse	, 8}, //	0x80000072	ID_RET_MCU_TIME
-	{	tms_AnalyseUnuse	, 0}, //	0x80000073	ID_ALARM_SOUND_ON_OFF
+	{	tms_AnalyseAlarmSoundONOFF	, 0}, //	0x80000073	ID_ALARM_SOUND_ON_OFF
 	{	tms_AnalyseUnuse	, 0}, //	0x80000074	ID_GET_ALARM_SOUND_STATE
 	{	tms_AnalyseUnuse	, 8}, //	0x80000075	ID_RET_ALARM_SOUND_STATE
 
