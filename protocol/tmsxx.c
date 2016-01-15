@@ -8020,6 +8020,7 @@ int32_t tms_DelManage(struct tms_context *pcontext, int fd)
 				printf("-------tms_DelManage--------   %d\n", fd);
 				sg_manage.fd[i]   = 0;
 				sg_manage.fdtc[i] = 0;
+				sg_manage.fd_addr[i] = 0;
 				printf("find mamage");
 			}
 			count--;
