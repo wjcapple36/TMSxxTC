@@ -7880,7 +7880,7 @@ int32_t tms_CountList(struct tms_man_base *list, int32_t count)
 		plist->addr = sg_manage.fd_addr[i];
 		plist++;
 	}
-	return 0;
+	return ret;
 }
 
 /**
