@@ -6177,7 +6177,7 @@ uint32_t tms_RetAlarmHWChange(
 
 	tms_FillGlinkFrame(&base_hdr, paddr);
 
-	glink_Build(&base_hdr, ID_ALARM_OPM, len);
+	glink_Build(&base_hdr, ID_RET_ALARM_HW_CHANGE, len);
 	if (paddr != NULL && paddr->dst == GLINK_MASK_MADDR) {
 		ret = tms_SendAllManager(&base_hdr, pmem, len);
 		goto _Free;
@@ -6227,7 +6227,12 @@ static int32_t tms_AnalyseAlarmSoundONOFF(struct tms_context *pcontext, int8_t *
 {
 	int32_t *pval;
 	pval = (int32_t *)(pdata + GLINK_OFFSET_DATA);
+
+	printf("%s():%d\n",__FUNCTION__, __LINE__);
+	printf("raw    %8.8x\n", *pval);
 	*pval = htonl(*pval);
+	printf("change %8.8x\n", *pval);
+
 
 	// printf("tms_AnalyseGetOPMOP\n");
 	// printf("val:f%d/s%x\n", pval->frame, pval->slot);
@@ -6716,6 +6721,7 @@ int32_t tms_SendAllManager(struct glink_base  *pbase_hdr, uint8_t *pdata, int32_
 	int fd;
 	uint32_t dst;
 	// 以后改用 tms_SelectFdByIndex
+	printf("%8.8x %8.8x\n", pbase_hdr->src, pbase_hdr->dst);
 	for (dst = 0x3a; dst <= 0x3f; dst++) {
 		fd = tms_SelectFdByAddr(&dst);
 		// 没有该地址的网管

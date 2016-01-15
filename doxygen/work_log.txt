@@ -1,4 +1,10 @@
 /*! \page workhis TMSxxTC 项目工作日志
+2016-01-15: Menglong Wu
+	- bug : tms_RetAlarmHWChange ID写错
+	- bug : OLP_SWITCH_ACTION 相关宏数值定义错误
+	- bug : tms_RetAlarmSoundState ID写错
+	- doubt 收到80000073命令，网络字节没有转换
+
 2015-12-23: Menglong Wu
 	- Add 添加IP设置回调处理，也传递给QT应用层，成功、失败都向网管汇报，失败返回RET_UNEXIST，不知道这个错误码对方能不能接受，
 
