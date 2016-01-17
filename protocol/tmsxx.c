@@ -37,11 +37,11 @@ int unuse_echo(const char *__restrict __format, ...)
 	return 0;
 }
 #endif
-#ifdef _MANAGE
-int (*fecho)(const char *__restrict __format, ...) = unuse_echo;
-#else
+// #ifdef _MANAGE
+// int (*fecho)(const char *__restrict __format, ...) = unuse_echo;
+// #else
 int (*fecho)(const char *__restrict __format, ...) = printf;
-#endif
+// #endif
 
 
 void tms_Echo(int en)
@@ -1496,17 +1496,24 @@ uint32_t tms_RetDeviceComposition_any(
 	pcfg_hdr->count = htonl(count);
 
 	// todo :防止循环count次溢出ptlist
-	ptlist = list;
+	printf("count %d\n", count);
+	ptlist = plist;
 	for (uint32_t i = 0; i < count; i++) {
-		plist->frame  = htonl(ptlist->frame);
-		plist->slot = htonl(ptlist->slot);
-		plist->type  = htonl(ptlist->type);
-		plist->port  = htonl(ptlist->port);
-		plist->reserved0 = htonl(plist->reserved0);
-		plist->reserved1 = htonl(plist->reserved1);
-		plist->reserved2 = htonl(plist->reserved2);
-		plist->reserved3 = htonl(plist->reserved3);
-		plist++;
+		// printf("r0 %d \n", ptlist->reserved0);
+		printf("\tf%d/s%d/t%d/p%d r0%d/r1%d/r2%d/r3%d\n", list->frame, list->slot, list->type, list->port,
+			list->reserved0,
+			list->reserved1,
+			list->reserved2,
+			list->reserved3);
+		ptlist->frame  = htonl(list->frame);
+		ptlist->slot = htonl(list->slot);
+		ptlist->type  = htonl(list->type);
+		ptlist->port  = htonl(list->port);
+		ptlist->reserved0 = htonl(list->reserved0);
+		ptlist->reserved1 = htonl(list->reserved1);
+		ptlist->reserved2 = htonl(list->reserved2);
+		ptlist->reserved3 = htonl(list->reserved3);
+		list++;
 		ptlist++;
 	}
 
@@ -1516,7 +1523,7 @@ uint32_t tms_RetDeviceComposition_any(
 
 	ptlist = list;
 	for (uint32_t i = 0; i < count; i++) {
-		printf("\tf%d/s%x/t%d/p%d\n", ptlist->frame, ptlist->slot, ptlist->type, ptlist->port);
+		printf("\tf%d/s%d/t%d/p%d\n", ptlist->frame, ptlist->slot, ptlist->type, ptlist->port);
 		ptlist++;
 	}
 
@@ -1590,11 +1597,17 @@ static int32_t tms_AnalyseRetDeviceComposition(struct tms_context *pcontext, int
 		ptlist->reserved1 = htonl(ptlist->reserved1);
 		ptlist->reserved2 = htonl(ptlist->reserved2);
 		ptlist->reserved3 = htonl(ptlist->reserved3);
+
+		printf("\tf%d/s%d/t%d/p%d r0%d/r1%d/r2%d/r3%d\n", ptlist->frame, ptlist->slot, ptlist->type, ptlist->port,
+			ptlist->reserved0,
+			ptlist->reserved1,
+			ptlist->reserved2,
+			ptlist->reserved3);
 		ptlist++;
 	}
 
 	if (pcontext->ptcb->pf_OnRetDeviceComposition) {
-		pcontext->ptcb->pf_OnRetDeviceComposition(pcontext, pdata, len, pcfg_hdr, plist);
+		// pcontext->ptcb->pf_OnRetDeviceComposition(pcontext, pdata, len, pcfg_hdr, plist);
 	}
 	return 0;
 }
@@ -6103,6 +6116,7 @@ uint32_t tms_RetDeviceCompositionRT(
     uint32_t count,
     struct tms_dev_composition_val *list)
 {
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
 	return tms_RetDeviceComposition_any(fd, paddr, count, list, ID_RET_COMPOSITION_RT);
 }
 
