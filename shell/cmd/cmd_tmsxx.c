@@ -3037,6 +3037,29 @@ int cmd_tmsall(int argc, char **argv)
 		tms_RetDeviceComposition(fd, &gl, 2, list);
 		// 
 	}
+	else if(argc == 2 && strcmp(argv[1], "rdevcrt") == 0) {
+		struct tms_dev_composition_val list[4];
+		struct glink_addr gl;
+
+		gl.src = GLINK_4412_ADDR;
+		gl.dst = GLINK_MANAGE_ADDR;
+		gl.pkid = 1;
+
+		for (int i = 0; i < 4;i++) {
+			list[i].frame = 0;
+			list[i].slot = i;
+			list[i].type = DEV_OPM;
+			list[i].port = i + 1;
+			list[i].reserved0 = i * 10  + 1;
+			list[i].reserved1 = i * 10  + 2;
+			list[i].reserved2 = i * 10  + 2;
+			list[i].reserved3 = i * 10  + 3;
+
+		}
+		tms_RetDeviceCompositionRT(fd, &gl, 4, list);
+
+	}
+	
 	else if(argc == 3 && strcmp(argv[1], "update") == 0) {
 		// UpdateOTDR("update.txt", "", 12345);
 	}
@@ -5754,7 +5777,11 @@ int cmd_Disp(int argc, char **argv)
 	// 本地执行：请求板卡组成信息
 	else if(argc == 2 && memcmp(argv[1], "updatev2", strlen(argv[1])) == 0) {
 		// TMSxxV1.2新协议
-		tms_GetDeviceCompositionRT(sg_sockfdid, NULL);
+		struct glink_addr base;
+		base.dst = GLINK_4412_ADDR;
+		base.src = GLINK_MASK_MADDR + 0x0f;
+		base.pkid = 12;
+		tms_GetDeviceCompositionRT(sg_sockfdid, &base);
 
 		goto _Clear;
 	}
