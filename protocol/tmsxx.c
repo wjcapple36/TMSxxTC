@@ -6329,7 +6329,7 @@ int32_t tms_RetTotalOPAlarm(int fd, struct glink_addr *paddr,
 
 	len = sizeof(struct tms_total_op_alarm_hdr) + count * sizeof(struct tms_total_op_alarm_val);
 	tms_FillGlinkFrame(&base_hdr, paddr);
-	glink_Build(&base_hdr, ID_GET_TOTAL_OP_ALARM, len);
+	glink_Build(&base_hdr, ID_RET_TOTAL_OP_ALARM, len);
 	if (paddr != NULL && paddr->dst == GLINK_MASK_MADDR) {
 		return tms_SendAllManagerDot(&base_hdr,
 		                             2,
@@ -6340,7 +6340,7 @@ int32_t tms_RetTotalOPAlarm(int fd, struct glink_addr *paddr,
 	if (0 == fd) {
 		fd = tms_SelectFdByAddr(&base_hdr.dst);
 	}
-	glink_Build(&base_hdr, ID_GET_TOTAL_OP_ALARM, len);
+	// glink_Build(&base_hdr, ID_GET_TOTAL_OP_ALARM, len);
 	glink_SendHead(fd, &base_hdr);
 	glink_SendSerial(fd, (uint8_t *)&hdr,   sizeof(struct tms_total_op_alarm_hdr));
 	glink_SendSerial(fd, (uint8_t *)pval,   count * sizeof(struct tms_total_op_alarm_val));
