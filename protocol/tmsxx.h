@@ -309,6 +309,10 @@ extern "C" {
 #define ID_GET_OLP_ACTION_LOG	0x80000079 ///< 网管查询OLP切换记录
 #define ID_RET_OLP_ACTION_LOG	0x80000080 ///< 返回OLP切换记录
 
+#define ID_GET_OLP_LINE 0x80000093 ///< 网管查询OLP当前所在线路
+#define ID_RET_OLP_LINE 0x80000094 ///< MCU返回OLP当前所在线路
+#define ID_GET_OLP_INFO 0x80000095 ///< 网管查询OLP模块的工作模式、返回时间和切换门限
+#define ID_RET_OLP_INFO 0x80000096 ///< MCU返回模块的工作模式、返回时间和切换门限
 
 
 struct pro_list
@@ -594,6 +598,7 @@ struct tms_alarm_hw_change_val
 	int32_t level;
 	int32_t frame;
 	int32_t slot;
+	int32_t type;
 	// uint16_t reason[64];
 	uint32_t reason;
 	int8_t time[20];
@@ -883,6 +888,7 @@ struct tms_cfg_olp_mode
 	int32_t  frame;		///< 
 	int32_t  slot;		///< 
 	int32_t  type;		///< 
+	int32_t  flag;
 	int32_t  mode;		///< 0表示保护不返回，1表示保护返回
 	int32_t  backtime;	///< 返回时间，单位分钟。
 	int32_t  protect;	///< 保护线路，0表示保护线路为主路，1表示保护线路为备路
@@ -1118,6 +1124,7 @@ struct tms_alarm_opm
 	int	alarm_type;
 	int32_t frame;
 	int32_t slot;
+	int32_t type;
 	int32_t	count;
 };
 struct tms_alarm_opm_val
@@ -1133,6 +1140,7 @@ struct tms_alarm_opm_change
 	int	alarm_type;
 	int32_t frame;
 	int32_t slot;
+	int32_t type;
 	int32_t alarm_cnt;
 	int32_t	count;
 };
@@ -1145,6 +1153,7 @@ struct tms_report_olp_action
 	int32_t  type;
 	int32_t  sw_type;///< 0表示人工切换，1表示自动保护倒换，2表示保护返回。
 	int32_t  sw_port;     ///< 0表示切换到主路，1表示切换到备路
+	uint8_t	time[20];
 };
 // // 与上面的合并
 // struct tms_
@@ -1188,6 +1197,7 @@ struct tms_alarm_hw_val
 	int32_t level;
 	int32_t frame;
 	int32_t slot;
+	int32_t type;
 	// uint8_t	reason[128];
 	uint32_t	reason;
 	uint8_t	time[20];
@@ -1406,6 +1416,43 @@ struct tms_olp_action_log_val
 	int32_t sw_port;
 	int8_t  time[20];
 };
+struct tms_get_olp_line
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+};
+
+struct tms_ret_olp_line
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+	int32_t current_line;
+};
+struct tms_get_olp_info
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+};
+
+struct tms_ret_olp_info
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+	int32_t flag;
+	int32_t mode;
+	int32_t back_time;
+	int32_t protect_port;
+	int32_t sw_level1;
+	int32_t sw_level2;
+	int32_t tx_ref;
+	int32_t tx_jump;
+
+};
+
 #include "bipbuffer.h"
 ///< 应用程序
 struct tmsxx_app
@@ -2155,6 +2202,31 @@ int32_t tms_SendAllManagerDot(struct glink_base  *pbase_hdr, int group, uint8_t 
 int32_t tms_CountList(struct tms_man_base *list, int32_t count);
 int32_t tms_RetOLPActionLog(int fd, struct glink_addr *paddr, int32_t count, struct tms_olp_action_log_val *pval);
 int32_t tms_ManageCount();
+
+// 2016-1-18
+int32_t tms_ReportOLPActionEx(
+    int fd,
+    struct glink_addr *paddr,
+    struct tms_report_olp_action *val);
+
+int32_t tms_AlarmOPMEx(
+    int fd,
+    struct glink_addr *paddr,
+    struct tms_alarm_opm      *hdr,
+    struct tms_alarm_opm_val  *list);
+int32_t tms_RetTotalOPAlarmEx(int fd, struct glink_addr *paddr,
+                            struct tms_total_op_alarm_hdr *phdr,
+                            struct tms_total_op_alarm_val *pval);
+int32_t tms_CfgOLPModeEx(
+    int fd,
+    struct glink_addr *paddr,
+    struct tms_cfg_olp_mode *pval);
+// 新增协议
+int32_t tms_RetOLPLine(int fd, struct glink_addr *paddr,
+                            struct tms_ret_olp_line *pval);
+int32_t tms_RetOLPInfo(int fd, struct glink_addr *paddr,
+                            struct tms_ret_olp_info *pval);
+// end 2016-1-18
 #ifdef __cplusplus
 }
 #endif

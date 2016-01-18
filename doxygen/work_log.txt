@@ -1,4 +1,18 @@
 /*! \page workhis TMSxxTC 项目工作日志
+2016-01-18: Menglong Wu
+	- ok 0x80000027 增加切换时间
+	- ok 0x80000028 
+	- ok 0x80000029 
+	- ok 0x80000077 
+	- ok 0x80000031 
+	- ok 0x80000068 对应地方增加了板卡类型
+	- ok 增加0x80000025中新增主从标志，切换门限2，Tx的参考光功率和门限
+	- todo 增加与OLP相关命令：0x80000093——0x80000096
+		+ tms_AnalyseGetOLPLine
+		+ tms_RetOLPLine
+		+ tms_AnalyseGetOLPInfo
+		+ tms_RetOLPInfo
+
 2016-01-15: Menglong Wu
 	- bug : tms_RetAlarmHWChange ID写错
 	- bug : OLP_SWITCH_ACTION 相关宏数值定义错误
