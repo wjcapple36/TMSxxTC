@@ -5,6 +5,7 @@
 #include "epollserver.h"
 #include "tms_app.h"
 #include "tmsxxdb.h"
+#include "sys/wait.h"
 // #include <strings.h>
 
 #ifdef __cplusplus
