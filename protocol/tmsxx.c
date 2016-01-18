@@ -6335,7 +6335,7 @@ int32_t tms_RetTotalOPAlarm(int fd, struct glink_addr *paddr,
 		                             2,
 		                             NULL,
 		                             (uint8_t *)&hdr,      sizeof(struct tms_total_op_alarm_hdr),
-		                             (uint8_t *)&pval,   sizeof(struct tms_total_op_alarm_val));
+		                             (uint8_t *)pval,   sizeof(struct tms_total_op_alarm_val));
 	}
 	if (0 == fd) {
 		fd = tms_SelectFdByAddr(&base_hdr.dst);
@@ -6343,13 +6343,14 @@ int32_t tms_RetTotalOPAlarm(int fd, struct glink_addr *paddr,
 	glink_Build(&base_hdr, ID_GET_TOTAL_OP_ALARM, len);
 	glink_SendHead(fd, &base_hdr);
 	glink_SendSerial(fd, (uint8_t *)&hdr,   sizeof(struct tms_total_op_alarm_hdr));
-	glink_SendSerial(fd, (uint8_t *)&pval,   count * sizeof(struct tms_total_op_alarm_val));
+	glink_SendSerial(fd, (uint8_t *)pval,   count * sizeof(struct tms_total_op_alarm_val));
+
 	glink_SendTail(fd);
 
 
 	return 0;
 }
-// 0x80000077
+// 0x80000076
 static int32_t tms_AnalyseRetTotalOPAlarm(struct tms_context *pcontext, int8_t *pdata, int32_t len)
 {
 	return 0;

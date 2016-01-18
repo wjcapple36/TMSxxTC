@@ -2155,6 +2155,10 @@ int32_t tms_SendAllManagerDot(struct glink_base  *pbase_hdr, int group, uint8_t 
 int32_t tms_CountList(struct tms_man_base *list, int32_t count);
 int32_t tms_RetOLPActionLog(int fd, struct glink_addr *paddr, int32_t count, struct tms_olp_action_log_val *pval);
 int32_t tms_ManageCount();
+int32_t tms_RetTotalOPAlarm(int fd, struct glink_addr *paddr,
+                            int32_t type,
+                            int32_t count,
+                            struct tms_total_op_alarm_val *pval);
 #ifdef __cplusplus
 }
 #endif

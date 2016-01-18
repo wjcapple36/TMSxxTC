@@ -2866,7 +2866,13 @@ int cmd_tmsall(int argc, char **argv)
 		gl.pkid = 1;
 		tms_AlarmHW(sg_sockfdid, &gl, 1, &val);
 	}
-	
+	else if (argc == 2 && memcmp(argv[1], "rtopma", strlen(argv[1])) == 0) {
+		struct tms_total_op_alarm_val val[4];
+		for (int i = 0; i < 4; i++) {
+			val[i].frame = i;
+		}
+		tms_RetTotalOPAlarm(sg_sockfdid, NULL, DEV_OPM, 4, val);
+	}	
 	else if (argc == 2 && strcmp(argv[1], "rsn") == 0) {
 		uint8_t sn[128] = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '\0'};
 		tms_RetSerialNumber(fd, NULL, &sn);
