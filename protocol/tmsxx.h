@@ -2203,6 +2203,7 @@ int32_t tms_CountList(struct tms_man_base *list, int32_t count);
 int32_t tms_RetOLPActionLog(int fd, struct glink_addr *paddr, int32_t count, struct tms_olp_action_log_val *pval);
 int32_t tms_ManageCount();
 
+
 // 2016-1-18
 int32_t tms_ReportOLPActionEx(
     int fd,
@@ -2227,6 +2228,10 @@ int32_t tms_RetOLPLine(int fd, struct glink_addr *paddr,
 int32_t tms_RetOLPInfo(int fd, struct glink_addr *paddr,
                             struct tms_ret_olp_info *pval);
 // end 2016-1-18
+int32_t tms_RetTotalOPAlarm(int fd, struct glink_addr *paddr,
+                            int32_t type,
+                            int32_t count,
+                            struct tms_total_op_alarm_val *pval);
 #ifdef __cplusplus
 }
 #endif

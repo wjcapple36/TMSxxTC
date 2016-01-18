@@ -731,7 +731,6 @@ static int32_t tms_AnalyseTestPacketEcho(struct tms_context *pcontext, int8_t *p
 	if (pkt->save == 1) {
 		test_save_bin(pdata, len);
 	}
-
 	ret = snprintf((char *)pecho, 32, "%8.8d %dB\n",
 	               pcontext->net_pack_id,
 	               len - GLINK_OFFSET_DATA - GLINK_END_H);
@@ -758,6 +757,7 @@ static int32_t tms_AnalyseTestPacketAck(struct tms_context *pcontext, int8_t *pd
 	struct test_netpacket *pkt;
 	pkt = (struct test_netpacket *)(pdata + GLINK_OFFSET_DATA);
 
+
 	printf("pkt->save %8.8x %d %d\n", pkt->save, len,
 	       len - GLINK_OFFSET_DATA - GLINK_END_H);
 	if (pkt->save == 1) {
@@ -769,6 +769,7 @@ static int32_t tms_AnalyseTestPacketAck(struct tms_context *pcontext, int8_t *pd
 	               pkt->id,
 	               pkt->thread_id,
 	               len - GLINK_OFFSET_DATA - GLINK_END_H);
+
 	glink_SendSerial(pcontext->fd, (uint8_t *)pecho, ret);
 
 
@@ -6537,7 +6538,7 @@ int32_t tms_RetTotalOPAlarm(int fd, struct glink_addr *paddr,
 		                             2,
 		                             NULL,
 		                             (uint8_t *)&hdr,      sizeof(struct tms_total_op_alarm_hdr),
-		                             (uint8_t *)&pval,   sizeof(struct tms_total_op_alarm_val));
+		                             (uint8_t *)pval,   sizeof(struct tms_total_op_alarm_val));
 	}
 	if (0 == fd) {
 		fd = tms_SelectFdByAddr(&base_hdr.dst);
@@ -6545,12 +6546,14 @@ int32_t tms_RetTotalOPAlarm(int fd, struct glink_addr *paddr,
 	glink_Build(&base_hdr, ID_GET_TOTAL_OP_ALARM, len);
 	glink_SendHead(fd, &base_hdr);
 	glink_SendSerial(fd, (uint8_t *)&hdr,   sizeof(struct tms_total_op_alarm_hdr));
-	glink_SendSerial(fd, (uint8_t *)&pval,   count * sizeof(struct tms_total_op_alarm_val));
+	glink_SendSerial(fd, (uint8_t *)pval,   count * sizeof(struct tms_total_op_alarm_val));
+
 	glink_SendTail(fd);
 
 
 	return 0;
 }
+
 // 0x80000077
 int32_t tms_RetTotalOPAlarmEx(
     int fd,
@@ -7126,7 +7129,7 @@ int32_t tms_SendAllManagerDot(struct glink_base  *pbase_hdr, int group, uint8_t 
 			continue;
 		}
 		dbg_tms("send all manager %x\n", dst);
-		pbase_hdr->dst = dst;
+		pbase_hdr->dst = htonl(dst);
 
 
 		glink_SendHead(fd, pbase_hdr);
