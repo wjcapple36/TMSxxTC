@@ -732,7 +732,7 @@ static int32_t tms_AnalyseTestPacketEcho(struct tms_context *pcontext, int8_t *p
 		test_save_bin(pdata, len);
 	}
 	
-	ret = snprintf((char*)pecho, 32, "%8.8d %dB\n", 
+	ret = snprintf((char*)pecho, 32, "%8.8d %dB\r\n", 
 		pcontext->net_pack_id,
 		len - GLINK_OFFSET_DATA - GLINK_END_H);
 	glink_SendSerial(pcontext->fd, (uint8_t *)pecho, 32);
@@ -758,13 +758,13 @@ static int32_t tms_AnalyseTestPacketAck(struct tms_context *pcontext, int8_t *pd
 	struct test_netpacket *pkt;
 	pkt = (struct test_netpacket *)(pdata + GLINK_OFFSET_DATA);
 
-	printf("pkt->save %8.8x %d %d\n", pkt->save, len, 
+	printf("pkt->save %8.8x %d %d\r\n", pkt->save, len, 
 		len - GLINK_OFFSET_DATA - GLINK_END_H);
 	if (pkt->save == 1) {
 		test_save_bin(pdata, len);
 	}
 	
-	ret = snprintf((char*)pecho, 64, "%8.8d %8.8d %8.8d %dB\n", 
+	ret = snprintf((char*)pecho, 64, "%8.8d %8.8d %8.8d %dB\r\n", 
 		pcontext->net_pack_id,
 		pkt->id,
 		pkt->thread_id,
@@ -6778,7 +6778,7 @@ int32_t tms_SendAllManagerDot(struct glink_base  *pbase_hdr, int group, uint8_t 
 			continue;
 		}
 		dbg_tms("send all manager %x\n", dst);
-		pbase_hdr->dst = dst;
+		pbase_hdr->dst = htonl(dst);
 
 
 		glink_SendHead(fd, pbase_hdr);
