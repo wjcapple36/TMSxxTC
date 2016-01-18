@@ -37,11 +37,11 @@ int unuse_echo(const char *__restrict __format, ...)
 	return 0;
 }
 #endif
-// #ifdef _MANAGE
-// int (*fecho)(const char *__restrict __format, ...) = unuse_echo;
-// #else
+#ifdef _MANAGE
+int (*fecho)(const char *__restrict __format, ...) = unuse_echo;
+#else
 int (*fecho)(const char *__restrict __format, ...) = printf;
-// #endif
+#endif
 
 
 void tms_Echo(int en)
@@ -4375,7 +4375,7 @@ int32_t tms_AlarmOPMChange(
 	phdr->frame       = htonl(frame);
 	phdr->slot        = htonl(slot);
 	phdr->alarm_cnt   = htonl(alarm_cnt);
-	phdr->count       = htonl(count + 12);
+	phdr->count       = htonl(count);
 	printf("count :%d\n", phdr->count);
 
 	// todo :防止循环count次溢出ptlist
@@ -6743,7 +6743,7 @@ int32_t tms_SendAllManager(struct glink_base  *pbase_hdr, uint8_t *pdata, int32_
 			continue;
 		}
 		dbg_tms("send all manager %x\n", dst);
-		pbase_hdr->dst = dst;
+		pbase_hdr->dst = htonl(dst);
 		glink_Send(fd, pbase_hdr, pdata, len);
 	}
 	return 1;

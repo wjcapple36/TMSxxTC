@@ -187,7 +187,7 @@ OBJCOPY = $(CROSS_COMPILE)objcopy
 # CFLAGS		- Compile general option
 # CC_FLAGS		- Compile only for *.c file option
 # CS_FLAGS		- Compile only for *.S file option
-CFLAGS		+=  -g  	 -Wall -static -rdynamic -D_UNUSE_QT_ -fshort-wchar  \
+CFLAGS		+=  -g  -O3	 -Wall -static -rdynamic -D_UNUSE_QT_ -fshort-wchar  \
 			-DUSE_MD5 \
 			-DTMS_DEBUG \
 			-DCONFIG_ACK_DEVICE \
