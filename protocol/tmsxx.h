@@ -1145,6 +1145,7 @@ struct tms_report_olp_action
 	int32_t  type;
 	int32_t  sw_type;///< 0表示人工切换，1表示自动保护倒换，2表示保护返回。
 	int32_t  sw_port;     ///< 0表示切换到主路，1表示切换到备路
+	uint8_t	time[20];
 };
 // // 与上面的合并
 // struct tms_
