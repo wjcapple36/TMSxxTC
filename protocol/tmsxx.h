@@ -91,6 +91,7 @@ extern "C" {
 #define RET_SMS_PHONE_ILLEGALT          23 /// 短信电话非法
 #define RET_SMS_TEXT_VOERFLOW          24 /// 短信内容长度越界
 #define RET_SMS_EQ_ERROR                     25 //短信猫设备故障
+#define RET_SYS_NEW_MEM_ERR                    26 //系统分配内存失败
 
 ////////////////////////////////////////////////////////////////////////////////
 // Section  Proccess 数据包处理方式
@@ -309,11 +310,22 @@ extern "C" {
 #define ID_GET_OLP_ACTION_LOG	0x80000079 ///< 网管查询OLP切换记录
 #define ID_RET_OLP_ACTION_LOG	0x80000080 ///< 返回OLP切换记录
 
+#define ID_GET_ALARM_POWER	0x80000081 ///< 网管查询告警短信权限
+#define ID_RET_ALARM_POWER	0x80000082 ///< MCU返回告警短信权限
+#define ID_GET_MCU_OSW_PORT	0x80000083 ///< 网管查询OSW、OTDR或OLP模块各光端口关联光路信息
+#define ID_RET_MCU_OSW_PORT	0x80000084 ///< MCU 返回OSW、OTDR或OLP模块各光端口关联光路信息
+#define ID_GET_OTDR_REF	0x80000085 ///< 网管查询参考曲线
+#define ID_RET_OTDR_REF	0x80000086 ///< MCU返回参考曲线
+#define ID_GET_TBROUTE	0x80000087 ///< 网管查询模块级联表
+#define ID_RET_TBROUTE	0x80000088 ///< MCU返回模块级联表
+#define ID_GET_TBUNIT	0x80000089 ///< 网管查询“光端口联动触发表”
+#define ID_RET_TBUNIT	0x80000090 ///< MCU返回“光端口联动触发表”
+#define ID_GET_TBCYCTEST	0x80000091 ///< 网管查询周期性测量
+#define ID_RET_TBCYCTEST	0x80000092 ///< MCU返回周期性测量
 #define ID_GET_OLP_LINE 0x80000093 ///< 网管查询OLP当前所在线路
 #define ID_RET_OLP_LINE 0x80000094 ///< MCU返回OLP当前所在线路
 #define ID_GET_OLP_INFO 0x80000095 ///< 网管查询OLP模块的工作模式、返回时间和切换门限
 #define ID_RET_OLP_INFO 0x80000096 ///< MCU返回模块的工作模式、返回时间和切换门限
-
 
 struct pro_list
 {
