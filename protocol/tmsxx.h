@@ -897,14 +897,27 @@ struct tms_cfg_mcu_osw_cycle_val
 // ID_CFG_OLP_MODE
 struct tms_cfg_olp_mode
 {
-	int32_t  frame;		///< 
-	int32_t  slot;		///< 
-	int32_t  type;		///< 
-	int32_t  flag;
-	int32_t  mode;		///< 0表示保护不返回，1表示保护返回
-	int32_t  backtime;	///< 返回时间，单位分钟。
-	int32_t  protect;	///< 保护线路，0表示保护线路为主路，1表示保护线路为备路
-	int32_t  sw_gate;	///< 切换门限
+	// int32_t  frame;		///< 
+	// int32_t  slot;		///< 
+	// int32_t  type;		///< 
+	// int32_t  flag;
+	// int32_t  mode;		///< 0表示保护不返回，1表示保护返回
+	// int32_t  backtime;	///< 返回时间，单位分钟。
+	// int32_t  protect;	///< 保护线路，0表示保护线路为主路，1表示保护线路为备路
+	// int32_t  sw_gate;	///< 切换门限
+
+
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+	int32_t flag;
+	int32_t mode;
+	int32_t back_time;
+	int32_t protect_port;
+	int32_t work_line;
+	int32_t sw_level1;
+	int32_t sw_level2;
+	int32_t tx_ref;
 };
 // struct tms_
 // {
@@ -1458,6 +1471,7 @@ struct tms_ret_olp_info
 	int32_t mode;
 	int32_t back_time;
 	int32_t protect_port;
+	int32_t work_line;
 	int32_t sw_level1;
 	int32_t sw_level2;
 	int32_t tx_ref;
