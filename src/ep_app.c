@@ -246,7 +246,7 @@ int epFUI_OnRecv(struct ep_t *pep, struct ep_con_t *pnode)
 		pdata = bipbuffer_Reserve(&pss->lbb,pss->lbyte,&reserved);
 		int size;
 		bipbuffer_GetContiguousBlock(&pss->lbb,&size);
-		printf("size %d\n",size);
+		// printf("size %d\n",size);
 	}
 
 	// printf("1-1 ");

@@ -3101,7 +3101,7 @@ int cmd_tmsall(int argc, char **argv)
 		struct tms_retotdr_test_hdr test_hdr;
 		struct tms_retotdr_test_param test_param;
 		struct tms_retotdr_data_hdr data_hdr = {{0}}; 
-		struct tms_retotdr_data_val data_val[30000];//= {'o', 't', 'd', 'r', 'd', 'a', 't', 'a', '-', '-'};
+		struct tms_retotdr_data_val data_val[30000]= {'o', 't', 'd', 'r', 'd', 'a', 'b', 'c', 'd', 'e'};
 
 		struct tms_retotdr_event_hdr event_hdr = {{0}};
 		struct tms_retotdr_event_val event_val[4]= {
@@ -3146,6 +3146,9 @@ int cmd_tmsall(int argc, char **argv)
 		strcpy((char*)data_hdr.dpid , "OTDRData");
 		// printf("data.dpid %s\n", data_hdr.dpid);
 		data_hdr.count = 30000;
+		for (int i = 0; i < 30000; i++) {
+			data_val[i].data = i;
+		}
 		strcpy((char*)event_hdr.eventid, "KeyEvents");
 		event_hdr.count = 4;
 		strcpy((char*)chain.inf, "OTDRTestResultInfo");
@@ -4342,7 +4345,7 @@ int cmd_otdr(int argc, char **argv)
 	int frame,slot,port;
 	struct tms_getotdr_test_param test_param;
 	test_param.rang =  30000;
-	test_param.wl	= 1550;
+	test_param.wl	= 1625;
 	test_param.pw   = 640;
 	test_param.time = 15;
 	test_param.gi   = 1.4685;

@@ -324,3 +324,4 @@ sqlite3:
 
 copy:
 	cp ./$(OUTPUT_DIR)/$(OUTPUT_ELF) /usr/armdebug/tms4412.elf
+	cp ./$(OUTPUT_DIR)/$(OUTPUT_ELF) /mnt/xpshare/tms4412.elf
