@@ -2866,7 +2866,13 @@ int cmd_tmsall(int argc, char **argv)
 		gl.pkid = 1;
 		tms_AlarmHW(sg_sockfdid, &gl, 1, &val);
 	}
-	
+	else if (argc == 2 && memcmp(argv[1], "rtopma", strlen(argv[1])) == 0) {
+		struct tms_total_op_alarm_val val[4];
+		for (int i = 0; i < 4; i++) {
+			val[i].frame = i;
+		}
+		tms_RetTotalOPAlarm(sg_sockfdid, NULL, DEV_OPM, 4, val);
+	}	
 	else if (argc == 2 && strcmp(argv[1], "rsn") == 0) {
 		uint8_t sn[128] = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '\0'};
 		tms_RetSerialNumber(fd, NULL, &sn);
@@ -3037,6 +3043,29 @@ int cmd_tmsall(int argc, char **argv)
 		tms_RetDeviceComposition(fd, &gl, 2, list);
 		// 
 	}
+	else if(argc == 2 && strcmp(argv[1], "rdevcrt") == 0) {
+		struct tms_dev_composition_val list[4];
+		struct glink_addr gl;
+
+		gl.src = GLINK_4412_ADDR;
+		gl.dst = GLINK_MANAGE_ADDR;
+		gl.pkid = 1;
+
+		for (int i = 0; i < 4;i++) {
+			list[i].frame = 0;
+			list[i].slot = i;
+			list[i].type = DEV_OPM;
+			list[i].port = i + 1;
+			list[i].reserved0 = i * 10  + 1;
+			list[i].reserved1 = i * 10  + 2;
+			list[i].reserved2 = i * 10  + 2;
+			list[i].reserved3 = i * 10  + 3;
+
+		}
+		tms_RetDeviceCompositionRT(fd, &gl, 4, list);
+
+	}
+	
 	else if(argc == 3 && strcmp(argv[1], "update") == 0) {
 		// UpdateOTDR("update.txt", "", 12345);
 	}
@@ -3072,7 +3101,7 @@ int cmd_tmsall(int argc, char **argv)
 		struct tms_retotdr_test_hdr test_hdr;
 		struct tms_retotdr_test_param test_param;
 		struct tms_retotdr_data_hdr data_hdr = {{0}}; 
-		struct tms_retotdr_data_val data_val[30000];//= {'o', 't', 'd', 'r', 'd', 'a', 't', 'a', '-', '-'};
+		struct tms_retotdr_data_val data_val[30000]= {'o', 't', 'd', 'r', 'd', 'a', 'b', 'c', 'd', 'e'};
 
 		struct tms_retotdr_event_hdr event_hdr = {{0}};
 		struct tms_retotdr_event_val event_val[4]= {
@@ -3117,6 +3146,9 @@ int cmd_tmsall(int argc, char **argv)
 		strcpy((char*)data_hdr.dpid , "OTDRData");
 		// printf("data.dpid %s\n", data_hdr.dpid);
 		data_hdr.count = 30000;
+		for (int i = 0; i < 30000; i++) {
+			data_val[i].data = i;
+		}
 		strcpy((char*)event_hdr.eventid, "KeyEvents");
 		event_hdr.count = 4;
 		strcpy((char*)chain.inf, "OTDRTestResultInfo");
@@ -4313,7 +4345,7 @@ int cmd_otdr(int argc, char **argv)
 	int frame,slot,port;
 	struct tms_getotdr_test_param test_param;
 	test_param.rang =  30000;
-	test_param.wl	= 1550;
+	test_param.wl	= 1625;
 	test_param.pw   = 640;
 	test_param.time = 15;
 	test_param.gi   = 1.4685;
@@ -5754,7 +5786,11 @@ int cmd_Disp(int argc, char **argv)
 	// 本地执行：请求板卡组成信息
 	else if(argc == 2 && memcmp(argv[1], "updatev2", strlen(argv[1])) == 0) {
 		// TMSxxV1.2新协议
-		tms_GetDeviceCompositionRT(sg_sockfdid, NULL);
+		struct glink_addr base;
+		base.dst = GLINK_4412_ADDR;
+		base.src = GLINK_MASK_MADDR + 0x0f;
+		base.pkid = 12;
+		tms_GetDeviceCompositionRT(sg_sockfdid, &base);
 
 		goto _Clear;
 	}

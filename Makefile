@@ -94,7 +94,7 @@ else
 endif
 
 ifeq ("$(OUTPUT_ELF)", "")
-	OUTPUT_ELF	= download2.elf
+	OUTPUT_ELF	= download.elf
 endif
 ifeq ("$(OUTPUT_DIS)", "")
 	OUTPUT_DIS	= download.dis
@@ -187,7 +187,7 @@ OBJCOPY = $(CROSS_COMPILE)objcopy
 # CFLAGS		- Compile general option
 # CC_FLAGS		- Compile only for *.c file option
 # CS_FLAGS		- Compile only for *.S file option
-CFLAGS		+= -O -g  	 -Wall -static -rdynamic -D_UNUSE_QT_ -fshort-wchar  \
+CFLAGS		+=  -g  -O3	 -Wall -static -rdynamic -D_UNUSE_QT_ -fshort-wchar  \
 			-DUSE_MD5 \
 			-DTMS_DEBUG \
 			-DCONFIG_ACK_DEVICE \
@@ -324,3 +324,4 @@ sqlite3:
 
 copy:
 	cp ./$(OUTPUT_DIR)/$(OUTPUT_ELF) /usr/armdebug/tms4412.elf
+	cp ./$(OUTPUT_DIR)/$(OUTPUT_ELF) /mnt/xpshare/tms4412.elf

@@ -246,7 +246,7 @@ int epFUI_OnRecv(struct ep_t *pep, struct ep_con_t *pnode)
 		pdata = bipbuffer_Reserve(&pss->lbb,pss->lbyte,&reserved);
 		int size;
 		bipbuffer_GetContiguousBlock(&pss->lbb,&size);
-		printf("size %d\n",size);
+		// printf("size %d\n",size);
 	}
 
 	// printf("1-1 ");
@@ -1225,11 +1225,11 @@ int ThreadRunServerAndShell(struct ep_t *pep)
 	ep_Callback(pep);               // 设在epollserver在本工程的回掉函数
 
 #ifdef _MANAGE
-    if(ep_Listen(pep,6001)) {     // 监听TCP 0.0.0.0:6500端口
+    if(ep_Listen(pep,6000)) {     // 监听TCP 0.0.0.0:6500端口
         return 0;
     }
 #else
-	if(ep_Listen(pep,6001)) {     // 监听TCP 0.0.0.0:6500端口
+	if(ep_Listen(pep,6000)) {     // 监听TCP 0.0.0.0:6500端口
         return 0;
     }
 #endif
