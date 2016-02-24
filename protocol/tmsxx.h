@@ -1479,6 +1479,21 @@ struct tms_ret_olp_info
 
 };
 
+struct tms_get_mcuosw_port
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+	int32_t port;
+};
+
+struct tms_get_otdrref
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+	int32_t port;
+};
 #include "bipbuffer.h"
 ///< 应用程序
 struct tmsxx_app
