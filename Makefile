@@ -128,7 +128,7 @@ BUILD_DATE="$(shell date "+%Y-%m-%d_%H:%M:%S")"
 #-Wl,-rpath=./:./lib/
 
 #when app.elf run will select *.so/a from $(PATH) -> ./ -> ./lib/
-INCLUDE_DIR	+= -I./include -I./osnet -I./shell -I./ -I./src -I/usr/include/readline
+INCLUDE_DIR	+= -I./include -I./osnet -I./shell -I./ -I./src -I/usr/include/readline -I/usr/local/install/include
 LFLAGS		+= -lreadline -lpthread -lhistory -lncurses -lsqlite3 
 #-lmd5
 LIB_DIR 	+= 
