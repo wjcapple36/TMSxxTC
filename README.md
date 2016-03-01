@@ -1,27 +1,95 @@
+<div>
+<ul>
+<li>
+<a href="#1-tmsxxtc">1 TMSxxTC光缆在线监测系统</a><ul>
+<li><a href="#11">1.1 性能</a></li>
+<li><a href="#12">1.2 网络拓扑</a></li>
+<li><a href="#13">1.3 数据分离</a></li>
+<li><a href="#14">1.4 服务器架构</a></li>
+<li><a href="#15">1.5 帧格式</a></li>
+</ul>
+</li>
+<li>
+<a href="#2-tmsxxtc">2 TMSxxTC软件架构</a><ul>
+<li>
+<a href="#21-epollserver-tcp">2.1 EpollServer TCP 网络服务器核心层</a><ul>
+<li><a href="#_1">相关代码</a></li>
+</ul>
+</li>
+<li><a href="#22-glink-frame">2.2 glink frame协议解析、封装层</a></li>
+<li><a href="#_2">相关代码</a></li>
+<li>
+<a href="#23-tmsxxtc">2.3 TMSxxTC应用层</a><ul>
+<li><a href="#_3">相关代码</a></li>
+</ul>
+</li>
+<li>
+<a href="#24-uiminishellshell">2.4 UI层——minishell用户命令行解析shell</a><ul>
+<li><a href="#_4">相关代码</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<a href="#3">3 运行状态</a><ul>
+<li><a href="#31-tmsxxtc-servercu6000">3.1 TMSxxTC Server/CU启动开放6000端口</a></li>
+<li><a href="#32-cu16">3.2 CU等待16个槽位业务板连接</a></li>
+<li><a href="#33-servercu">3.3 Server连接两个CU</a></li>
+<li><a href="#34-servercu">3.4 Server查询两CU状态查询所有机框状态</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+
+
 # 1 TMSxxTC光缆在线监测系统
 本工程属于EpollServerX、minishellEx的具体应用项目。
 
 ![image](doc/image/system.png)
 
-## 1.1网络拓扑
+## 1.1 性能
+
+以下性能均以exynos 4412为运行平台
+* 双网卡USB 2.0 DM9601 10/100Mbps
+* 内存1GB（实际可用内存600MB）
+* CPU 4核，采用频率1.5GHz（空闲时只开启单核）
+
+* Server服务器能承受至少128个CU的连接以及突发数据	
+	* 默认限制 **800** 个TCP连接，此限制可以通过服务器配置修改，理论上只于 **内存** 消耗有关。
+		* Server静默状态消耗内存296KB
+		* 800个连接消耗内存24.6MB
+
+	* 服务器连接400客户端，所有客户端均含有心跳数据，客户端在30s以内没得到服务器响应则自动断开。
+		* 其中10个客户端全速发送数据。服务器保持 **600KB/S** 吞吐量，10个客户端显示吞吐量 **200KB/S** 
+		* **具体测试方法参考：网络强壮性测试** https://github.com/MenglongWu/NetStrong
+		* 以上测试经过2周， **无任何客户端断开连接** ，并且10个客户端收到的服务器的 **响应ID号有序**
+
+* CU采用轻量级数据库， **正常数据量** 查询和插入能在10s内完成
+	* FLASH（eMMC）为存储介质插入40万条数据耗时80~90s
+	* DDR2为存储介质插入40万条数据耗时5~10s
+
+
+
+## 1.2 网络拓扑
 系统由两个局域网组成，CU配置 **双网卡** 隔离内外网：
 
 内外网之间采用 **iptable实现防火墙配置访问控制**，与CU在同一机框的业务板处于同一内网，并与该CU通过TCP连接。
 
 外网是所有CU通过TCP连接Server
 
-## 1.2数据分离
+## 1.3 数据分离
 Server与各CU拥有本地数据库，Server的数据库不能理解成是个CU数据库的汇总，CU的数据库记录的是本地16个业务板槽位的数据，采用这种分离方式目的在于当Server异常或外网崩溃后，CU依旧能通过读取本地数据库执行工作，保证光缆检测业务正常。
 
 当Server恢复正常或外网通信正常后，CU将断网期间的差异数据上报到Server。
 
-## 1.3服务器架构
+## 1.4 服务器架构
 Server和CU采用相同的软件架构，差异仅仅是 **tms_OnXXX 回调函数对相同CMD ID下的Payload执行不同的处理流程** 。
 
 
 
 
-## 1.4帧格式
+## 1.5 帧格式
 
 ![image](doc/image/TMSxxTCformat.png)
 
@@ -30,7 +98,7 @@ Server和CU采用相同的软件架构，差异仅仅是 **tms_OnXXX 回调函�
 
 
 
-## 2 TMSxxTC软件架构
+# 2 TMSxxTC软件架构
 ![image](doc/image/frame.png)
 
 
@@ -87,7 +155,7 @@ git clone https://github.com/MenglongWu/EpollServerX.git
 
 * protocol/tmsxx.c
 
-**与Server/CU分别定制**
+**Server/CU分别定制回调函数tms_OnXXX**
 
 * src/tmsxx_app.c
 
@@ -185,7 +253,7 @@ Frame:00 Slot count:15
 
 MiniShell:>disp frame
 
-Frame:00 Slot count:15
+Frame:00 Slot count:16
 -----------------------------------------------------------------
 |00 |01 |02 |03 |04 |05 |06 |07 |08 |09 |10 |11 |12 |13 |14 |15 |
 -----------------------------------------------------------------
@@ -199,7 +267,7 @@ Frame:00 Slot count:15
 Socket Fd:
 00:06    01:07    02:09    03:08    04:11    05:05    06:15    07:16    
 08:14    09:22    10:19    11:22    12:13    13:20    14:21    15:24    
-                    Total Frame:01 Total Slot:15
+                    Total Frame:01 Total Slot:16
 ```
 
 ## 3.3 Server连接两个CU
@@ -227,7 +295,7 @@ Index      FD          locate                  Remote
 
 MiniShell:>disp frame
 
-Frame:00 Slot count:15
+Frame:00 Slot count:16
 -----------------------------------------------------------------
 |00 |01 |02 |03 |04 |05 |06 |07 |08 |09 |10 |11 |12 |13 |14 |15 |
 -----------------------------------------------------------------
@@ -241,9 +309,9 @@ Frame:00 Slot count:15
 Socket Fd:
 00:06    01:07    02:09    03:08    04:11    05:05    06:15    07:16    
 08:14    09:22    10:19    11:23    12:13    13:20    14:21    15:24    
-                    Total Frame:01 Total Slot:15
+                    Total Frame:01 Total Slot:16
 
-Frame:01 Slot count:15
+Frame:01 Slot count:11
 -----------------------------------------------------------------
 |00 |01 |02 |03 |04 |05 |06 |07 |08 |09 |10 |11 |12 |13 |14 |15 |
 -----------------------------------------------------------------
@@ -257,7 +325,7 @@ Frame:01 Slot count:15
 Socket Fd:
 00:no    01:05    02:09    03:06    04:07    05:05    06:10    07:11    
 08:13    09:no    10:no    11:no    12:12    13:14    14:13    15:no    
-                    Total Frame:01 Total Slot:15
+                    Total Frame:01 Total Slot:11
 ```
 
 * [**TODO** ](./script/README.md)  
