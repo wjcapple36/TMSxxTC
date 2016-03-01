@@ -14,6 +14,7 @@
 
 #ifndef _TMSXX_H_
 #define _TMSXX_H_
+#include "autoconfig.h"
 #include "glink.h"
 #include "osnet/epollserver.h"
 
@@ -90,6 +91,7 @@ extern "C" {
 #define RET_SMS_PHONE_ILLEGALT          23 /// 短信电话非法
 #define RET_SMS_TEXT_VOERFLOW          24 /// 短信内容长度越界
 #define RET_SMS_EQ_ERROR                     25 //短信猫设备故障
+#define RET_SYS_NEW_MEM_ERR                    26 //系统分配内存失败
 
 ////////////////////////////////////////////////////////////////////////////////
 // Section  Proccess 数据包处理方式
@@ -137,9 +139,9 @@ extern "C" {
 #define OLP_SWITCH_MODE_UNBACK       0	///<保护不返回，ID_CFG_OLP_MODE
 #define OLP_SWITCH_MODE_BACK        1	///<表示保护返回，ID_CFG_OLP_MODE
 
-#define OLP_SWITCH_ACTION_PERSION  0	///<人工切换，ID_REPORT_OLP_ACTION
-#define OLP_SWITCH_ACTION_AUTO     1	///<自动保护倒换，ID_REPORT_OLP_ACTION
-#define OLP_SWITCH_ACTION_BACK     2	///<保护返回，ID_REPORT_OLP_ACTION
+#define OLP_SWITCH_ACTION_PERSION  1	///<人工切换，ID_REPORT_OLP_ACTION
+#define OLP_SWITCH_ACTION_AUTO     2	///<自动保护倒换，ID_REPORT_OLP_ACTION
+#define OLP_SWITCH_ACTION_BACK     3	///<保护返回，ID_REPORT_OLP_ACTION
 
 #define OLP_SWITCH_ACTION_MASTER       0	///<切换到主光路，ID_REPORT_OLP_ACTION
 #define OLP_SWITCH_ACTION_SLAVE        1	///<切换到备光路，ID_REPORT_OLP_ACTION
@@ -177,7 +179,12 @@ extern "C" {
 
 ////////////////////////////////////////////////////////////////////////////////
 // Section 3 命令ID
+#ifdef CONFIG_TEST_NET_STRONG
+#define 	ID_TEST_NETPACK_SAVE			0x20000000	///< 测试网络强壮性
+#define 	ID_TEST_NETPACK_ECHO			0x20000001	///< 测试网络强壮性
+#define 	ID_TEST_NETPACK_ACK				0x20000002	///< 测试网络强壮性
 
+#endif
 
 #define 	ID_TICK			0x10000000	///< 心跳
 #define 	ID_UPDATE			0x10000001	///< 在线升级
@@ -303,7 +310,22 @@ extern "C" {
 #define ID_GET_OLP_ACTION_LOG	0x80000079 ///< 网管查询OLP切换记录
 #define ID_RET_OLP_ACTION_LOG	0x80000080 ///< 返回OLP切换记录
 
-
+#define ID_GET_ALARM_POWER	0x80000081 ///< 网管查询告警短信权限
+#define ID_RET_ALARM_POWER	0x80000082 ///< MCU返回告警短信权限
+#define ID_GET_MCU_OSW_PORT	0x80000083 ///< 网管查询OSW、OTDR或OLP模块各光端口关联光路信息
+#define ID_RET_MCU_OSW_PORT	0x80000084 ///< MCU 返回OSW、OTDR或OLP模块各光端口关联光路信息
+#define ID_GET_OTDR_REF	0x80000085 ///< 网管查询参考曲线
+#define ID_RET_OTDR_REF	0x80000086 ///< MCU返回参考曲线
+#define ID_GET_TBROUTE	0x80000087 ///< 网管查询模块级联表
+#define ID_RET_TBROUTE	0x80000088 ///< MCU返回模块级联表
+#define ID_GET_TBUNIT	0x80000089 ///< 网管查询“光端口联动触发表”
+#define ID_RET_TBUNIT	0x80000090 ///< MCU返回“光端口联动触发表”
+#define ID_GET_TBCYCTEST	0x80000091 ///< 网管查询周期性测量
+#define ID_RET_TBCYCTEST	0x80000092 ///< MCU返回周期性测量
+#define ID_GET_OLP_LINE 0x80000093 ///< 网管查询OLP当前所在线路
+#define ID_RET_OLP_LINE 0x80000094 ///< MCU返回OLP当前所在线路
+#define ID_GET_OLP_INFO 0x80000095 ///< 网管查询OLP模块的工作模式、返回时间和切换门限
+#define ID_RET_OLP_INFO 0x80000096 ///< MCU返回模块的工作模式、返回时间和切换门限
 
 struct pro_list
 {
@@ -311,6 +333,16 @@ struct pro_list
 	// int len;
 };
 
+#ifdef CONFIG_TEST_NET_STRONG
+struct test_netpacket
+{
+	uint8_t fname[16];
+	int32_t save;
+	uint32_t id;
+	uint32_t thread_id;
+
+};
+#endif
 ////////////////////////////////////////////////////////////////////////////////
 // Section 4 TMSxx通信各种包结构
 struct tms_dev_slot
@@ -578,6 +610,7 @@ struct tms_alarm_hw_change_val
 	int32_t level;
 	int32_t frame;
 	int32_t slot;
+	int32_t type;
 	// uint16_t reason[64];
 	uint32_t reason;
 	int8_t time[20];
@@ -864,13 +897,27 @@ struct tms_cfg_mcu_osw_cycle_val
 // ID_CFG_OLP_MODE
 struct tms_cfg_olp_mode
 {
-	int32_t  frame;		///< 
-	int32_t  slot;		///< 
-	int32_t  type;		///< 
-	int32_t  mode;		///< 0表示保护不返回，1表示保护返回
-	int32_t  backtime;	///< 返回时间，单位分钟。
-	int32_t  protect;	///< 保护线路，0表示保护线路为主路，1表示保护线路为备路
-	int32_t  sw_gate;	///< 切换门限
+	// int32_t  frame;		///< 
+	// int32_t  slot;		///< 
+	// int32_t  type;		///< 
+	// int32_t  flag;
+	// int32_t  mode;		///< 0表示保护不返回，1表示保护返回
+	// int32_t  backtime;	///< 返回时间，单位分钟。
+	// int32_t  protect;	///< 保护线路，0表示保护线路为主路，1表示保护线路为备路
+	// int32_t  sw_gate;	///< 切换门限
+
+
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+	int32_t flag;
+	int32_t mode;
+	int32_t back_time;
+	int32_t protect_port;
+	int32_t work_line;
+	int32_t sw_level1;
+	int32_t sw_level2;
+	int32_t tx_ref;
 };
 // struct tms_
 // {
@@ -1102,6 +1149,7 @@ struct tms_alarm_opm
 	int	alarm_type;
 	int32_t frame;
 	int32_t slot;
+	int32_t type;
 	int32_t	count;
 };
 struct tms_alarm_opm_val
@@ -1117,6 +1165,7 @@ struct tms_alarm_opm_change
 	int	alarm_type;
 	int32_t frame;
 	int32_t slot;
+	int32_t type;
 	int32_t alarm_cnt;
 	int32_t	count;
 };
@@ -1129,6 +1178,7 @@ struct tms_report_olp_action
 	int32_t  type;
 	int32_t  sw_type;///< 0表示人工切换，1表示自动保护倒换，2表示保护返回。
 	int32_t  sw_port;     ///< 0表示切换到主路，1表示切换到备路
+	uint8_t	time[20];
 };
 // // 与上面的合并
 // struct tms_
@@ -1172,6 +1222,7 @@ struct tms_alarm_hw_val
 	int32_t level;
 	int32_t frame;
 	int32_t slot;
+	int32_t type;
 	// uint8_t	reason[128];
 	uint32_t	reason;
 	uint8_t	time[20];
@@ -1286,6 +1337,9 @@ struct tms_context
 	struct tms_callback *ptcb;
 	// void     *ptr_analyse_arr;  ///<应用层不要读取任何值，tmsxx协议内部使用
 	struct tms_analyse_array *ptr_analyse_arr;
+#ifdef CONFIG_TEST_NET_STRONG
+	uint32_t net_pack_id;
+#endif
 };
 
 struct tms_dev_produce
@@ -1386,6 +1440,59 @@ struct tms_olp_action_log_val
 	int32_t sw_type;
 	int32_t sw_port;
 	int8_t  time[20];
+};
+struct tms_get_olp_line
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+};
+
+struct tms_ret_olp_line
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+	int32_t current_line;
+};
+struct tms_get_olp_info
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+};
+
+struct tms_ret_olp_info
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+	int32_t flag;
+	int32_t mode;
+	int32_t back_time;
+	int32_t protect_port;
+	int32_t work_line;
+	int32_t sw_level1;
+	int32_t sw_level2;
+	int32_t tx_ref;
+	int32_t tx_jump;
+
+};
+
+struct tms_get_mcuosw_port
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+	int32_t port;
+};
+
+struct tms_get_otdrref
+{
+	int32_t frame;
+	int32_t slot;
+	int32_t type;
+	int32_t port;
 };
 #include "bipbuffer.h"
 ///< 应用程序
@@ -1494,6 +1601,12 @@ int32_t tms_MCUtoDevice(
 	int32_t port,
 	int32_t cmdID,
 	int32_t len);
+int32_t tms_TestPacketID(
+    int fd,
+    struct glink_addr *paddr,
+    uint8_t *pdata,
+    uint32_t len,
+    uint32_t cmdid);
 // 一下函数间接调用tms_MCUtoDevice
 int32_t tms_MCU_GetDeviceType(
 	int fd,
@@ -2130,6 +2243,36 @@ int32_t tms_SendAllManagerDot(struct glink_base  *pbase_hdr, int group, uint8_t 
 int32_t tms_CountList(struct tms_man_base *list, int32_t count);
 int32_t tms_RetOLPActionLog(int fd, struct glink_addr *paddr, int32_t count, struct tms_olp_action_log_val *pval);
 int32_t tms_ManageCount();
+
+
+// 2016-1-18
+int32_t tms_ReportOLPActionEx(
+    int fd,
+    struct glink_addr *paddr,
+    struct tms_report_olp_action *val);
+
+int32_t tms_AlarmOPMEx(
+    int fd,
+    struct glink_addr *paddr,
+    struct tms_alarm_opm      *hdr,
+    struct tms_alarm_opm_val  *list);
+int32_t tms_RetTotalOPAlarmEx(int fd, struct glink_addr *paddr,
+                            struct tms_total_op_alarm_hdr *phdr,
+                            struct tms_total_op_alarm_val *pval);
+int32_t tms_CfgOLPModeEx(
+    int fd,
+    struct glink_addr *paddr,
+    struct tms_cfg_olp_mode *pval);
+// 新增协议
+int32_t tms_RetOLPLine(int fd, struct glink_addr *paddr,
+                            struct tms_ret_olp_line *pval);
+int32_t tms_RetOLPInfo(int fd, struct glink_addr *paddr,
+                            struct tms_ret_olp_info *pval);
+// end 2016-1-18
+int32_t tms_RetTotalOPAlarm(int fd, struct glink_addr *paddr,
+                            int32_t type,
+                            int32_t count,
+                            struct tms_total_op_alarm_val *pval);
 #ifdef __cplusplus
 }
 #endif

@@ -10,6 +10,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include "autoconfig.h"
+
 #include <wchar.h>
 #include "minishell_core.h"
 #include "epollserver.h"
@@ -2864,7 +2866,13 @@ int cmd_tmsall(int argc, char **argv)
 		gl.pkid = 1;
 		tms_AlarmHW(sg_sockfdid, &gl, 1, &val);
 	}
-	
+	else if (argc == 2 && memcmp(argv[1], "rtopma", strlen(argv[1])) == 0) {
+		struct tms_total_op_alarm_val val[4];
+		for (int i = 0; i < 4; i++) {
+			val[i].frame = i;
+		}
+		tms_RetTotalOPAlarm(sg_sockfdid, NULL, DEV_OPM, 4, val);
+	}	
 	else if (argc == 2 && strcmp(argv[1], "rsn") == 0) {
 		uint8_t sn[128] = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '\0'};
 		tms_RetSerialNumber(fd, NULL, &sn);
@@ -3035,6 +3043,29 @@ int cmd_tmsall(int argc, char **argv)
 		tms_RetDeviceComposition(fd, &gl, 2, list);
 		// 
 	}
+	else if(argc == 2 && strcmp(argv[1], "rdevcrt") == 0) {
+		struct tms_dev_composition_val list[4];
+		struct glink_addr gl;
+
+		gl.src = GLINK_4412_ADDR;
+		gl.dst = GLINK_MANAGE_ADDR;
+		gl.pkid = 1;
+
+		for (int i = 0; i < 4;i++) {
+			list[i].frame = 0;
+			list[i].slot = i;
+			list[i].type = DEV_OPM;
+			list[i].port = i + 1;
+			list[i].reserved0 = i * 10  + 1;
+			list[i].reserved1 = i * 10  + 2;
+			list[i].reserved2 = i * 10  + 2;
+			list[i].reserved3 = i * 10  + 3;
+
+		}
+		tms_RetDeviceCompositionRT(fd, &gl, 4, list);
+
+	}
+	
 	else if(argc == 3 && strcmp(argv[1], "update") == 0) {
 		// UpdateOTDR("update.txt", "", 12345);
 	}
@@ -3070,7 +3101,7 @@ int cmd_tmsall(int argc, char **argv)
 		struct tms_retotdr_test_hdr test_hdr;
 		struct tms_retotdr_test_param test_param;
 		struct tms_retotdr_data_hdr data_hdr = {{0}}; 
-		struct tms_retotdr_data_val data_val[30000];//= {'o', 't', 'd', 'r', 'd', 'a', 't', 'a', '-', '-'};
+		struct tms_retotdr_data_val data_val[30000]= {'o', 't', 'd', 'r', 'd', 'a', 'b', 'c', 'd', 'e'};
 
 		struct tms_retotdr_event_hdr event_hdr = {{0}};
 		struct tms_retotdr_event_val event_val[4]= {
@@ -3115,6 +3146,9 @@ int cmd_tmsall(int argc, char **argv)
 		strcpy((char*)data_hdr.dpid , "OTDRData");
 		// printf("data.dpid %s\n", data_hdr.dpid);
 		data_hdr.count = 30000;
+		for (int i = 0; i < 30000; i++) {
+			data_val[i].data = i;
+		}
 		strcpy((char*)event_hdr.eventid, "KeyEvents");
 		event_hdr.count = 4;
 		strcpy((char*)chain.inf, "OTDRTestResultInfo");
@@ -4311,7 +4345,7 @@ int cmd_otdr(int argc, char **argv)
 	int frame,slot,port;
 	struct tms_getotdr_test_param test_param;
 	test_param.rang =  30000;
-	test_param.wl	= 1550;
+	test_param.wl	= 1625;
 	test_param.pw   = 640;
 	test_param.time = 15;
 	test_param.gi   = 1.4685;
@@ -5752,7 +5786,11 @@ int cmd_Disp(int argc, char **argv)
 	// 本地执行：请求板卡组成信息
 	else if(argc == 2 && memcmp(argv[1], "updatev2", strlen(argv[1])) == 0) {
 		// TMSxxV1.2新协议
-		tms_GetDeviceCompositionRT(sg_sockfdid, NULL);
+		struct glink_addr base;
+		base.dst = GLINK_4412_ADDR;
+		base.src = GLINK_MASK_MADDR + 0x0f;
+		base.pkid = 12;
+		tms_GetDeviceCompositionRT(sg_sockfdid, &base);
 
 		goto _Clear;
 	}
@@ -5804,7 +5842,134 @@ _Clear:;
 W_BOOT_CMD(disp, cmd_Disp, "Display more information");
 
 
+int cmd_testnetpacket(int argc, char **argv)
+{
+#ifdef CONFIG_TEST_NET_STRONG
 
+	static uint8_t pdata[100*1024], first = 1;
+	int scale = 0;
+	int val = 10;
+	int len;
+	int cmdid = ID_TEST_NETPACK_ECHO;
+	struct test_netpacket *pkt = (struct test_netpacket *) pdata;
+
+	if (first == 1) {
+		for (int i = 0; i < sizeof(pdata); i++) {
+			pdata[i] = i;
+		}
+
+		first = 0;
+	}
+
+	// tnp <n> <k/b>
+	if (argc >= 3) {
+		switch(argv[2][0]) {
+		case 'k':
+			scale = 1024;
+			break;
+		default:
+			scale = 1;
+			break;
+		}
+
+		val = atoi(argv[1]);
+		if (val > 100 && scale == 1024) {
+			val = 100;
+		}
+	}
+
+	// tnp <n> <k/b> <e/a>
+	if (argc >= 4) {
+		switch(argv[3][0]) {
+		case 'e':
+			cmdid = ID_TEST_NETPACK_ECHO;
+			break;
+		case 'a':
+			cmdid = ID_TEST_NETPACK_ACK;
+			break;
+		
+		default:
+			break;
+		}
+	}
+	// tnp <n> <k/b> <e/a> <name>
+	if (argc >= 5) {
+		
+		pkt->fname[0] = 'a';
+		pkt->fname[1] = '.';
+		pkt->fname[2] = 'b';
+		pkt->fname[3] = 'i';
+		pkt->fname[4] = 'n';
+		pkt->fname[5] = '\0';
+
+		strncpy((char*)pkt->fname, argv[4], sizeof(pkt->fname));
+		pkt->fname[strlen(argv[4])] = '\0';
+		pkt->fname[ sizeof(pkt->fname) - 1] = '\0';
+		// 必须放在字符串赋值下面，防止字符串拷贝溢出
+		pkt->save = 1;
+		printf("name %s save %d\n", pkt->fname, pkt->save);
+	}
+	else {
+		pkt->save = 0;
+	}
+
+	len = val * scale;
+	if (len < sizeof(struct test_netpacket)) {
+		len = sizeof(struct test_netpacket);
+	}
+	printf("len = %d\n", len);
+	tms_TestPacketID(sg_sockfdid, NULL,(uint8_t*)pdata, len, cmdid);
+	sleep(1);
+
+
+#else
+	printf("undefine CONFIG_TEST_NET_STRONG\n");
+#endif
+	
+	return 0;
+}
+W_BOOT_CMD(tnp, cmd_testnetpacket, "Test net packet id");
+
+int cmd_testnetpacket_file(int argc, char **argv)
+{
+#ifdef CONFIG_TEST_NET_STRONG
+	uint8_t pdata[200*1024];
+
+	if (argc < 2) {
+		return 0;
+	}
+	FILE *fp;
+	uint32_t flen;
+
+	fp = fopen(argv[1], "rb");
+
+	fseek(fp, 0, SEEK_END);
+	flen = ftell(fp);
+	printf("flen %d\n", flen);
+	fseek(fp, 0, SEEK_SET);
+
+
+	fread(pdata, 1, flen, fp);
+	fclose(fp);
+
+	// tms_TestPacketID(sg_sockfdid, NULL,(uint8_t*)pdata, len, cmdid);
+	// glink_SendSerial(sg_sockfdid, (uint8_t *)pdata, flen);
+	// glink_SendSerial(sg_sockfdid, (uint8_t *)pdata+20, 34);
+	// glink_SendSerial(sg_sockfdid, (uint8_t *)pdata+20, 34);
+	// glink_SendSerial(sg_sockfdid, (uint8_t *)pdata+20, 34);
+	// glink_SendSerial(sg_sockfdid, (uint8_t *)pdata+20, 34);
+	// glink_SendSerial(sg_sockfdid, (uint8_t *)pdata+20, 34);
+	// glink_SendSerial(sg_sockfdid, (uint8_t *)pdata+20, 34);
+	// glink_SendSerial(sg_sockfdid, (uint8_t *)pdata+20, 34);
+	// sleep(3);
+	glink_SendSerial(sg_sockfdid, (uint8_t *)pdata, flen);
+	// glink_SendSerial(sg_sockfdid, (uint8_t *)pdata, flen);
+
+#else
+	printf("undefine CONFIG_TEST_NET_STRONG\n");
+#endif
+	return 0;
+}
 #ifdef __cplusplus
 }
 #endif

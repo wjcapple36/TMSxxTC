@@ -99,6 +99,8 @@ int cmd_produce(int argc, char **argv);
 int cmd_atb(int argc, char **argv);
 int cmd_sip(int argc, char **argv);
 int cmd_epsend(int argc, char **argv);
+int cmd_testnetpacket(int argc, char **argv);
+int cmd_testnetpacket_file(int argc, char **argv);
 // W_BOOT_CMD(epsend,cmd_epsend,"cmd epoll server send");
 
 #define INIT_CMD \
@@ -135,6 +137,8 @@ int cmd_epsend(int argc, char **argv);
 		{(char*)"sudo",cmd_sudo,(char*)"shell help"}, \
 		{(char*)"gpro",cmd_produce,(char*)" get sn"}, \
 		{(char*)"atb",cmd_atb,(char*)" get sn"}, \
+		{(char*)"tnp",cmd_testnetpacket,(char*)"Test net packet id"}, \
+		{(char*)"tnpf",cmd_testnetpacket_file,(char*)"Test net packet id"}, \
 		{(char*)"display",cmd_Disp,(char*)"Display current system information"} 
 
 

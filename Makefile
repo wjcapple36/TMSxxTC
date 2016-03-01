@@ -128,7 +128,7 @@ BUILD_DATE="$(shell date "+%Y-%m-%d_%H:%M:%S")"
 #-Wl,-rpath=./:./lib/
 
 #when app.elf run will select *.so/a from $(PATH) -> ./ -> ./lib/
-INCLUDE_DIR	+= -I./include -I./osnet -I./shell -I./ -I./src -I/usr/include/readline
+INCLUDE_DIR	+= -I./include -I./osnet -I./shell -I./ -I./src -I/usr/include/readline -I/usr/local/install/include
 LFLAGS		+= -lreadline -lpthread -lhistory -lncurses -lsqlite3 
 #-lmd5
 LIB_DIR 	+= 
@@ -187,11 +187,13 @@ OBJCOPY = $(CROSS_COMPILE)objcopy
 # CFLAGS		- Compile general option
 # CC_FLAGS		- Compile only for *.c file option
 # CS_FLAGS		- Compile only for *.S file option
-CFLAGS		+= -O -g  	 -Wall -static -rdynamic -D_UNUSE_QT_ -fshort-wchar  \
+CFLAGS		+=  -g  -O3	 -Wall -static -rdynamic -D_UNUSE_QT_ -fshort-wchar  \
 			-DUSE_MD5 \
 			-DTMS_DEBUG \
 			-DCONFIG_ACK_DEVICE \
 			-DUSE_INLINE
+			# -DBIPBUFF_ECHO \
+			
 ifeq ("$(GCC_G++)","gcc") # 只有gcc编译器才使用该选项，g++无此选项
 	CC_FLAGS    = -std=gnu99
 else
@@ -322,3 +324,4 @@ sqlite3:
 
 copy:
 	cp ./$(OUTPUT_DIR)/$(OUTPUT_ELF) /usr/armdebug/tms4412.elf
+	cp ./$(OUTPUT_DIR)/$(OUTPUT_ELF) /mnt/xpshare/tms4412.elf

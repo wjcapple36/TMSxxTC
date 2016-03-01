@@ -1,4 +1,34 @@
 /*! \page workhis TMSxxTC 项目工作日志
+2016-02-24: Menglong Wu
+	- Finish 完成《网管与MCU通信协议2016-01-30修订版.doc》需求，未验证
+
+2016-02-23: Menglong Wu
+	- Change 开始根据《网管与MCU通信协议2016-01-30修订版.doc》需求做修改
+	- Mission 添加命令任务0x80000081 - 0x80000096
+	- Add 统计0x80000081 - 0x80000096需要编写的代码，后期补充具体内容
+
+2016-01-18: Menglong Wu
+	- ok 0x80000027 增加切换时间
+	- ok 0x80000028 
+	- ok 0x80000029 
+	- ok 0x80000077 
+	- ok 0x80000031 
+	- ok 0x80000068 对应地方增加了板卡类型
+	- ok 增加0x80000025中新增主从标志，切换门限2，Tx的参考光功率和门限
+	- todo 增加与OLP相关命令：0x80000093——0x80000096
+		+ tms_AnalyseGetOLPLine
+		+ tms_RetOLPLine
+		+ tms_AnalyseGetOLPInfo
+		+ tms_RetOLPInfo
+
+2016-01-15: Menglong Wu
+	- bug : tms_RetAlarmHWChange ID写错
+	- bug : OLP_SWITCH_ACTION 相关宏数值定义错误
+	- bug : tms_RetAlarmSoundState ID写错
+	- doubt 收到80000073命令，网络字节没有转换
+	- bug tms_CountList返回值错误
+	- bug disp manager显示已经关闭的网管
+
 2015-12-23: Menglong Wu
 	- Add 添加IP设置回调处理，也传递给QT应用层，成功、失败都向网管汇报，失败返回RET_UNEXIST，不知道这个错误码对方能不能接受，
 

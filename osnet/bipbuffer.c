@@ -38,6 +38,11 @@ static int   datamemcmp(char *s1, char *s2, int len);
 #define OUT
 
 
+#ifdef BIPBUFF_ECHO
+#define echo_printf printf
+#else
+#define echo_printf 
+#endif
 /**
  * @brief	初始化struct bipbuffer，将其清零
  */
@@ -254,7 +259,7 @@ char* bipbuffer_GetContiguousBlock(struct bipbuffer *bb,OUT int *size)
 
 char *bipbuffer_GetUnContiguousBlock(struct bipbuffer *bb,OUT int *size)
 {
-	printf("bb->sza %d bb->szb %d\n",bb->sza,bb->szb);
+	echo_printf("bb->sza %d bb->szb %d\n",bb->sza,bb->szb);
 	if (bb->sza == 0)
 	{
 		*size = 0;
@@ -267,7 +272,7 @@ char *bipbuffer_GetUnContiguousBlock(struct bipbuffer *bb,OUT int *size)
 	}
 	else {
 		char *ptmp;
-		printf("copy........\n");
+		echo_printf("copy........\n");
 		ptmp = (char*)malloc(bb->buflen);
 		if (ptmp == NULL) return NULL;
 		memcpy(ptmp,           bb->pBuffer + bb->ixa,    bb->sza);
