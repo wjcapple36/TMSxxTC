@@ -1,3 +1,46 @@
+<div>
+<ul>
+<li>
+<a href="#1-tmsxxtc">1 TMSxxTC光缆在线监测系统</a><ul>
+<li><a href="#11">1.1 性能</a></li>
+<li><a href="#12">1.2 网络拓扑</a></li>
+<li><a href="#13">1.3 数据分离</a></li>
+<li><a href="#14">1.4 服务器架构</a></li>
+<li><a href="#15">1.5 帧格式</a></li>
+</ul>
+</li>
+<li>
+<a href="#2-tmsxxtc">2 TMSxxTC软件架构</a><ul>
+<li>
+<a href="#21-epollserver-tcp">2.1 EpollServer TCP 网络服务器核心层</a><ul>
+<li><a href="#_1">相关代码</a></li>
+</ul>
+</li>
+<li><a href="#22-glink-frame">2.2 glink frame协议解析、封装层</a></li>
+<li><a href="#_2">相关代码</a></li>
+<li>
+<a href="#23-tmsxxtc">2.3 TMSxxTC应用层</a><ul>
+<li><a href="#_3">相关代码</a></li>
+</ul>
+</li>
+<li>
+<a href="#24-uiminishellshell">2.4 UI层——minishell用户命令行解析shell</a><ul>
+<li><a href="#_4">相关代码</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<a href="#3">3 运行状态</a><ul>
+<li><a href="#31-tmsxxtc-servercu6000">3.1 TMSxxTC Server/CU启动开放6000端口</a></li>
+<li><a href="#32-cu16">3.2 CU等待16个槽位业务板连接</a></li>
+<li><a href="#33-servercu">3.3 Server连接两个CU</a></li>
+<li><a href="#34-servercu">3.4 Server查询两CU状态查询所有机框状态</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
 # 1 TMSxxTC光缆在线监测系统
 本工程属于EpollServerX、minishellEx的具体应用项目。
 
@@ -17,7 +60,7 @@
 
 	* 服务器连接400客户端，所有客户端均含有心跳数据，客户端在30s以内没得到服务器响应则自动断开。
 		* 其中10个客户端全速发送数据。服务器保持 **600KB/S** 吞吐量，10个客户端显示吞吐量 **200KB/S** 
-		* **具体测试方法参考：** https://github.com/MenglongWu/NetStrong
+		* **具体测试方法参考：网络强壮性测试** https://github.com/MenglongWu/NetStrong
 		* 以上测试经过2周， **无任何客户端断开连接** ，并且10个客户端收到的服务器的 **响应ID号有序**
 
 * CU采用轻量级数据库， **正常数据量** 查询和插入能在10s内完成
@@ -53,7 +96,7 @@ Server和CU采用相同的软件架构，差异仅仅是 **tms_OnXXX 回调函�
 
 
 
-## 2 TMSxxTC软件架构
+# 2 TMSxxTC软件架构
 ![image](doc/image/frame.png)
 
 
@@ -110,7 +153,7 @@ git clone https://github.com/MenglongWu/EpollServerX.git
 
 * protocol/tmsxx.c
 
-**与Server/CU分别定制**
+**Server/CU分别定制回调函数tms_OnXXX**
 
 * src/tmsxx_app.c
 
@@ -208,7 +251,7 @@ Frame:00 Slot count:15
 
 MiniShell:>disp frame
 
-Frame:00 Slot count:15
+Frame:00 Slot count:16
 -----------------------------------------------------------------
 |00 |01 |02 |03 |04 |05 |06 |07 |08 |09 |10 |11 |12 |13 |14 |15 |
 -----------------------------------------------------------------
@@ -222,7 +265,7 @@ Frame:00 Slot count:15
 Socket Fd:
 00:06    01:07    02:09    03:08    04:11    05:05    06:15    07:16    
 08:14    09:22    10:19    11:22    12:13    13:20    14:21    15:24    
-                    Total Frame:01 Total Slot:15
+                    Total Frame:01 Total Slot:16
 ```
 
 ## 3.3 Server连接两个CU
@@ -250,7 +293,7 @@ Index      FD          locate                  Remote
 
 MiniShell:>disp frame
 
-Frame:00 Slot count:15
+Frame:00 Slot count:16
 -----------------------------------------------------------------
 |00 |01 |02 |03 |04 |05 |06 |07 |08 |09 |10 |11 |12 |13 |14 |15 |
 -----------------------------------------------------------------
@@ -264,9 +307,9 @@ Frame:00 Slot count:15
 Socket Fd:
 00:06    01:07    02:09    03:08    04:11    05:05    06:15    07:16    
 08:14    09:22    10:19    11:23    12:13    13:20    14:21    15:24    
-                    Total Frame:01 Total Slot:15
+                    Total Frame:01 Total Slot:16
 
-Frame:01 Slot count:15
+Frame:01 Slot count:11
 -----------------------------------------------------------------
 |00 |01 |02 |03 |04 |05 |06 |07 |08 |09 |10 |11 |12 |13 |14 |15 |
 -----------------------------------------------------------------
@@ -280,7 +323,7 @@ Frame:01 Slot count:15
 Socket Fd:
 00:no    01:05    02:09    03:06    04:07    05:05    06:10    07:11    
 08:13    09:no    10:no    11:no    12:12    13:14    14:13    15:no    
-                    Total Frame:01 Total Slot:15
+                    Total Frame:01 Total Slot:11
 ```
 
 * [**TODO** ](./script/README.md)  
