@@ -4381,7 +4381,7 @@ int32_t tms_AlarmOPM(
 	phdr->frame       = htonl(frame);
 	phdr->slot        = htonl(slot);
 	phdr->count       = htonl(count);
-	phdr->type		  = htonl(DEV_OPM);
+	// phdr->type		  = htonl(DEV_OPM);
 
 	// todo :防止循环count次溢出ptlist
 	ptlist = list;
@@ -4442,7 +4442,7 @@ int32_t tms_AlarmOPMEx(
 	phdr->frame       = htonl(hdr->frame);
 	phdr->slot        = htonl(hdr->slot);
 	phdr->count       = htonl(hdr->count);
-	phdr->type		  = htonl(hdr->type);
+	// phdr->type		  = htonl(hdr->type);
 
 	// todo :防止循环count次溢出ptlist
 	ptlist = list;

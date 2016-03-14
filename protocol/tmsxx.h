@@ -88,10 +88,11 @@ extern "C" {
 #define RET_CONNECT_PORT_NOT_TEST   20///<本端口属于级联端口，不能进行测试
 #define RET_MODULE_ROUTE_NO_EXIST   21///<模块路由不存在
 #define RET_MODULE_ROUTE_ILLEGALT   22///<模块路由非法
-#define RET_SMS_PHONE_ILLEGALT          23 /// 短信电话非法
-#define RET_SMS_TEXT_VOERFLOW          24 /// 短信内容长度越界
-#define RET_SMS_EQ_ERROR                     25 //短信猫设备故障
-#define RET_SYS_NEW_MEM_ERR                    26 //系统分配内存失败
+#define RET_SMS_PHONE_ILLEGALT		23 /// 短信电话非法
+#define RET_SMS_TEXT_VOERFLOW		24 /// 短信内容长度越界
+#define RET_SMS_EQ_ERROR			25 //短信猫设备故障
+#define RET_SYS_NEW_MEM_ERR         26 //系统分配内存失败
+#define RET_GET_LOCAL_WLAN_IP_FAIL	27 //获取本地IP失败
 
 ////////////////////////////////////////////////////////////////////////////////
 // Section  Proccess 数据包处理方式
@@ -1143,13 +1144,13 @@ struct tms_retotdr_chain
 // };
 
 
-// //ID_ALARM_OPM			22	
+//ID_ALARM_OPM			28
 struct tms_alarm_opm
 {
 	int	alarm_type;
 	int32_t frame;
 	int32_t slot;
-	int32_t type;
+	// int32_t type;
 	int32_t	count;
 };
 struct tms_alarm_opm_val
