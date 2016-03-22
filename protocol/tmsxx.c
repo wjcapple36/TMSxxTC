@@ -8005,9 +8005,9 @@ struct tms_analyse_array sg_analyse_0x8000xxxx[] = {
 	{	tms_AnalyseUnuse	,8},//	0x80000090	ID_RET_TBUNIT
 	{	tms_AnalyseUnuse	,0},//	0x80000091	ID_GET_TBCYCTEST
 	{	tms_AnalyseUnuse	,8},//	0x80000092	ID_RET_TBCYCTEST
-	{	tms_AnalyseGetOLPLine	,0},//	0x80000093	ID_GET_OLP_LINE
+	{	tms_AnalyseGetOLPLine	,2},//	0x80000093	ID_GET_OLP_LINE
 	{	tms_AnalyseUnuse	,8},//	0x80000094	ID_RET_OLP_LINE
-	{	tms_AnalyseGetOLPInfo	,0},//	0x80000095	ID_GET_OLP_INFO
+	{	tms_AnalyseGetOLPInfo	,2},//	0x80000095	ID_GET_OLP_INFO
 	{	tms_AnalyseUnuse	,8},//	0x80000096	ID_RET_OLP_INFO
 
 };
