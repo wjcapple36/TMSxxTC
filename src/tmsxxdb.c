@@ -5622,6 +5622,65 @@ int tmsdb_Delete_otdr_alarm_data(
 }
 
 
+int tmsdb_Select_count(
+    char *sql,
+    int 
+    (*pcallback)(void *output, void *ptr),
+    void *ptr)
+{
+	sqlite3 *db;
+	int rc;
+
+	// char sql[1024];
+
+
+	int find = 0;// 没什么卵用的
+	sqlite3_stmt *pstmt;
+	tdb_common_t out;
+	int funret = 0;
+
+
+	// if (pcallback == NULL) {
+	// 	return -3;
+	// }
+	rc = sqlite3_open(DB_PATH, &db);
+	if ( rc ) {
+		fprintf(stdin, "Can't open database:");// %s\n", sqlite3_errmsg(db));
+		sqlite3_close(db);
+		return -1;
+	}
+
+	if (sg_echo) {
+		printf("sql:%s\n", sql);
+	}
+
+	sqlite3_prepare(db, sql, -1, &pstmt, NULL);
+
+
+	out.pdata = NULL;
+	while(sqlite3_step(pstmt) == SQLITE_ROW) {
+		find = 1;
+
+		funret    = sqlite3_column_int(pstmt, 0);
+		break;
+		// // 
+		// if (-1 == funret) {
+		// 	funret = 0;
+		// 	break;
+		// }
+		// else if (0 != funret) {
+		// 	break;
+		// }
+	}
+
+	sqlite3_finalize(pstmt);
+	sqlite3_close(db);
+	if (find == 0) {
+		return -2;
+	}
+
+	return funret;
+}
 
 #ifdef __cplusplus
 }

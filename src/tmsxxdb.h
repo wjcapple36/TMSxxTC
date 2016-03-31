@@ -518,8 +518,15 @@ int tmsdb_Select_Page_a_trigger_b(
 		tdb_a_trigger_b_t *pmask,
 		int from,
 		int limit,
-		int (*pcallback)(tdb_a_trigger_b_t *output, void *ptr),
+		int 
+		(*pcallback)(tdb_a_trigger_b_t *output, void *ptr),
 		void *ptr);
+
+int tmsdb_Select_count(
+    char *sql,
+    int 
+    (*pcallback)(void *output, void *ptr),
+    void *ptr);
 
 struct tdb_route * tmsdb_Check_route_getoneline(struct tdb_route *pval, int *len);
 int tmsdb_Check_route_oneline(struct tdb_route *pval, int count);
