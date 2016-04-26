@@ -7939,7 +7939,7 @@ struct tms_analyse_array sg_analyse_0x8000xxxx[] = {
 	{	tms_AnalyseUnuse	,8},//	0x8000004E	--
 	{	tms_AnalyseUnuse	,8},//	0x8000004F	--
 	{	tms_AnalyseDelAll_TbRoute	,2},//	0x80000050	ID_GET_OTDR_PARAM
-	{	tms_AnalyseRetOTDRParam	,3},//	0x80000051	ID_RET_OTDR_PARAM
+	{	tms_AnalyseRetOTDRParam	,5},//	0x80000051	ID_RET_OTDR_PARAM //2016-4-26
 	{	tms_AnalyseGetDevProduce	,2},//	0x80000052	ID_GET_DEV_PRODUCE
 	{	tms_AnalyseRetDevProduce	,5},//	0x80000053	ID_RET_DEV_PRODUCE
 	{	tms_AnalyseTbRoute_Insert	,0},//	0x80000054	ID_INSERT_TBROUTE
