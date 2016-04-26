@@ -93,6 +93,8 @@ extern "C" {
 #define RET_SMS_EQ_ERROR			25 //短信猫设备故障
 #define RET_SYS_NEW_MEM_ERR         26 //系统分配内存失败
 #define RET_GET_LOCAL_WLAN_IP_FAIL	27 //获取本地IP失败
+#define RET_SMS_EQ_NO_EXIST			28 //短信猫不存在
+#define RET_SMS_EQ_NITIALING			29 //短信猫正在初始化
 
 ////////////////////////////////////////////////////////////////////////////////
 // Section  Proccess 数据包处理方式
@@ -2274,6 +2276,11 @@ int32_t tms_RetTotalOPAlarm(int fd, struct glink_addr *paddr,
                             int32_t type,
                             int32_t count,
                             struct tms_total_op_alarm_val *pval);
+int32_t tms_Insert_TbCycTest(
+    int fd,
+    struct glink_addr *paddr,
+    int32_t count,
+    struct tms_cyctest *plist);
 #ifdef __cplusplus
 }
 #endif
