@@ -7907,7 +7907,11 @@ struct tms_analyse_array sg_analyse_0x8000xxxx[] = {
 	{	tms_AnalyseUnuse	,8},//	0x8000002E	--
 	{	tms_AnalyseUnuse	,8},//	0x8000002F	--
 	{	tms_AnalyseAlarmLine	,0},//	0x80000030	ID_ALARM_LINE
+#ifdef _MANAGE	
+	{	tms_AnalyseAlarmHW	,0},//	0x80000031	ID_ALARM_HW
+#else
 	{	tms_AnalyseAlarmHW	,9},//	0x80000031	ID_ALARM_HW
+#endif
 	{	tms_AnalyseRetOTDRCycle	,0},//	0x80000032	ID_RET_OTDR_CYC
 	{	tms_AnalyseSendSMS	,9},//	0x80000033	ID_CMD_SMS_TEXT
 	{	tms_AnalyseSMSError	,5},//	0x80000034	ID_CMD_SMS_ERROR
