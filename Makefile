@@ -129,7 +129,8 @@ BUILD_DATE="$(shell date "+%Y-%m-%d_%H:%M:%S")"
 
 #when app.elf run will select *.so/a from $(PATH) -> ./ -> ./lib/
 INCLUDE_DIR	+= -I./include -I./osnet -I./shell -I./ -I./src -I/usr/include/readline -I/usr/local/install/include
-LFLAGS		+= -lreadline -lpthread -lhistory -lncurses -lsqlite3 
+LFLAGS		+= -lreadline -lpthread -lhistory  -lsqlite3 -ltermcap
+# -lncurses
 #-lmd5
 LIB_DIR 	+= 
 CFLAGS      += -DBUILD_DATE=\"$(BUILD_DATE)\"  -DPRJ_VERSION=\"$(PRJ_VERSION)\" -DPRJ_NAME=\"$(PRJ_NAME)\" 
@@ -323,5 +324,5 @@ sqlite3:
 
 
 copy:
-	cp ./$(OUTPUT_DIR)/$(OUTPUT_ELF) /usr/armdebug/tms4412.elf
-	cp ./$(OUTPUT_DIR)/$(OUTPUT_ELF) /mnt/xpshare/tms4412.elf
+	cp ./$(OUTPUT_DIR)/$(OUTPUT_ELF) /work/armdebug/tms4412.elf
+	cp ./$(OUTPUT_DIR)/$(OUTPUT_ELF) /mnt/cifs/linuxproject/debug/tms4412.elf
