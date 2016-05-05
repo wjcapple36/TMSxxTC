@@ -116,11 +116,16 @@ void autoupdate()
 	// system("cp /mnt/udisk/update/targetExe-r /usr/MenglongWu/bin/tms4412..new");
 }
 
+
+void autoalarm()
+{
+	system("/bin/alarm.sh");
+}
 int checkudisk()
 {
 	umount("/mnt/udisk");
 	for (int i = 0; i < g_disk_count; i++) {
-		printf("disk %s\n", g_disk[i]);
+		//printf("disk %s\n", g_disk[i]);
 		if (0 == mountudisk(g_disk[i]) ) {
 		// if (0 == mountudisk("sdb1") ) {
 			printf("-----------------------   find %s  -----------------------\n", g_disk[i]);
@@ -148,17 +153,17 @@ int mountudisk(char *disk)
 
 	sprintf(spath, "/dev/%s", disk);
 	sprintf(dpath, "/mnt/udisk");
-	printf("spath %s, dpath %s\n", spath, dpath);
+//	printf("spath %s, dpath %s\n", spath, dpath);
 	// ret = umount("/mnt/udisk");
 	// printf("umount = %d\n", ret);
 
 	// 创建一个目录，mask填写阅读 man 2 mkdir
 	ret = mkdir(dpath,(1 & ~1 & 0777));
-	printf("mkdir = %d\n", ret);
+//	printf("mkdir = %d\n", ret);
 
 	// ret = mount(spath, dpath, "vfat", NULL, NULL);
 	ret = mount(spath, dpath, "vfat", NULL, NULL);
-	printf("mount = %d\n", ret);
+//	printf("mount = %d\n", ret);
 
 	return ret;
 }
@@ -217,7 +222,7 @@ int checkdisk()
 	}
 
 	for( int i = 0; i < g_disk_count; i++) {
-		printf("%s\n", g_disk[i]);
+		//printf("%s\n", g_disk[i]);
 	}	
 	fclose(fp);
 	return 0;
@@ -236,12 +241,12 @@ int main(int argc, char* argv[])
 		/* Netlink message buffer */	
 		char buf[UEVENT_BUFFER_SIZE * 2] = {0};	
 		recv(hotplug_sock, &buf, sizeof(buf), 0);	
-		printf("buf :%s\n", buf);
+//		printf("buf :%s\n", buf);
 
 		if ( memcmp(buf,"add",strlen("add")) == 0) {
-			printf("add............\n");
+//			printf("add............\n");
 			checkdisk();
-			printf("g_disk_count %d\n", g_disk_count);
+//			printf("g_disk_count %d\n", g_disk_count);
 			if (last_count != g_disk_count) {
 				last_count = g_disk_count;
 			
@@ -253,12 +258,12 @@ int main(int argc, char* argv[])
 						// 稍作延时
 						autobak();
 						autoupdate();
-						printf("sleep ....................\n");
+						//printf("sleep ....................\n");
 						sleep(3);
 						// 修补代码，防止拷贝进去后读不出
 						umount("/mnt/udisk");
 						printf("-----------------------      OK     -----------------------\n");
-
+						autoalarm();
 						break;
 					}
 					sleep(2);
@@ -266,7 +271,7 @@ int main(int argc, char* argv[])
 			}
 		}
 		else if ( memcmp(buf,"remove", strlen("remove")) == 0) {
-			printf("remove............\n");
+		//	printf("remove............\n");
 			umount("/mnt/udisk");
 		}
 
